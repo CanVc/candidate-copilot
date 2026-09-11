@@ -1,0 +1,41 @@
+# Research: recruiter-facing interactive candidate portfolios
+
+## Key takeaways
+
+- This is an emerging, distinct category from auto-apply/job-search copilots: products position around a **shareable candidate-controlled profile** where recruiters can ask questions about skills, projects, experience, work style, and role fit. Examples include Aigis, AskMyResume, Distills, Portiqo, ProBot, PortfolioOS, AskMe, and open-source widgets such as ChatFolio/Cosmo. [Aigis](https://aigis.bio/for-recruiters), [AskMyResume](https://askmyresume.org/), [Distills](https://distills.app/), [Portiqo](https://portiqo.app/), [ProBot](https://pro-bot.dev/), [PortfolioOS](https://www.portfolios.chat/), [AskMe](https://www.askme.site/)
+- The strongest trust pattern is **grounded Q&A with citations**: every answer should link to a resume bullet, portfolio case study, certificate, project, or uploaded document; weak/absent evidence should produce an “insufficient evidence” response rather than inference. Aigis explicitly promises cited answers from verified documents and “never a black-box score”; LinkedIn’s recruiter AI similarly says it cites sources and requires recruiters to verify outputs. [Aigis](https://aigis.bio/for-recruiters), [LinkedIn](https://www.linkedin.com/help/recruiter/answer/a7437598)
+- Recruiter UX is converging on **no-account public access**, prompt chips/suggested questions, downloadable resume/contact CTA, optional voice/chat, embeddable widget, and role/JD-aware variants. Aigis says recruiters open a candidate link with no signup; AskMyResume supports profile links and embeds; Distills and Portiqo emphasize shareable hosted URLs and recruiter analytics. [Aigis](https://aigis.bio/for-recruiters), [AskMyResume](https://askmyresume.org/), [Distills](https://distills.app/), [Portiqo](https://portiqo.app/)
+- Privacy expectations: candidate owns/controls source material; recruiter access is read-only, revocable, and auditable where possible; do not expose references/private contact details without consent; minimize visitor data collection and disclose analytics/lead capture. NIST defines minimization as limiting PII creation/collection/use/retention to what is directly relevant and necessary. [Aigis](https://aigis.bio/for-recruiters), [Qlynk](https://www.qlynk.site/solutions/ai-resume-assistant), [NIST minimization](https://csrc.nist.gov/glossary/term/minimization)
+- Avoid becoming an automated selection tool. If offering JD matching, prefer **evidence-by-requirement** or categorical “strong/partial/insufficient evidence,” keep recruiter review explicit, and avoid opaque scores, protected-class inferences, medical/disability questions, or automated hire/no-hire recommendations. EEOC guidance warns selection procedures can create disparate-impact or discrimination risk if not job-related and justified. [EEOC](https://www.eeoc.gov/laws/guidance/employment-tests-and-selection-procedures), [Aigis](https://aigis.bio/for-recruiters)
+
+## Comparable patterns/products
+
+| Product/pattern | What to learn | Source |
+|---|---|---|
+| **Aigis AI Twin** | Recruiter-specific product: no-signup candidate share link, text/voice questions, cited answers from CV/portfolio/certifications, read-only access, audit logs, revocable access, categorical JD scoring instead of opaque score. | [aigis.bio/for-recruiters](https://aigis.bio/for-recruiters) |
+| **AskMyResume** | Lightweight hosted/embedded AI resume: recruiters ask “Do you know AWS?” / “Tell me about leadership,” answers are drawn from resume/LinkedIn profile; supports public profile URLs and website embeds. | [askmyresume.org](https://askmyresume.org/) |
+| **Distills** | “AI-powered professional profile” from uploaded docs plus AI interview; visitors ask about work/experience/approach; offers hosted profile, self-hostable knowledge/widget files, analytics, resume download, and JD-aware URLs. | [distills.app](https://distills.app/) |
+| **Portiqo** | CV-to-living-portfolio with AI recruiter representative, proof citations to original CV, public subdomain/custom domain, visitor/company telemetry, and recruiter question analytics. | [portiqo.app](https://portiqo.app/) |
+| **ProBot** | Trust/security angle: free/self-hostable, BYO LLM key, private vector store, prompt-injection defenses, output sanitization, per-bot rate limits, one-line widget, lead capture. | [pro-bot.dev](https://pro-bot.dev/) |
+| **PortfolioOS / portfolios.chat** | AI-native portfolio builder from resume/LinkedIn/GitHub; positions around visitors asking questions about skills, projects, and background. | [portfolios.chat](https://www.portfolios.chat/) |
+| **AskMe** | Broader “AI site from owned context” pattern: resume, portfolio, notes, documents, and approved source material become a public conversational professional site. | [askme.site](https://www.askme.site/) |
+| **ChatFolio / Cosmo open-source widgets** | Developer pattern: one-line portfolio chat widget; recruiter questions about background/projects/tech/job fit; architecture includes document search, no client-side API keys, CORS, rate limits, bot checks, chat-to-email handoff, and analytics. | [ChatFolio](https://github.com/Kvndoshi/chatfolio), [Cosmo](https://github.com/PureGrain/cosmo) |
+| **AskRich case study** | Citation-backed answers, recruiter prompt chips, structured feedback events, failure triage buckets, and privacy-conscious rate limiting using hashed request context rather than storing raw IPs. | [DEV write-up](https://dev.to/rich_robertson/how-i-built-a-retrieval-backed-chatbot-to-replace-my-resume-screening-step-131n) |
+| **LinkedIn recruiter AI agents** | Mainstream recruiter-AI trust pattern: cite sources, show info only with high confidence, disclose AI-generated content, and state recruiter remains responsible for verification and hiring decisions. | [LinkedIn Help](https://www.linkedin.com/help/recruiter/answer/a7437598) |
+
+## PRD implications
+
+1. **Positioning:** define Candidate Copilot as a “verifiable candidate portfolio / recruiter Q&A profile,” not an auto-apply agent. Primary value is faster recruiter understanding with candidate-approved evidence.
+2. **MVP surface:** public share URL, embedded chat widget, resume download, contact/booking CTA, suggested recruiter prompts, and a visible “answers are based only on approved sources” trust note.
+3. **Knowledge model:** source objects should preserve title, type, date, owner approval status, visibility, and citation anchors. Answers should expose sources inline and support “view evidence.”
+4. **Answer policy:** default to grounded summaries; refuse or defer when evidence is missing, sensitive, speculative, or requires live negotiation. Include “ask candidate directly” routes for availability, salary, references, work authorization nuance, and private details.
+5. **JD fit mode:** support requirement-by-requirement evidence mapping, but avoid numeric fit scores as the core UX. Use “evidence found / partial / not found” and keep human decision language explicit.
+6. **Privacy controls:** candidate can publish/unpublish, redact sources, expire links, revoke recruiter access, delete data, and see conversation/audit history. For anonymous public visitors, collect minimal telemetry by default; disclose analytics and any recruiter email capture.
+7. **Security/abuse:** implement prompt-injection filtering, scope guardrails, rate limiting, bot protection, CORS/origin controls, no client-side model keys, output sanitization, and conversation logging sufficient for audit/debugging.
+8. **Trust UX:** show source coverage and limits (“verified docs: resume, portfolio, certs”; “last updated”; “may be incomplete”), plus feedback buttons for inaccurate answers/citation quality.
+9. **Analytics:** useful but sensitive; prioritize aggregate visit/question analytics first. If adding company identity or lead capture, make it opt-in and clearly disclosed.
+10. **Differentiator opportunity:** many competitors offer generic resume chat. Stronger differentiation is an **evidence-backed portfolio graph**: claims → projects → artifacts → outcomes → citations, with recruiter-ready views and privacy-safe public access.
+
+## Output path
+
+`/home/cvc/dev/candidate-copilot/docs/_bmad-output/planning-artifacts/prds/prd-candidate-copilot-2026-09-11/research-recruiter-facing-portfolio.md`
