@@ -1,0 +1,48 @@
+# Review — Adversarial Seams in Architecture Spine
+
+Scope: reviewed `ARCHITECTURE-SPINE.md` as of 2026-09-16. Requested `plan.md` and `progress.md` were not present at `/home/cvc/dev/candidate-copilot/`, so this review is based on the architecture spine itself.
+
+## Review
+
+- **Correct:** The spine has strong high-level ownership boundaries: product policy belongs in application/domain services behind ports, not Hono/D1/provider/browser adapters (`ARCHITECTURE-SPINE.md:41-45`); the browser is explicitly untrusted and cannot own canonical transcript/citation/deletion/retention state (`ARCHITECTURE-SPINE.md:53-63`); public evidence is constrained to `content/public` and D1 FTS over deterministic Markdown chunks (`ARCHITECTURE-SPINE.md:47-51`, `ARCHITECTURE-SPINE.md:77-81`); launch is blocked by deterministic tests (`ARCHITECTURE-SPINE.md:113-117`).
+
+- **Blocker: block-level evidence can be valid in the response but unrecoverable from canonical state.**
+  - **Evidence:** AD-5 requires each factual response block to carry one or more response-local `SourceExcerpt` ids (`ARCHITECTURE-SPINE.md:65-69`). AD-4 says answer records and cited Source Excerpts live in D1 (`ARCHITECTURE-SPINE.md:59-63`). The ER shape stores `answer_blocks` and `source_excerpts`, but `answer_blocks` has no citation-id field and there is no join table linking blocks to excerpts (`ARCHITECTURE-SPINE.md:232-246`).
+  - **Adversarial pair that obeys current ADs:**
+    - Unit A, the response-shaping service, returns `answerBlocks[{ id, kind, text, sourceExcerptIds: ['S1'] }]` plus `sourceExcerpts[{ responseLocalId: 'S1', ... }]`, satisfying AD-5 for the live Worker response.
+    - Unit B, the D1 persistence adapter/migration, stores rows exactly matching the documented ER: `answer_blocks(id, answer_id, sequence, kind, text)` and `source_excerpts(id, answer_id, response_local_id, source_path, excerpt, location)`, satisfying AD-4's requirement that answer records and Source Excerpts live in D1.
+  - **Clash:** `GET /api/conversations/:id`, operator export, diagnostics, and post-facto launch checks cannot reconstruct which factual paragraph cited which excerpt. Both units followed the ADs, but the canonical data model lost the paragraph-level evidence contract.
+  - **Close the hole:** Tighten AD-5/AD-4 with a canonical citation graph requirement: every persisted factual answer block must retain its ordered SourceExcerpt references, either as a validated `answer_block_citations(answer_block_id, source_excerpt_id, sequence)` table or an equivalent typed field. The shared API contract and D1 schema must use the same `AnswerBlock`/`SourceExcerpt` identifiers and cardinality rules.
+
+- **Blocker: conversation turn ownership is underspecified, so valid concurrent message paths can produce unpairable transcripts.**
+  - **Evidence:** AD-10 exposes `POST /api/conversations/:id/messages` and `GET /api/conversations/:id` but only requires token validation and returning that conversation (`ARCHITECTURE-SPINE.md:95-99`). The runtime flow stores a user message, retrieves/generates, then stores an answer (`ARCHITECTURE-SPINE.md:190-198`). The ER links both `messages` and `answers` directly to `conversations`, but `answers` has no `message_id`, `turn_id`, sequence, or in-flight/concurrency field (`ARCHITECTURE-SPINE.md:218-230`).
+  - **Adversarial pair that obeys current ADs:**
+    - Unit A, the message route/app service, accepts every token-valid `POST /messages` and appends a user message before running the pipeline, as AD-3 and AD-10 require.
+    - Unit B, the conversation read assembler, loads `messages` and `answers` by `conversation_id` and sorts by `created_at`, matching the documented shape.
+  - **Clash:** two valid browser requests for the same conversation can run concurrently. D1 can contain `message A`, `message B`, `answer B`, `answer A` or timestamp ties. The GET assembler cannot know which answer belongs to which question, and launch/operator diagnostics cannot inspect a stable turn. No current AD forbids concurrent posts, requires single-flight processing, or requires an answer-to-question relation.
+  - **Close the hole:** Add/tighten an AD for the conversation turn model: each user question creates a canonical turn with monotonic `turn_sequence`; each answer references exactly one triggering user message/turn; `POST /messages` is either single-flight per conversation or rejects/queues when a turn is in progress; `GET /conversations/:id` returns turns assembled from this canonical relation, not timestamp inference.
+
+- **Blocker: deletion-request state has multiple legal mutation paths without an owner/state machine.**
+  - **Evidence:** AD-3 says the Worker owns deletion-request persistence (`ARCHITECTURE-SPINE.md:53-57`). AD-10 exposes `POST /api/conversations/:id/deletion-request` (`ARCHITECTURE-SPINE.md:95-99`). AD-11 says the local operator CLI reviews deletion requests and manual deletions (`ARCHITECTURE-SPINE.md:101-105`). AD-12 defines `deletion_requests` fields and says they are retained indefinitely (`ARCHITECTURE-SPINE.md:107-111`), while the ER ties deletion requests to conversations (`ARCHITECTURE-SPINE.md:247-253`).
+  - **Adversarial pair that obeys current ADs:**
+    - Unit A, the public endpoint, treats every valid POST as persistence of a deletion request and inserts or rewrites `status='pending'` for that conversation.
+    - Unit B, the operator CLI, reviews pending requests, manually deletes conversation data, and sets `status='handled'`/`handled_at`.
+  - **Clash:** a repeat POST after handling can reset or duplicate a handled request; a schema with cascading FK deletion from `conversations` to `deletion_requests` can delete the indefinite audit record during purge/manual deletion; a schema without FK can break CLI code that expects joins. Each interpretation is consistent with at least one current AD sentence, but they build incompatible deletion semantics.
+  - **Close the hole:** Add an AD-level deletion-request state machine and ownership rule: public API may create an idempotent pending request per conversation/session but must not transition handled states; operator service is the only owner of `status`, `handled_at`, and manual deletion transitions after creation; purge/manual conversation deletion must preserve deletion-request audit metadata indefinitely; schema must avoid cascades that violate that retention and must define what immutable conversation identifier/metadata remains after raw data deletion.
+
+- **Blocker: deterministic chunking is required, but the canonical chunk/index contract is not.**
+  - **Evidence:** AD-7 requires deterministic chunks and D1 FTS over public Markdown (`ARCHITECTURE-SPINE.md:77-81`). Source excerpts must include `sourcePath` and enough location metadata (`ARCHITECTURE-SPINE.md:65-69`). The ER gives `source_chunks(id, source_path, chunk_text, metadata)` and `source_documents(source_path, title, topics, indexed_at)` but leaves chunk id, metadata shape, location shape, content hash, frontmatter mapping, and line/section offsets unspecified (`ARCHITECTURE-SPINE.md:255-265`). Scripts own indexing while adapters own retrieval (`ARCHITECTURE-SPINE.md:161-172`).
+  - **Adversarial pair that obeys current ADs:**
+    - Unit A, the index script, deterministically chunks by heading, stores random UUID chunk ids, and writes JSON metadata `{ heading, ordinal }`.
+    - Unit B, the retriever/answer validator/operator export, expects stable ids derived from `source_path + line range`, and expects `metadata` to contain `{ lineStart, lineEnd, contentHash }` for diagnostics and launch-gate verification.
+  - **Clash:** both units obey public-only deterministic FTS, but citations, re-indexing, diagnostics, launch sentinels, and exports disagree about chunk identity and location. The result can be unreproducible evidence or broken SourceExcerpt construction without violating AD-7's text.
+  - **Close the hole:** Tighten AD-7/AD-13 with a single shared chunk contract: one chunking library or manifest used by indexer, retriever, launch gate, and exports; stable chunk ids; required metadata keys for source path, frontmatter identity, heading/ordinal, line or byte offsets, content hash, and created/indexed timestamps; deterministic re-index behavior for updates/deletes.
+
+- **Note: answer status/error taxonomy is too loose for independent units.**
+  - **Evidence:** AD-6 and AD-8 require refusal/partial/failure paths (`ARCHITECTURE-SPINE.md:71-87`), the public API errors convention requires normalized professional shapes (`ARCHITECTURE-SPINE.md:134`), and the ER stores `answers.status` as unconstrained text (`ARCHITECTURE-SPINE.md:225-230`).
+  - **Adversarial pair:** an answer service can persist `status='refused'|'partial'|'answered'`, while the UI/launch tests can look for `kind='failure'|'ok'` or HTTP error shapes. Both can claim adherence to professional refusal/failure paths and shared-type intent, but interop depends on undocumented names.
+  - **Close the hole:** Add an AD/convention requiring a canonical shared `AnswerStatus`, `AnswerBlockKind`, and public `ApiError` union consumed by app, worker, web, D1 mapping, and launch tests; D1 may store text but migrations/adapters must validate against the shared enum.
+
+## Verdict
+
+The architecture spine is directionally strong, but not yet seam-tight. The largest gaps are not in high-level boundaries; they are in canonical contracts at the next layer down: citation graph persistence, conversation turn identity/concurrency, deletion-request state ownership, and chunk/index metadata. These should be closed with new or tightened ADs before implementation units are allowed to proceed independently.
