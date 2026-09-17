@@ -2,7 +2,7 @@
 title: Candidate Copilot PRD
 status: final
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-17
 ---
 
 # PRD: Candidate Copilot
@@ -127,7 +127,10 @@ A Recruiter can start a Conversation from the web app through a shared, unlisted
 Candidate Copilot must support follow-up questions within a Conversation about BC's documented experience, projects, outcomes, technical skills, working methods, and design decisions.
 
 **Acceptance / Planning Notes:**
-- The Recruiter can ask a broad question, then refine or change topic.
+- The Recruiter can ask a broad question, then refine or change topic, up to the configurable 20 admitted user messages per Conversation.
+- Only one turn is processed at a time in a Conversation, without a server-side queue. Send is disabled during processing and concurrent submissions are rejected without adding another message; reading and Deletion Request submission remain available.
+- If the available context does not resolve an ambiguity that materially changes the question's subject or intent, the system asks a short clarification question before searching for evidence or giving a factual answer; it does not guess between plausible interpretations.
+- A clarification reply is interpreted together with the original question and the clarification asked. If older context is unavailable, the system asks again rather than inventing it.
 - The product remains focused on documented professional material.
 
 #### FR-7: Answer in the language of the question
@@ -137,6 +140,7 @@ Candidate Copilot must answer in the language used by the Recruiter’s question
 **Acceptance / Planning Notes:**
 - If a Recruiter asks in French, the answer is in French.
 - If a Recruiter asks in English, the answer is in English.
+- An explicit request for another answer language takes precedence where practical; the Recruiter may change language between turns, including clarification turns.
 - Source Excerpts remain in their original document language, expected to be French in V1.
 
 #### FR-8: Show working status during generation
@@ -144,8 +148,11 @@ Candidate Copilot must answer in the language used by the Recruiter’s question
 The UI must show a clear progress or working message while Candidate Copilot retrieves and synthesizes an answer.
 
 **Acceptance / Planning Notes:**
-- The Recruiter can tell the app is working during normal multi-second LLM latency.
-- Longer answers that take up to roughly 30 seconds do not appear as a frozen UI.
+- The Recruiter can tell the app is working during normal multi-second LLM latency; the indicator must not invent backend progress stages.
+- V1 presents a complete result after checks and durable recording, not unvalidated token-by-token streaming. Answers and their evidence are recorded together; a failed finalization leaves the original admitted question without a partial answer.
+- A network interruption or browser timeout does not imply the question failed. Preserve the pending question and offer manual recovery without duplicating its submission.
+- A received, recorded recoverable technical failure may show a small “Réessayer” button that explicitly submits the same text as a new turn. A normal answer, partial answer, business refusal, or clarification does not get this technical retry action.
+- There are no automatic processing retries, whether in the browser or backend. Waiting and recovery are bounded as specified in §5.2.
 
 ### 4.3 Grounded Answers and Evidence
 
@@ -169,7 +176,9 @@ Candidate Copilot answers must include Source Excerpts sufficient for the Recrui
 **Acceptance / Planning Notes:**
 - V1 may show excerpts/snippets in the response rather than full public source pages.
 - Full source cards or full document views are out of scope for V1.
-- Representative launch tests verify that answers are not merely cited, but sufficiently complete for the question asked.
+- Historical excerpts retain the text and source-version provenance used for the answer; updating or removing a current public document must not silently rewrite that history. Accidentally sensitive source material requires separate remediation of historical copies.
+- Representative launch evaluations assess whether actual model answers are supported by their cited excerpts and sufficiently complete for the question asked.
+- A valid response structure or citation reference does not prove that the cited text supports an assertion. V1 relies on LLM behavior for semantic interpretation; automated contract checks do not certify meaning, completeness, or factual correctness.
 
 #### FR-11: Handle partial or missing evidence explicitly
 
@@ -178,6 +187,7 @@ When support is absent, weak, or partial, Candidate Copilot must say so rather t
 **Acceptance / Planning Notes:**
 - Unsupported claims are not presented as facts.
 - Partial answers distinguish what is supported from what is unavailable.
+- Finding no suitable passage is reported as insufficient retrieved evidence, not proof that the information does not exist anywhere in the Public Knowledge Base.
 
 ### 4.4 Refusals and Professional Boundaries
 
@@ -225,11 +235,13 @@ Candidate Copilot must not comply with requests to ignore its boundaries, reveal
 
 #### FR-16: Disclose conversation retention, review, and processing
 
-The app must tell Visitors that Conversation data may be stored and manually reviewed by BC, that retained Conversation data is deleted within 90 days, and that questions may be processed through the AI/provider processing path chosen during implementation.
+The app must tell Visitors that Conversation content and associated runtime data may be stored and manually reviewed by BC, that they are deleted within 90 days of Conversation creation, and that questions may be processed through the AI/provider path chosen during implementation. The separate, minimal Deletion Request audit retained indefinitely must be disclosed explicitly.
 
 **Acceptance / Planning Notes:**
 - The disclosure is visible before or during use, not hidden in a long policy only.
-- Visitors understand the 90-day maximum retention window.
+- Visitors understand that the 90-day maximum runs from Conversation creation, not the date of their latest message.
+- Disclose the indefinite audit exception: Deletion Request identity, historical Conversation UUID when known, status, and lifecycle timestamps only; no Conversation text, excerpts, tokens, or Visitor identity in that audit.
+- Explain the minimal temporary IP-based abuse counter separately from Conversation storage; it is not an account or durable browsing fingerprint.
 - Before launch, the privacy copy must reflect the real storage and AI/provider processing path.
 - The app must not intentionally include private source material, secrets, unnecessary Visitor identifiers, or unrelated personal data in model prompts.
 
@@ -247,8 +259,10 @@ Each Conversation must have a Conversation UUID used for diagnostics, Deletion R
 V1 must start a new Conversation with a new Conversation UUID when a Visitor returns in a new visit/session.
 
 **Acceptance / Planning Notes:**
-- V1 does not restore previous Conversation history for returning Visitors.
-- If the current browser tab/session remains open, the current Conversation may remain visible.
+- V1 does not restore previous Conversation history across new visits/sessions; reloading the same active tab/session is different and restores the server-recorded transcript and processing state.
+- While the outcome of a submission is unknown, retain just that pending question and its submission identity temporarily in the current session, not a browser-owned transcript.
+- After reload, an active turn may be observed through bounded read-only checks. Stop on completion, expired processing, communication failure, or the observation limit; never automatically resubmit a question. Observation errors offer “Vérifier à nouveau” rather than falsely claiming generation failure.
+- Inaccessible/expired/deleted Conversations show a neutral unavailable message and may offer a new Conversation. Do not silently recreate the old one or send its pending question into the new one.
 - The product avoids account-like tracking or identity linkage in V1.
 
 #### FR-19: Provide in-app Deletion Request submission
@@ -257,7 +271,10 @@ The app must allow the Visitor to submit a Deletion Request from the interface f
 
 **Acceptance / Planning Notes:**
 - Deletion requests are handled manually by BC.
-- A Deletion Request must be persisted with the Conversation UUID and request timestamp.
+- A Deletion Request must initially be persisted with the current Conversation UUID and request timestamp. Repeated submission returns the same request without resetting its date.
+- Deletion Request states are `open` and `handled`. Mark handled only after confirmed deletion or confirmation that the data is already gone; an unsuccessful deletion leaves the request open.
+- Submission remains available during generation and after the message limit is reached. Actual deletion waits while processing is active on that Conversation, without blocking cleanup of other Conversations.
+- Minimal audit metadata survives Conversation deletion indefinitely as disclosed in FR-16; the historical Conversation UUID may be absent but should be retained when known. No content or credentials belong in this audit.
 - Deletion Requests must be visible to BC through the same controlled access/export path used for retained Conversations.
 - BC must define a manual review cadence before public recruiter use.
 - UI confirmation must honestly state that deletion is manual and not immediate.
@@ -266,11 +283,13 @@ The app must allow the Visitor to submit a Deletion Request from the interface f
 
 #### FR-20: Automatically delete conversation data within 90 days
 
-Raw and derived Conversation data retained by the system must be deleted within 90 days.
+Raw and derived Conversation content/runtime data must be deleted no later than the Conversation creation timestamp plus 90 × 24 hours, calculated in UTC. The narrow Deletion Request audit exception is defined in FR-16/FR-19.
 
 **Acceptance / Planning Notes:**
-- Retention cannot silently exceed the promised maximum.
-- Architecture must account for raw and derived data deletion.
+- New messages and recovery attempts never extend the deadline; newer associated records may therefore be kept for less than 90 days.
+- Automatic cleanup starts early enough to account for scheduling, an active treatment, and operational recovery. Deferring a busy Conversation must not permit retention beyond the deadline.
+- Raw/derived data and deletion-completion state must not be left partially removed/updated after failure.
+- Loss of access is not proof of deletion; overdue or failed cleanup must be operator-visible and recoverable. Architecture must account for all associated messages, answers, excerpts, processing metadata, and diagnostics.
 
 ### 4.6 Pre-Launch Evaluation
 
@@ -288,10 +307,13 @@ BC must define and run a minimal test set before public deployment.
 - Tests include value-judgment questions.
 - Tests include sensitive personal questions.
 - Tests include prompt-injection or rule-bypass attempts.
-- Tests include long or ambiguous questions.
-- Tests verify citations/source excerpts, answer completeness for representative questions, and refusal behavior.
-- Tests verify privacy disclosure, visible Conversation UUID, Deletion Request persistence, and 90-day deletion behavior.
-- Tests verify maximum prompt length, excessive-use handling, generation timeout, professional error states, and safe free-quota exhaustion behavior.
+- Tests include long or ambiguous questions, clarification and its resolution on the next turn, French/English language changes, and corporate terms or paraphrases that differ from source vocabulary.
+- Deterministic tests verify response contracts, citation references and source integrity, isolation, and controlled failure paths; mocked model responses test application behavior, not semantic model capability.
+- Separate evaluations of actual configured model outputs assess citation support, answer completeness, appropriate refusal/redirection, clarification relevance, and actual response language on representative questions. Human inspection assesses meaning; sampled success is not a guarantee for every future response.
+- Tests verify privacy disclosure including audit/counter exceptions, visible Conversation UUID, idempotent Deletion Request state, and creation-based 90-day cleanup, including busy-conversation deferral and failure visibility.
+- Tests verify single active processing, atomic answer/evidence persistence, duplicate/conflicting requests, interrupted processing, manual recovery versus explicit new-turn retry, and reload observation without automatic processing retries.
+- Tests verify the 1,000-character boundary, 20-turn accounting, 10 new Conversations per IP per UTC day, generation/browser time limits, professional failures, and safe free-quota behavior. Same-submission recovery and reads do not consume extra logical turns.
+- Provider quota, rate-limit, reset, and billing cases must be derived from current official Cloudflare documentation during implementation and tested in the adapter; no assumed universal error code or reset schedule.
 - Tests include a manual Public Knowledge Base launch review confirming that deployed source files are intended to be public and contain no obvious secrets, private notes, private contact details, or unintended sensitive personal data.
 
 #### FR-22: Block launch on critical failures
@@ -300,7 +322,7 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 
 **Acceptance / Planning Notes:**
 - Launch readiness is based on professional trust, not feature quantity.
-- Known critical failures are fixed before recruiter use.
+- Known critical failures are fixed before recruiter use, including those found in real-model evaluations; passing deterministic checks alone is insufficient. Acknowledging the limits of automatic semantic verification does not relax these acceptance requirements.
 - A launch test fails critically if the system fabricates unsupported claims, exposes or deploys private material, answers prohibited personal/sensitive questions, loses or hides Deletion Requests, shows raw provider/runtime errors, hangs without recovery, or cannot safely handle exhausted free quota.
 
 ## 5. Cross-Cutting Non-Functional Requirements
@@ -311,15 +333,19 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 - V1 should avoid overengineering and avoid semantic/vector retrieval unless simpler retrieval fails evaluation.
 - V1 must cost zero euros and avoid mandatory paid services.
 - V1 should rely on a shared, unlisted link rather than accounts or broad public discovery.
-- V1 must include simple zero-euro guardrails for obvious abuse and runaway usage: unlisted access, no broad indexing, maximum prompt length, maximum turns per Conversation or browser session, generation timeout, professional failure message, and safe behavior when any free quota is exhausted.
-- V1 should use basic per-session or per-IP throttling if the chosen zero-euro host/runtime provides it without meaningful complexity.
+- Initial configurable limits are 1,000 characters per user message with a visible counter and matching server enforcement, and 20 admitted logical user messages per Conversation. Never silently truncate user input.
+- Clarification replies and explicit new submissions after recorded failures consume a turn; recovery of the same submission, rejected messages, transcript reads, and Deletion Requests do not consume another turn.
+- Limit creation to 10 Conversations per IP per UTC calendar day using a short-lived pseudonymous counter, without linking Conversations to a durable Visitor profile. Explain when creation can resume; do not block existing Conversations or deletion controls solely because this creation limit is reached. Shared corporate IPs are a known trade-off and limits must remain configurable.
+- No automatic processing retry, paid overage, or fallback to another provider. Confirmed pre-admission quota unavailability preserves the draft without consuming a turn; an admitted turn that receives a provider rejection ends in a controlled recorded failure when possible.
+- Document and test actual plan quotas/billing before launch; only display a recovery time when it is known. The product must fail professionally rather than assume an exhausted free quota permits continued use.
 - V1 should not depend on outbound email unless a free, simple, reliable option is later confirmed and explicitly accepted.
 
 ### 5.2 Performance and Reliability
 
 - Normal answers may take several seconds due to LLM use.
-- Deeper retrieval or synthesis may take up to roughly 30 seconds.
-- The UI must show a meaningful working state during answer generation.
+- Initial configurable limits are a 30-second total backend processing budget and 45-second browser wait. Expiry of the browser wait is an unknown outcome, not proof the backend stopped; retries remain manual.
+- Following a reload only, read-only observation of an active turn runs approximately every 3 seconds for at most 45 seconds, stopping on error or terminal state. It must not trigger another generation or indefinitely show a spinner.
+- The UI must show a meaningful working state during answer generation, preserving the draft and preventing competing sends while processing or its state remains unknown.
 - Raw crashes, stack traces, or broken states must not be visible to recruiters.
 - Failure states must be professional, safe, and understandable.
 
@@ -330,7 +356,9 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 - V1 must not use non-essential analytics or tracking.
 - V1 must not create an account-like identifier across visits.
 - The Conversation UUID must not be tied to Recruiter identity by the app.
-- App-retained Conversation data should be limited to message content, timestamps, Conversation UUID, Deletion Request state, and minimal diagnostics needed for debugging or abuse control.
+- App-retained Conversation data is limited to message/answer content and evidence, identifiers and timestamps needed for correlation/recovery, and minimal diagnostics. These follow FR-20; the indefinitely retained Deletion Request audit contains only the separate identifiers/status/timestamps disclosed in FR-16.
+- Temporary pseudonymous IP counters support creation limits only, expire after their useful window, and are not stored as Visitor identifiers in Conversations. Avoid unnecessary raw IP logs or browser fingerprinting.
+- Conversation access credentials must travel securely, never appear in URLs/logs/model prompts, and authorize only their own Conversation. Model-generated text must not execute as trusted HTML or script.
 - Any unavoidable host/provider logs must be understood separately from app-retained Conversation data before launch.
 - BC contact details must not be displayed publicly in V1.
 - Operational access to retained Conversations and Deletion Requests must be controlled, even if simple.
@@ -341,6 +369,13 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 - The V1 UI is French-only.
 - Answers should follow the language of the Recruiter's question where practical.
 - Source Excerpts remain in the original source language.
+
+### 5.5 Delivery and Operations
+
+- Validate changes in an isolated preview before BC manually promotes the evaluated revision to production. Preserve source-version traceability and run post-deployment checks.
+- Delivery/Operations stories must include a usable operator runbook as acceptance work: deployment, migration compatibility, rollback, deletion/purge handling, and provider incidents. The runbook documents required secret configuration, never secret values.
+- A deployment or rollback must not discard newer Conversations or Deletion Requests. Implementation must define recovery for partially completed deployments without claiming cross-service atomicity.
+- CI/deployment quotas and actual hosting/provider billing must preserve the zero-euro constraint; detailed tooling and procedures belong to the architecture and implementation stories.
 
 ## 6. Non-Goals
 
@@ -369,7 +404,7 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 - Refusals for value judgments, BC intentions/commitments, private information, sensitive personal topics, and prompt-injection attempts.
 - Visible Conversation UUIDs.
 - In-app Deletion Request submission linked to the Conversation UUID.
-- Conversation retention disclosure and automatic deletion within 90 days.
+- Conversation retention disclosure and automatic content/runtime-data deletion within 90 days of creation, with the separately disclosed minimal deletion-audit exception.
 - Controlled simple BC access or export for retained conversations.
 - Minimal pre-launch evaluation test set, including public-source review, deletion-request workflow checks, abuse/quota behavior checks, and privacy/provider disclosure checks.
 
@@ -417,8 +452,8 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 
 1. Which two to three documented projects should appear on the landing page?
 2. What exact French copy should be used for landing-page trust, privacy, and refusal messages?
-3. What simple retrieval approach is sufficient for V1, and what evaluation result would justify changing it?
-4. Which simple controlled access/export mechanism will architecture choose for retained Conversations and Deletion Requests?
+3. Does the initial lexical retrieval baseline find sufficient evidence on representative questions, and what evaluation result would justify semantic/vector retrieval?
+4. What exact operator commands and runbook will implement the chosen controlled local CLI/script access, deletion, purge, export, and deployment procedures?
 
 ## 11. Assumptions Index
 
