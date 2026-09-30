@@ -1,0 +1,793 @@
+{
+  "fontEvidence": [
+    {
+      "label": "desktop 1360px",
+      "status": "loaded",
+      "faces": [
+        {
+          "family": "DM Mono",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "loaded"
+        }
+      ],
+      "computed": {
+        "body": "Manrope, system-ui, sans-serif",
+        "identity": "Newsreader, Georgia, serif",
+        "metadata": "\"DM Mono\""
+      },
+      "rendered": {
+        "body": [
+          {
+            "familyName": "Manrope ExtraLight",
+            "postScriptName": "Manrope-ExtraLight",
+            "isCustomFont": true,
+            "glyphCount": 139
+          }
+        ],
+        "heading": [
+          {
+            "familyName": "Newsreader 16pt",
+            "postScriptName": "Newsreader16pt-Regular",
+            "isCustomFont": true,
+            "glyphCount": 15
+          }
+        ],
+        "metadata": [
+          {
+            "familyName": "DM Mono",
+            "postScriptName": "DMMono-Regular",
+            "isCustomFont": true,
+            "glyphCount": 27
+          }
+        ]
+      }
+    },
+    {
+      "label": "mobile 390px",
+      "status": "loaded",
+      "faces": [
+        {
+          "family": "DM Mono",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "loaded"
+        }
+      ],
+      "computed": {
+        "body": "Manrope, system-ui, sans-serif",
+        "identity": "Newsreader, Georgia, serif",
+        "metadata": "\"DM Mono\""
+      },
+      "rendered": {
+        "body": [
+          {
+            "familyName": "Manrope ExtraLight",
+            "postScriptName": "Manrope-ExtraLight",
+            "isCustomFont": true,
+            "glyphCount": 182
+          }
+        ],
+        "heading": [
+          {
+            "familyName": "Newsreader 16pt",
+            "postScriptName": "Newsreader16pt-Regular",
+            "isCustomFont": true,
+            "glyphCount": 15
+          }
+        ],
+        "metadata": [
+          {
+            "familyName": "DM Mono",
+            "postScriptName": "DMMono-Regular",
+            "isCustomFont": true,
+            "glyphCount": 27
+          }
+        ]
+      }
+    },
+    {
+      "label": "mobile 320px",
+      "status": "loaded",
+      "faces": [
+        {
+          "family": "DM Mono",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "DM Mono",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "600",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Manrope",
+          "weight": "700",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "400",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Newsreader",
+          "weight": "500",
+          "style": "normal",
+          "status": "loaded"
+        }
+      ],
+      "computed": {
+        "body": "Manrope, system-ui, sans-serif",
+        "identity": "Newsreader, Georgia, serif",
+        "metadata": "\"DM Mono\""
+      },
+      "rendered": {
+        "body": [
+          {
+            "familyName": "Manrope ExtraLight",
+            "postScriptName": "Manrope-ExtraLight",
+            "isCustomFont": true,
+            "glyphCount": 181
+          }
+        ],
+        "heading": [
+          {
+            "familyName": "Newsreader 16pt",
+            "postScriptName": "Newsreader16pt-Regular",
+            "isCustomFont": true,
+            "glyphCount": 15
+          }
+        ],
+        "metadata": [
+          {
+            "familyName": "DM Mono",
+            "postScriptName": "DMMono-Regular",
+            "isCustomFont": true,
+            "glyphCount": 27
+          }
+        ]
+      }
+    }
+  ],
+  "fontNetwork": [
+    {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSg.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBA.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjA.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSg.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBA.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjA.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSg.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBA.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjA.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSg.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBA.woff2",
+      "status": 200
+    },
+    {
+      "url": "https://fonts.gstatic.com/s/newsreader/v26/cY9AfjOCX1hbuyalUrK4397yjA.woff2",
+      "status": 200
+    }
+  ]
+}

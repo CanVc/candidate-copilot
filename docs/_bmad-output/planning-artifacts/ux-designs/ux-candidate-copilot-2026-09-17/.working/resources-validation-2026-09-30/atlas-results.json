@@ -1,0 +1,12 @@
+{
+  "elements": 188,
+  "checks": [
+    "JSON round trip",
+    "Unique element IDs",
+    "Unique two-character indices",
+    "Standard required element fields",
+    "Positive dimensions",
+    "SVG XML parse"
+  ],
+  "limitation": "Editor import not tested; SVG rendered separately in headless Chromium."
+}

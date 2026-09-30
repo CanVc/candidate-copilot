@@ -1,0 +1,22 @@
+{
+  "tool": "Cached Chromium 1223 via Node native CDP/WebSocket, headless only",
+  "checks": [
+    "Zero selection: no history band or global scope label.",
+    "Immediate add/remove 1:1; no duplicate tokens, no Apply/auto-send; draft and chat geometry preserved; close restores focus.",
+    "Waiting snapshot A+B vs editable D+E; Send disabled while pending; reply preserves draft/active resources; no historical remove controls.",
+    "Actual submit snapshots immutable resources; selection persists across sends; simulated error retains historical scope and future draft/selection.",
+    "Scrolled-up transcript stays at scrollTop=80 through library open/selection/close, reply arrival and privacy scaffold.",
+    "900px: sheet overlay, no chat reflow, focus restoration, no full-page horizontal overflow.",
+    "390px: sheet overlay, no chat reflow, focus restoration, no full-page horizontal overflow; single active row overflow, keyboard horizontal scroll, Escape/focus restoration, 44px visible targets and wrapping historical tokens.",
+    "320px: sheet overlay, no chat reflow, focus restoration, no full-page horizontal overflow; single active row overflow, keyboard horizontal scroll, Escape/focus restoration, 44px visible targets and wrapping historical tokens.",
+    "Standalone file:// preview loads nested interactive surface; viewport controls and waiting/receive controls work.",
+    "Reviewer wrapper also has no full-page horizontal overflow at 390/320px browser widths.",
+    "SVG atlas rendered in headless Chromium; overview screenshot saved.",
+    "No uncaught JavaScript exceptions during checks."
+  ],
+  "limitations": [
+    "No physical touch/virtual keyboard or screen-reader testing.",
+    "No backend, runtime recovery, real evidence retrieval or persistence tested.",
+    "Excalidraw JSON structurally checked; not imported into the Excalidraw editor."
+  ]
+}

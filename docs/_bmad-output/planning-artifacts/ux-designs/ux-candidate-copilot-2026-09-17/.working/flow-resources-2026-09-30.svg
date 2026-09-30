@@ -1,0 +1,470 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1980" height="1620" viewBox="0 0 1980 1620" role="img" aria-label="Candidate Copilot — atlas de ressources illustratives">
+<rect width="1980" height="1620" fill="white"/>
+<text x="40" y="49" font-size="25" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="40" dy="0">Candidate Copilot · ressources — atlas basse fidélité · 30/09/2026</tspan>
+</text>
+<text x="40" y="80" font-size="15" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="40" dy="0">Structure approuvée ; contenus illustratifs. Styles, dimensions, noms et copy non finalisés. Aucun upload, aucun fait candidat.</tspan>
+</text>
+<text x="40" y="113" font-size="19" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="40" dy="0">A · desktop — fermé / aucune sélection</tspan>
+</text>
+<rect x="40" y="128" width="900" height="620" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="40" y="128" width="900" height="48" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="56" y="156" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="56" dy="0">Conversation · illustration</tspan>
+</text>
+<text x="802" y="156" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="802" dy="0">Confidentialité</tspan>
+</text>
+<circle cx="279" cy="213" r="17" fill="#eee" stroke="#444"/>
+<text x="269" y="216" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="269" dy="0">BC</tspan>
+</text>
+<text x="310" y="212" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="310" dy="0">Nom du candidat</tspan>
+</text>
+<text x="310" y="232" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="310" dy="0">Fonction · placeholder     Lieu · placeholder</tspan>
+</text>
+<rect x="262" y="258" width="448" height="76" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="274" y="284" font-size="14" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="274" dy="0">▾ Quelques repères</tspan>
+</text>
+<text x="274" y="310" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="274" dy="0">Guide facultatif · texte provisoire, hors transcript.</tspan>
+</text>
+<rect x="362" y="364" width="348" height="44" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="374" y="390" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="374" dy="0">Question illustrative sans sélection</tspan>
+</text>
+<circle cx="279" cy="447" r="17" fill="#eee" stroke="#444"/>
+<text x="269" y="450" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="269" dy="0">AI</tspan>
+</text>
+<rect x="308" y="426" width="402" height="112" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="320" y="457" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="320" dy="0">Réponse neutre · placeholder</tspan>
+<tspan x="320" dy="16.25">Aucun bandeau de périmètre vide.</tspan>
+<tspan x="320" dy="16.25">Aucun fait du candidat.</tspan>
+</text>
+<rect x="262" y="582" width="448" height="100" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="274" y="611" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="274" dy="0">Brouillon visiteur · inchangé</tspan>
+</text>
+<rect x="272" y="634" width="134" height="40" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="280" y="658" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="280" dy="0">+ Ressources</tspan>
+</text>
+<rect x="612" y="634" width="88" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="620" y="658" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="620" dy="0">Envoyer</tspan>
+</text>
+<text x="58" y="779" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="58" dy="0">Identité en haut, guide pliable, conversation centrale ; accès en bas à gauche.</tspan>
+</text>
+<text x="1040" y="113" font-size="19" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1040" dy="0">B · desktop — ouvert / attente</tspan>
+</text>
+<rect x="1040" y="128" width="900" height="620" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="1040" y="128" width="900" height="48" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="1056" y="156" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1056" dy="0">Conversation · illustration</tspan>
+</text>
+<text x="1802" y="156" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1802" dy="0">Confidentialité</tspan>
+</text>
+<circle cx="1279" cy="213" r="17" fill="#eee" stroke="#444"/>
+<text x="1269" y="216" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1269" dy="0">BC</tspan>
+</text>
+<text x="1310" y="212" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1310" dy="0">Nom du candidat</tspan>
+</text>
+<text x="1310" y="232" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1310" dy="0">Fonction · placeholder     Lieu · placeholder</tspan>
+</text>
+<rect x="1262" y="258" width="448" height="76" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="1274" y="284" font-size="14" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1274" dy="0">▾ Quelques repères</tspan>
+</text>
+<text x="1274" y="310" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1274" dy="0">Guide facultatif · texte provisoire, hors transcript.</tspan>
+</text>
+<rect x="1362" y="364" width="348" height="44" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="1374" y="390" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1374" dy="0">Question illustrative sur A et B</tspan>
+</text>
+<circle cx="1279" cy="447" r="17" fill="#eee" stroke="#444"/>
+<text x="1269" y="450" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1269" dy="0">AI</tspan>
+</text>
+<rect x="1308" y="426" width="402" height="112" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="1320" y="438" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="1328" y="456" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1328" dy="0">Projet A</tspan>
+</text>
+<rect x="1436" y="438" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="1444" y="456" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1444" dy="0">Projet B</tspan>
+</text>
+<text x="1320" y="505" font-size="22" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1320" dy="0">•••</tspan>
+</text>
+<rect x="1262" y="582" width="448" height="144" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="1272" y="592" width="110" height="36" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="1280" y="613" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1280" dy="0">Projet C</tspan>
+</text>
+<text x="1357" y="617" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1357" dy="0">−</tspan>
+</text>
+<rect x="1388" y="592" width="110" height="36" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="1396" y="613" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1396" dy="0">Projet D</tspan>
+</text>
+<text x="1473" y="617" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1473" dy="0">−</tspan>
+</text>
+<text x="1274" y="653" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1274" dy="0">Brouillon visiteur · inchangé</tspan>
+</text>
+<rect x="1272" y="676" width="134" height="40" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="1280" y="700" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1280" dy="0">+ Ressources</tspan>
+</text>
+<rect x="1612" y="676" width="88" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="1620" y="700" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1620" dy="0">Désactivé</tspan>
+</text>
+<rect x="1744" y="196" width="180" height="440" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="1756" y="223" font-size="15" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Ressources</tspan>
+</text>
+<text x="1894" y="226" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1894" dy="0">×</tspan>
+</text>
+<text x="1756" y="247" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Projets · placeholders</tspan>
+</text>
+<text x="1756" y="277" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Projet A</tspan>
+</text>
+<text x="1756" y="296" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Dossier public</tspan>
+<tspan x="1756" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="1871" y="264" width="40" height="40" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="1883" y="290" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1883" dy="0">+</tspan>
+</text>
+<text x="1756" y="349" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Projet B</tspan>
+</text>
+<text x="1756" y="368" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Dossier public</tspan>
+<tspan x="1756" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="1871" y="336" width="40" height="40" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="1883" y="362" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1883" dy="0">+</tspan>
+</text>
+<text x="1756" y="421" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Projet C</tspan>
+</text>
+<text x="1756" y="440" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Dossier public</tspan>
+<tspan x="1756" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="1871" y="408" width="40" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="1883" y="434" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1883" dy="0">✓</tspan>
+</text>
+<text x="1756" y="493" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Projet D</tspan>
+</text>
+<text x="1756" y="512" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Dossier public</tspan>
+<tspan x="1756" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="1871" y="480" width="40" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="1883" y="506" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1883" dy="0">✓</tspan>
+</text>
+<text x="1756" y="565" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Projet E</tspan>
+</text>
+<text x="1756" y="584" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1756" dy="0">Dossier public</tspan>
+<tspan x="1756" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="1871" y="552" width="40" height="40" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="1883" y="578" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1883" dy="0">+</tspan>
+</text>
+<text x="1058" y="779" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="1058" dy="0">Historique figé A+B ; actifs C+D pour le prochain tour.</tspan>
+</text>
+<text x="956" y="403" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="956" dy="0">+ Ressources</tspan>
+<tspan x="956" dy="16.25">→</tspan>
+</text>
+<text x="40" y="834" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="40" dy="0">C · mobile — fermé / débordement</tspan>
+</text>
+<rect x="40" y="850" width="360" height="704" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="40" y="850" width="360" height="46" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="52" y="877" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="52" dy="0">Illustration</tspan>
+</text>
+<text x="278" y="877" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="278" dy="0">Confidentialité</tspan>
+</text>
+<circle cx="73" cy="931" r="17" fill="#eee" stroke="#444"/>
+<text x="63" y="934" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="63" dy="0">BC</tspan>
+</text>
+<text x="103" y="928" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="103" dy="0">Nom du candidat</tspan>
+</text>
+<text x="103" y="949" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="103" dy="0">Fonction · placeholder</tspan>
+<tspan x="103" dy="15.0">Lieu · placeholder</tspan>
+</text>
+<rect x="56" y="986" width="328" height="80" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="68" y="1012" font-size="14" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="68" dy="0">▾ Quelques repères</tspan>
+</text>
+<text x="68" y="1039" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="68" dy="0">Guide facultatif · formulation provisoire.</tspan>
+</text>
+<rect x="112" y="1090" width="272" height="42" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="124" y="1115" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="124" dy="0">Question illustrative sur A, B, C.</tspan>
+</text>
+<circle cx="73" cy="1169" r="17" fill="#eee" stroke="#444"/>
+<text x="63" y="1172" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="63" dy="0">AI</tspan>
+</text>
+<rect x="101" y="1148" width="283" height="200" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="113" y="1160" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="121" y="1178" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="121" dy="0">Projet A</tspan>
+</text>
+<rect x="229" y="1160" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="237" y="1178" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="237" dy="0">Projet B</tspan>
+</text>
+<rect x="113" y="1192" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="121" y="1210" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="121" dy="0">Projet C</tspan>
+</text>
+<text x="113" y="1250" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="113" dy="0">Réponse neutre · placeholder</tspan>
+<tspan x="113" dy="15.0">Les jetons historiques se replient</tspan>
+<tspan x="113" dy="15.0">sur plusieurs lignes, sans retrait.</tspan>
+</text>
+<rect x="52" y="1394" width="336" height="144" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="62" y="1404" width="110" height="36" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="70" y="1425" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="70" dy="0">Projet A</tspan>
+</text>
+<text x="147" y="1429" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="147" dy="0">−</tspan>
+</text>
+<rect x="178" y="1404" width="110" height="36" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="186" y="1425" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="186" dy="0">Projet B</tspan>
+</text>
+<text x="263" y="1429" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="263" dy="0">−</tspan>
+</text>
+<text x="357" y="1429" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="357" dy="0">→</tspan>
+</text>
+<text x="64" y="1465" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="64" dy="0">Brouillon visiteur · inchangé</tspan>
+</text>
+<rect x="62" y="1488" width="134" height="40" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="70" y="1512" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="70" dy="0">+ Ressources</tspan>
+</text>
+<rect x="290" y="1488" width="88" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="298" y="1512" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="298" dy="0">Envoyer</tspan>
+</text>
+<text x="48" y="1586" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="48" dy="0">Actifs : rangée unique → défiler, pas de +N.</tspan>
+</text>
+<text x="460" y="834" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="460" dy="0">D · mobile — bibliothèque ouverte</tspan>
+</text>
+<rect x="460" y="850" width="360" height="704" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="460" y="850" width="360" height="46" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="472" y="877" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="472" dy="0">Illustration</tspan>
+</text>
+<text x="698" y="877" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="698" dy="0">Confidentialité</tspan>
+</text>
+<circle cx="493" cy="931" r="17" fill="#eee" stroke="#444"/>
+<text x="483" y="934" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="483" dy="0">BC</tspan>
+</text>
+<text x="523" y="928" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="523" dy="0">Nom du candidat</tspan>
+</text>
+<text x="523" y="949" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="523" dy="0">Fonction · placeholder</tspan>
+<tspan x="523" dy="15.0">Lieu · placeholder</tspan>
+</text>
+<rect x="476" y="986" width="328" height="80" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="488" y="1012" font-size="14" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="488" dy="0">▾ Quelques repères</tspan>
+</text>
+<text x="488" y="1039" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="488" dy="0">Guide facultatif · formulation provisoire.</tspan>
+</text>
+<rect x="532" y="1090" width="272" height="42" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="544" y="1115" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="544" dy="0">Question illustrative sur A, B, C.</tspan>
+</text>
+<circle cx="493" cy="1169" r="17" fill="#eee" stroke="#444"/>
+<text x="483" y="1172" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="483" dy="0">AI</tspan>
+</text>
+<rect x="521" y="1148" width="283" height="200" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="533" y="1160" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="541" y="1178" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="541" dy="0">Projet A</tspan>
+</text>
+<rect x="649" y="1160" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="657" y="1178" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="657" dy="0">Projet B</tspan>
+</text>
+<rect x="533" y="1192" width="110" height="26" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="541" y="1210" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="541" dy="0">Projet C</tspan>
+</text>
+<text x="533" y="1250" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="533" dy="0">Réponse neutre · placeholder</tspan>
+<tspan x="533" dy="15.0">Les jetons historiques se replient</tspan>
+<tspan x="533" dy="15.0">sur plusieurs lignes, sans retrait.</tspan>
+</text>
+<rect x="472" y="1394" width="336" height="144" rx="6" fill="#ffffff" stroke="#444"/>
+<rect x="482" y="1404" width="110" height="36" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="490" y="1425" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="490" dy="0">Projet A</tspan>
+</text>
+<text x="567" y="1429" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="567" dy="0">−</tspan>
+</text>
+<rect x="598" y="1404" width="110" height="36" rx="6" fill="#f5f5f5" stroke="#444"/>
+<text x="606" y="1425" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="606" dy="0">Projet B</tspan>
+</text>
+<text x="683" y="1429" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="683" dy="0">−</tspan>
+</text>
+<text x="777" y="1429" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="777" dy="0">→</tspan>
+</text>
+<text x="484" y="1465" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Brouillon visiteur · inchangé</tspan>
+</text>
+<rect x="482" y="1488" width="134" height="40" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="490" y="1512" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="490" dy="0">+ Ressources</tspan>
+</text>
+<rect x="710" y="1488" width="88" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="718" y="1512" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="718" dy="0">Envoyer</tspan>
+</text>
+<rect x="472" y="1102" width="336" height="280" rx="6" fill="#ffffff" stroke="#444"/>
+<text x="484" y="1129" font-size="15" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Ressources</tspan>
+</text>
+<text x="778" y="1132" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="778" dy="0">×</tspan>
+</text>
+<text x="484" y="1153" font-size="11" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Projets · placeholders</tspan>
+</text>
+<text x="484" y="1183" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Projet A</tspan>
+</text>
+<text x="484" y="1202" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Dossier public</tspan>
+<tspan x="484" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="755" y="1170" width="40" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="767" y="1196" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="767" dy="0">✓</tspan>
+</text>
+<text x="484" y="1251" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Projet B</tspan>
+</text>
+<text x="484" y="1270" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Dossier public</tspan>
+<tspan x="484" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="755" y="1238" width="40" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="767" y="1264" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="767" dy="0">✓</tspan>
+</text>
+<text x="484" y="1319" font-size="13" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Projet C</tspan>
+</text>
+<text x="484" y="1338" font-size="10" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="484" dy="0">Dossier public</tspan>
+<tspan x="484" dy="12.5">Descriptif à renseigner</tspan>
+</text>
+<rect x="755" y="1306" width="40" height="40" rx="6" fill="#eeeeee" stroke="#444"/>
+<text x="767" y="1332" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="767" dy="0">✓</tspan>
+</text>
+<text x="468" y="1586" font-size="12" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="468" dy="0">Feuille superposée, compositeur disponible.</tspan>
+</text>
+<text x="413" y="1198" font-size="18" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="413" dy="0">+</tspan>
+<tspan x="413" dy="22.5">→</tspan>
+</text>
+<rect x="890" y="850" width="1050" height="700" rx="6" fill="#fafafa" stroke="#444"/>
+<text x="916" y="895" font-size="21" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="916" dy="0">Invariants visibles dans le preview HTML interactif</tspan>
+</text>
+<text x="916" y="938" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="916" dy="0">1 clic = 1 projet + 1 jeton ; multi-sélection immédiate.</tspan>
+<tspan x="916" dy="20.0">La bibliothèque reste ouverte : pas de bouton Appliquer, pas d’envoi automatique.</tspan>
+<tspan x="916" dy="20.0">Aucun plafond numérique approuvé ; les cinq dossiers servent uniquement à illustrer.</tspan>
+</text>
+<text x="916" y="1022" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="916" dy="0">Actifs : rangée horizontale au-dessus du texte, retraits individuels −.</tspan>
+<tspan x="916" dy="20.0">Le brouillon reste intact ; la sélection persiste après chaque envoi.</tspan>
+<tspan x="916" dy="20.0">Historique : instantané dès l’attente, avant le texte de réponse ; conservé en erreur.</tspan>
+<tspan x="916" dy="20.0">Sans sélection : aucune étiquette globale, aucun bandeau historique vide.</tspan>
+</text>
+<text x="916" y="1132" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="916" dy="0">Portée stricte : preuves publiques des projets sélectionnés seulement.</tspan>
+<tspan x="916" dy="20.0">Sinon : base publique déployée seulement, pas le Web ou des données privées.</tspan>
+<tspan x="916" dy="20.0">Les jetons de périmètre ne sont pas les citations des passages.</tspan>
+</text>
+<text x="916" y="1216" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="916" dy="0">Pendant l’attente : brouillon + actifs modifiables pour le PROCHAIN tour.</tspan>
+<tspan x="916" dy="20.0">Le tour en cours conserve A+B même si le compositeur passe à C+D.</tspan>
+<tspan x="916" dy="20.0">Envoi désactivé ; arrivée simulée entière, pas de streaming ou étapes runtime.</tspan>
+<tspan x="916" dy="20.0">Réponse / erreur ne modifie ni le prochain brouillon ni les actifs ; aucune file.</tspan>
+</text>
+<text x="916" y="1326" font-size="16" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="916" dy="0">Marge droite libre si elle suffit : aucun reflow ou déplacement du chat.</tspan>
+<tspan x="916" dy="20.0">Sinon : feuille basse superposée, même sur desktop étroit.</tspan>
+<tspan x="916" dy="20.0">Fermeture : position de lecture et focus préservés ; jamais de scroll forcé en lecture haute.</tspan>
+<tspan x="916" dy="20.0">Mobile / desktop de même priorité ; confidentialité accessible en header.</tspan>
+</text>
+<text x="916" y="1435" font-size="15" fill="#333" font-family="Arial, Helvetica, sans-serif">
+<tspan x="916" dy="0">Scénarios HTML : zéro, multiple, overflow, attente ≠ sélection actuelle, erreur.</tspan>
+<tspan x="916" dy="18.75">Aperçus : adaptatif, desktop étroit, 390 et 320 px ; largeur réelle, sans mise à l’échelle.</tspan>
+<tspan x="916" dy="18.75">Clavier virtuel, copy finale, contrats runtime et persistance hors validation de ce rendu.</tspan>
+</text>
+</svg>

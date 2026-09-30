@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f3f0e8">
+<title>Candidate Copilot — ressources · style v2 · 30 septembre 2026</title>
+<style>
+/* Appearance inherited from imported v2; resource mappings are illustrative.
+   Geometry and simulation remain the approved resource wireframe's, not v2's. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap');
+:root { --paper:#f3f0e8; --ink:#19211d; --muted:#68716c; --line:#d4d2c9; --green:#1d5b44; --green-dark:#174a38; --mint:#c9f2dc; --white:#fbfaf6; --orange:#e96f45; --shadow:0 24px 70px rgba(37,48,42,.10); color-scheme:light; font-family:Manrope,system-ui,sans-serif; color:var(--ink); background:var(--paper); }
+* { box-sizing:border-box; }
+body { margin:0; }
+button, textarea, select { font:inherit; color:inherit; }
+button, select { min-height:44px; }
+button { border:1px solid #d2d5ce; border-radius:12px; background:transparent; padding:8px 12px; cursor:pointer; font-weight:600; }
+button:hover { background:#edf3ee; }
+button:disabled { opacity:.5; cursor:default; }
+:focus-visible { outline:2px solid var(--green); outline-offset:3px; }
+[hidden] { display:none !important; }
+p { line-height:1.5; margin:8px 0; }
+a { color:var(--green); }
+.reviewer { padding:20px; max-width:1480px; margin:auto; }
+h1 { font-family:Newsreader,Georgia,serif; font-weight:400; letter-spacing:-.04em; font-size:28px; margin:0 0 8px; }
+h2 { font-size:17px; margin:0; }
+.intro, .review-tools, .review-notes { background:var(--white); border:1px solid #cbc9bf; padding:16px; border-radius:22px; }
+.intro p { font-size:14px; max-width:100ch; color:#4e5752; }
+.review-tools { margin:14px 0; display:flex; flex-wrap:wrap; gap:12px 20px; align-items:center; }
+.control-group { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+.control-group > span, .control-group label { font-family:'DM Mono'; font-size:13px; color:var(--muted); }
+.control-group button[aria-pressed="true"] { background:var(--mint); border-color:#9ec7b3; color:var(--green); }
+select { max-width:100%; background:var(--white); border:1px solid #d6d3ca; padding:6px; border-radius:12px; }
+.stage { width:100%; min-width:0; }
+.preview-frame { display:block; width:100%; height:780px; max-width:100%; margin:auto; border:0; box-shadow:0 0 0 1px #cbc9bf; background:var(--paper); border-radius:22px; }
+.review-status { font-family:'DM Mono'; color:var(--muted); font-size:13px; margin:10px 0 14px; overflow-wrap:anywhere; }
+.review-notes { margin-top:14px; font-size:13px; }
+.review-notes ul { margin:8px 0; padding-left:20px; line-height:1.6; }
+.review-notes summary { cursor:pointer; font-weight:700; }
+.surface { height:100dvh; background:var(--paper); overflow:hidden; }
+.app { position:relative; height:100%; display:flex; flex-direction:column; min-width:0; }
+.app-header { flex:none; height:56px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; padding:0 16px; background:var(--paper); gap:8px; }
+.header-note { font-family:'DM Mono'; font-size:12px; color:var(--green); }
+.privacy { border:0; background:transparent; text-decoration:underline; padding:8px; font-size:13px; border-radius:99px; }
+.privacy:hover { background:#e7e4dc; }
+.reading { min-height:0; flex:1; overflow-y:auto; overflow-x:hidden; overflow-anchor:none; scrollbar-gutter:stable; }
+.column { width:calc(100% - 32px); max-width:620px; margin:0 auto; }
+.identity { display:flex; align-items:center; gap:12px; padding:24px 0 18px; }
+.badge { display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--ink); background:var(--ink); color:var(--white); font-family:Newsreader; border-radius:50%; width:42px; height:42px; flex:none; font-size:19px; }
+.identity-text { min-width:0; line-height:1.5; }
+.identity-text strong { display:block; font-family:Newsreader,Georgia,serif; font-weight:500; letter-spacing:-.03em; font-size:21px; }
+.identity-text span { display:block; font-size:13px; color:var(--muted); }
+.identity-text span:last-child { font-family:'DM Mono'; font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+.guide { border:1px solid #cbc9bf; background:var(--white); border-radius:14px; margin-bottom:26px; }
+.guide summary { cursor:pointer; padding:12px; min-height:44px; font-size:14px; font-weight:600; }
+.guide p { padding:0 12px 12px; margin:0; font-size:13px; color:#59625d; }
+.transcript { padding-bottom:28px; }
+.transcript-title { font-family:'DM Mono'; font-size:12px; color:var(--muted); margin:0 0 20px; font-weight:400; }
+.turn { margin-bottom:32px; }
+.question { margin:0 0 18px auto; padding:12px 16px; border:1px solid var(--ink); border-radius:15px 5px 15px 15px; max-width:85%; font-size:14px; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; background:var(--ink); color:white; }
+.response { display:flex; align-items:flex-start; gap:12px; }
+.assistant-badge { width:30px; height:30px; font-family:'DM Mono'; font-size:10px; margin-top:6px; border-radius:8px; background:var(--green); border-color:var(--green); color:var(--mint); }
+.answer { flex:1; min-width:0; border:1px solid #d3dfd6; border-radius:5px 15px 15px 15px; padding:16px; background:#edf3ee; }
+.history { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.historical-token { display:inline-block; border:1px solid #d3dfd6; border-radius:99px; background:var(--white); color:var(--green); font-family:'DM Mono'; padding:5px 9px; font-size:12px; }
+.reply-text { font-size:14px; line-height:1.7; margin:0; overflow-wrap:anywhere; }
+.reply-text + .reply-text { margin-top:12px; }
+.waiting { display:flex; align-items:center; gap:5px; min-height:32px; }
+.dot { width:5px; height:5px; background:#799082; border-radius:50%; animation:pulse 1.4s infinite; }
+.dot:nth-child(2) { animation-delay:.2s; }.dot:nth-child(3) { animation-delay:.4s; }
+@keyframes pulse { 50% { opacity:.25; } }
+@media(prefers-reduced-motion:reduce) { .dot { animation:none; } }
+.composer-dock { flex:none; padding:10px 0 12px; border-top:1px solid var(--line); background:var(--paper); }
+.composer { border:1px solid #d6d3ca; border-radius:14px; background:white; padding:8px; min-width:0; }
+.composer:focus-within { border-color:#7fa792; box-shadow:0 0 0 3px rgba(29,91,68,.09); }
+.token-rail { display:flex; align-items:center; gap:4px; min-width:0; margin-bottom:6px; }
+.active-row { display:flex; flex:1; min-width:0; flex-wrap:nowrap; gap:6px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; padding:2px 0 5px; }
+.active-token { display:inline-flex; flex:none; white-space:nowrap; align-items:center; border:1px solid #9ec7b3; border-radius:99px; background:#edf3ee; color:var(--green); font-size:13px; font-weight:600; height:44px; }
+.active-token > span { padding:0 0 0 10px; }
+.remove { border:0; border-left:1px solid #d3dfd6; border-radius:0 99px 99px 0; margin-left:8px; min-width:44px; height:42px; padding:0; background:transparent; font-size:20px; font-weight:400; }
+.remove:hover { background:var(--mint); }
+.overflow-cue { flex:none; min-width:44px; width:44px; height:44px; padding:0; border-color:#d2d5ce; background:var(--white); color:var(--green); font-size:19px; border-radius:99px; }
+textarea { display:block; width:100%; min-height:64px; height:64px; max-height:180px; border:0; border-radius:4px; resize:none; padding:10px 8px; background:transparent; font-size:14px; line-height:1.5; overflow-y:auto; }
+textarea::placeholder { color:#929792; }
+.composer-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:5px; }
+.resources-trigger { border-color:#d2d5ce; border-radius:99px; font-size:13px; color:#36423b; }
+.resources-trigger:hover { background:var(--mint); border-color:var(--mint); }
+.send { background:var(--green); color:white; border-color:var(--green); border-radius:10px; font-size:13px; font-weight:700; }
+.send:hover:not(:disabled) { background:var(--green-dark); }
+.library { position:absolute; z-index:3; background:var(--white); border:1px solid #cbc9bf; border-radius:22px; display:flex; flex-direction:column; overflow:hidden; box-shadow:var(--shadow); }
+.library.side { width:280px; top:76px; right:16px; max-height:calc(100% - 100px); }
+.library.sheet { width:calc(100% - 24px); max-width:620px; left:50%; transform:translateX(-50%); bottom:var(--dock-height, 166px); max-height:55%; }
+.library-heading { padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid #e0ded6; }
+.library-heading h2 { font-family:Newsreader,Georgia,serif; font-weight:500; font-size:21px; }.close-library { min-width:44px; padding:0; font-size:20px; font-weight:400; border:0; border-radius:99px; }
+.library-note { font-family:'DM Mono'; font-size:12px; padding:0 12px; color:var(--muted); }
+.library-list { overflow-y:auto; padding:0 12px 12px; min-height:0; }
+.resource-item { border-top:1px solid #e8e5dd; padding:12px 0; display:flex; gap:10px; align-items:center; }
+.resource-copy { flex:1; min-width:0; }.resource-copy strong { font-family:Newsreader,Georgia,serif; font-size:18px; font-weight:500; }.resource-copy p { font-size:12px; margin:5px 0 0; color:var(--muted); }
+.toggle { min-width:44px; width:44px; height:44px; padding:0; font-size:20px; flex:none; border-radius:10px; color:var(--green); }
+.toggle[aria-pressed="true"] { background:var(--mint); border-color:#9ec7b3; }
+.backdrop { position:absolute; inset:56px 0 var(--dock-height,166px); z-index:2; background:rgba(37,48,42,.10); }
+dialog { width:calc(100% - 32px); max-width:460px; border:1px solid #cbc9bf; border-radius:22px; padding:20px; background:var(--white); color:var(--ink); box-shadow:var(--shadow); }
+dialog::backdrop { background:rgba(37,48,42,.10); }
+dialog p { font-size:14px; }.dialog-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+@media(max-width:480px) {
+ .reviewer { padding:10px; }.intro,.review-tools,.review-notes { padding:12px; }.review-tools { gap:10px; }
+ .preview-frame { height:740px; }.column { width:calc(100% - 24px); }.app-header { padding:0 8px; }
+ .header-note { font-size:11px; }.identity { padding:18px 0; }.identity-text strong { font-size:20px; }
+ .answer { padding:12px; }.response { gap:8px; }.assistant-badge { width:26px; height:26px; }
+ .question { max-width:90%; }.library.sheet { width:calc(100% - 16px); }.library-note { font-size:11px; }
+}
+</style>
+</head>
+<body>
+<main class="reviewer" id="reviewer">
+ <header class="intro">
+  <h1>Conversation · ressources · style v2</h1>
+  <p>Aperçu visuel interactif — 30/09/2026. Couleurs, polices et ambiance de la maquette v2, sur la disposition approuvée. Tous les textes sont provisoires : identité, projets, descriptions et réponses illustratifs, sans faits réels du candidat. Les nouveaux traitements de ressources et leurs dimensions restent illustratifs, à discuter.</p>
+  <p><a href="flow-resources-2026-09-30.svg">Atlas SVG</a> · <a href="flow-resources-2026-09-30.excalidraw">Compagnon éditable Excalidraw</a></p>
+ </header>
+ <section class="review-tools" aria-label="Commandes de démonstration, hors interface produit">
+  <div class="control-group" id="width-controls"><span>Aperçu</span>
+   <button data-width="fluid" aria-pressed="true">Desktop / adaptatif</button><button data-width="900" aria-pressed="false">Desktop étroit · 900</button><button data-width="390" aria-pressed="false">Mobile · 390</button><button data-width="320" aria-pressed="false">Mobile · 320</button>
+  </div>
+  <div class="control-group"><label for="scenario">Scénario</label><select id="scenario">
+   <option value="zero">A · aucune sélection / fermé</option><option value="multiple">B · sélection multiple / ouvert</option><option value="overflow">C · débordement actif / fermé</option><option value="waiting">D · attente figée ≠ sélection actuelle</option>
+  </select><button id="reset">Recharger le scénario</button></div>
+  <div class="control-group"><button id="library-demo">Ouvrir / fermer la bibliothèque</button><button id="receive" disabled>Recevoir la réponse simulée</button><button id="error" disabled>Simuler une erreur</button></div>
+ </section>
+ <p class="review-status" id="review-status" role="status">Chargement de l’aperçu…</p>
+ <div class="stage"><iframe class="preview-frame" id="preview" title="Conversation illustrative interactive"></iframe></div>
+ <details class="review-notes" open><summary>Mode d’emploi et limites du rendu</summary>
+  <ul>
+   <li>Choisir un aperçu puis un scénario. Les boutons ci-dessus ne font pas partie du produit. Les commandes de scénario remplacent volontairement les données de démonstration.</li>
+   <li>Cliquer + / ✓ dans la bibliothèque : un clic = une ressource et un jeton, sans modifier le brouillon. La bibliothèque reste ouverte. Le − du compositeur retire uniquement ce projet.</li>
+   <li>Les ressources sélectionnées persistent après l’envoi et limitent strictement les preuves admissibles. Sans sélection : base publique déployée seulement, jamais le Web ou des données privées. Aucun bandeau historique vide ou libellé global.</li>
+   <li>Les jetons actifs restent au-dessus de la saisie dans une seule rangée défilante (glisser, molette horizontale, flèches au focus ou tabulation vers les retraits). La petite flèche est une aide illustrative, pas un token visuel approuvé. Les jetons historiques se répartissent sur plusieurs lignes, sans contrôle de retrait.</li>
+   <li>Envoyer crée un instantané immuable. Pendant l’attente, modifier le brouillon et les projets du prochain tour ; l’envoi est désactivé. Utiliser « Recevoir… » ou « Simuler une erreur » : arrivée d’un bloc, sans streaming ni délai réel, sans effacer le prochain brouillon ou sa sélection. Aucun envoi en file d’attente.</li>
+   <li>Sur une grande largeur, la bibliothèque occupe la marge droite sans déplacer le chat. Sinon, même sur desktop, elle se superpose en feuille basse au-dessus du compositeur. Fermer ou appuyer sur Échap restitue le focus, sans scroll imposé. Pour tester la lecture haute, envoyer plusieurs questions puis remonter avant une réponse simulée.</li>
+   <li>Confidentialité = scaffold sans disclosures. Citations et extraits ne sont pas simulés ici : les jetons de périmètre ne sont pas des citations. Pas d’upload, de vraie KB, d’évaluation du candidat, de réseau applicatif ni de persistance/recovery runtime. Seule la feuille de polices distante héritée de v2 peut être sollicitée. Clavier virtuel et dimensions finales hors validation de ce rendu.</li>
+  </ul>
+ </details>
+</main>
+<section class="app" id="app" hidden>
+ <header class="app-header"><span class="header-note">Conversation · illustration</span><button class="privacy" id="privacy">Confidentialité</button></header>
+ <div class="reading" id="reading" tabindex="0" aria-label="Conversation et repères, zone de lecture">
+  <div class="column" id="chat-column">
+   <section class="identity" aria-label="Identité illustrative du candidat"><span class="badge">BC</span><div class="identity-text"><strong>Nom du candidat</strong><span>Fonction · placeholder</span><span>Lieu · placeholder</span></div></section>
+   <details class="guide" open><summary>Quelques repères</summary><p>Guide provisoire : contexte visiteur, puis question sur le profil documenté. Repères facultatifs. Formulation à travailler.</p></details>
+   <section class="transcript" id="transcript" aria-label="Échanges illustratifs"><h2 class="transcript-title">Conversation · données fictives</h2></section>
+  </div>
+ </div>
+ <div class="composer-dock" id="dock"><form class="composer column" id="composer">
+  <div class="token-rail" id="token-rail" hidden><div class="active-row" id="active-row" tabindex="0" role="group" aria-label="Ressources actives pour le prochain envoi, rangée défilante"></div><button type="button" class="overflow-cue" id="overflow-cue" aria-label="Faire défiler les ressources vers la droite" hidden>→</button></div>
+  <label class="sr-only" for="draft">Votre question ou prochain brouillon</label><textarea id="draft" placeholder="Votre contexte et votre question…" rows="2"></textarea>
+  <div class="composer-toolbar"><button type="button" class="resources-trigger" id="resources-trigger" aria-expanded="false" aria-controls="library">+ Ressources</button><button class="send" id="send" type="submit">Envoyer</button></div>
+ </form></div>
+ <div class="backdrop" id="backdrop" hidden></div>
+ <aside class="library" id="library" hidden role="dialog" aria-labelledby="library-title">
+  <div class="library-heading"><h2 id="library-title">Ressources</h2><button class="close-library" id="close-library" aria-label="Fermer les ressources">×</button></div>
+  <p class="library-note">Projets illustratifs · sélection immédiate.<br>Texte et sélection restent éditables en attente.</p>
+  <div class="library-list" id="library-list"></div>
+ </aside>
+ <dialog id="privacy-dialog" aria-labelledby="privacy-title"><div class="dialog-head"><h2 id="privacy-title">Confidentialité</h2><button id="close-privacy" aria-label="Fermer la confidentialité">×</button></div><p>Maquette illustrative uniquement. Informations de confidentialité et contrôle de demande de suppression à composer après validation des disclosures. Aucun traitement ou demande n’est effectué ici.</p></dialog>
+ <span class="sr-only" id="announcer" role="status"></span>
+</section>
+<script>
+(() => {
+ 'use strict';
+ const $ = id => document.getElementById(id);
+ const isSurface = new URL(location.href).searchParams.has('surface');
+ if (!isSurface) {
+  const preview = $('preview');
+  const url = new URL(location.href); url.search = '?surface=1'; url.hash = ''; preview.src = url.href;
+  const send = (action, value) => preview.contentWindow.postMessage({wireframe:true, action, value}, '*');
+  $('width-controls').addEventListener('click', e => {
+   const button = e.target.closest('[data-width]'); if (!button) return;
+   document.querySelectorAll('[data-width]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+   preview.style.width = button.dataset.width === 'fluid' ? '100%' : button.dataset.width + 'px';
+  });
+  $('scenario').addEventListener('change', () => send('scenario', $('scenario').value));
+  $('reset').onclick = () => send('scenario', $('scenario').value);
+  $('library-demo').onclick = () => send('library');
+  $('receive').onclick = () => send('resolve', 'success');
+  $('error').onclick = () => send('resolve', 'error');
+  window.addEventListener('message', e => {
+   if (e.source !== preview.contentWindow || !e.data.wireframe) return;
+   if (e.data.ready) { send('scenario', $('scenario').value); return; }
+   if (!e.data.state) return;
+   const s = e.data.state;
+   $('receive').disabled = $('error').disabled = !s.pending;
+   $('review-status').textContent = `${s.width}px · bibliothèque ${s.open ? 'ouverte' : 'fermée'} (${s.mode === 'side' ? 'marge droite' : 'feuille basse'}) · actifs : ${s.selected.join(', ') || 'aucun'}${s.pending ? ' · tour en attente figé : ' + (s.snapshot.join(', ') || 'sans jetons') : ''} · timing : simulation manuelle`;
+  });
+  return;
+ }
+ $('reviewer').hidden = true; $('app').hidden = false; document.body.className = 'surface';
+ const resources = ['A','B','C','D','E'].map(letter => ({id:letter, name:'Projet ' + letter, description:'Dossier public du projet ' + letter + ' — description factuelle à renseigner.'}));
+ let selected = new Set(), pending = null, libraryOpen = false, mode = 'sheet', turnCount = 0;
+ const reading = $('reading'), draft = $('draft'), row = $('active-row');
+ const name = id => resources.find(r => r.id === id).name;
+ const names = ids => ids.map(name);
+ function emit() { parent.postMessage({wireframe:true,state:{width:innerWidth,open:libraryOpen,mode,selected:names([...selected]),pending:!!pending,snapshot:pending ? names(pending.scope) : []}}, '*'); }
+ function announce(text) { $('announcer').textContent = text; }
+ function updateSend() { $('send').disabled = !!pending || !draft.value.trim(); }
+ function cue() {
+  const overflow = row.scrollWidth > row.clientWidth + 2;
+  // Keep a stable cue width throughout overflow, even at the final token.
+  $('overflow-cue').hidden = !overflow;
+  $('overflow-cue').disabled = overflow && row.scrollLeft >= row.scrollWidth - row.clientWidth - 2;
+ }
+ function geometry() {
+  const chat = $('chat-column').getBoundingClientRect();
+  mode = innerWidth - chat.right >= 320 ? 'side' : 'sheet';
+  $('library').className = 'library ' + mode;
+  $('backdrop').hidden = !libraryOpen || mode === 'side';
+  $('app').style.setProperty('--dock-height', $('dock').getBoundingClientRect().height + 'px');
+  emit();
+ }
+ function renderSelected() {
+  const scroll = row.scrollLeft;
+  row.replaceChildren();
+  selected.forEach(id => {
+   const token = document.createElement('span'); token.className = 'active-token'; token.dataset.resource = id;
+   const label = document.createElement('span'); label.textContent = name(id);
+   const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove'; remove.textContent = '−'; remove.dataset.remove = id; remove.setAttribute('aria-label', 'Retirer ' + name(id) + ' du prochain envoi');
+   token.append(label, remove); row.append(token);
+  });
+  $('token-rail').hidden = selected.size === 0;
+  row.scrollLeft = scroll;
+  resources.forEach(r => {
+   const b = document.querySelector('[data-toggle="' + r.id + '"]');
+   b.setAttribute('aria-pressed', String(selected.has(r.id))); b.textContent = selected.has(r.id) ? '✓' : '+';
+   b.setAttribute('aria-label', (selected.has(r.id) ? 'Retirer ' : 'Ajouter ') + r.name);
+  });
+  requestAnimationFrame(() => { cue(); geometry(); }); emit();
+ }
+ function toggle(id) { selected.has(id) ? selected.delete(id) : selected.add(id); renderSelected(); announce(name(id) + (selected.has(id) ? ' ajouté pour les prochains envois.' : ' retiré pour les prochains envois.')); }
+ resources.forEach(r => {
+  const item = document.createElement('div'); item.className = 'resource-item';
+  const copy = document.createElement('div'); copy.className = 'resource-copy';
+  const title = document.createElement('strong'); title.textContent = r.name;
+  const description = document.createElement('p'); description.textContent = r.description;
+  const button = document.createElement('button'); button.className = 'toggle'; button.dataset.toggle = r.id; button.onclick = () => toggle(r.id);
+  copy.append(title,description); item.append(copy,button); $('library-list').append(item);
+ });
+ row.addEventListener('click', e => {
+  const button = e.target.closest('[data-remove]'); if (!button) return;
+  const next = button.closest('.active-token').nextElementSibling?.dataset.resource;
+  toggle(button.dataset.remove);
+  const target = next && row.querySelector('[data-remove="' + next + '"]');
+  (target || draft).focus({preventScroll:true});
+ });
+ row.addEventListener('scroll', cue);
+ row.addEventListener('keydown', e => {
+  if (e.target !== row) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); row.scrollBy({left:e.key === 'ArrowRight' ? 140 : -140}); }
+ });
+ $('overflow-cue').onclick = () => row.scrollBy({left:180,behavior:'smooth'});
+ function openLibrary(open, focus = true) {
+  libraryOpen = open; $('library').hidden = !open; $('resources-trigger').setAttribute('aria-expanded', String(open));
+  geometry();
+  if (focus) (open ? $('close-library') : $('resources-trigger')).focus({preventScroll:true});
+ }
+ $('resources-trigger').onclick = () => openLibrary(!libraryOpen);
+ $('close-library').onclick = $('backdrop').onclick = () => openLibrary(false);
+ document.addEventListener('keydown', e => { if (e.key === 'Escape' && libraryOpen && !$('privacy-dialog').open) { e.preventDefault(); openLibrary(false); } });
+ function grow() {
+  const top = reading.scrollTop;
+  draft.style.height = '64px'; draft.style.height = Math.min(Math.max(64,draft.scrollHeight), Math.min(180,innerHeight * .32)) + 'px';
+  reading.scrollTop = top; geometry();
+ }
+ draft.addEventListener('input', () => { grow(); updateSend(); });
+ function addTurn(question, scope, status) {
+  const turn = document.createElement('article'); turn.className = 'turn'; turn.dataset.turn = ++turnCount;
+  const q = document.createElement('p'); q.className = 'question'; q.textContent = question;
+  const response = document.createElement('div'); response.className = 'response';
+  const badge = document.createElement('span'); badge.className = 'badge assistant-badge'; badge.textContent = 'AI'; badge.setAttribute('aria-label','Assistant illustratif');
+  const answer = document.createElement('div'); answer.className = 'answer';
+  if (scope.length) {
+   const band = document.createElement('div'); band.className = 'history'; band.setAttribute('aria-label','Ressources figées à l’envoi');
+   scope.forEach(id => { const token = document.createElement('span'); token.className = 'historical-token'; token.dataset.resource = id; token.textContent = name(id); band.append(token); }); answer.append(band);
+  }
+  const body = document.createElement('div'); body.className = 'answer-body'; answer.append(body); response.append(badge,answer); turn.append(q,response); $('transcript').append(turn);
+  const result = {scope:Object.freeze([...scope]),question,body,turn};
+  paintResult(result,status); return result;
+ }
+ function paintResult(turn,status) {
+  turn.body.replaceChildren(); turn.turn.dataset.status = status;
+  if (status === 'waiting') {
+   const dots = document.createElement('div'); dots.className = 'waiting'; dots.setAttribute('role','status'); dots.setAttribute('aria-label','Réponse en attente, simulation manuelle');
+   for (let i=0;i<3;i++) { const dot = document.createElement('span'); dot.className='dot'; dots.append(dot); } turn.body.append(dots); return;
+  }
+  const p = document.createElement('p'); p.className = 'reply-text';
+  p.textContent = status === 'error' ? 'Erreur illustrative : aucune réponse disponible pour ce tour. Les ressources enregistrées à l’envoi restent visibles ci-dessus.' : turn.scope.length ? 'Réponse illustrative — seuls les documents publics associés à ' + names(turn.scope).join(' et ') + ' seraient admissibles. Aucun fait réel du candidat n’est représenté.' : 'Réponse illustrative — cette zone accueillerait une réponse fondée sur les éléments documentés. Aucun fait réel du candidat n’est représenté.';
+  turn.body.append(p);
+  if (status === 'success') {
+   const extra = document.createElement('p'); extra.className='reply-text'; extra.textContent = turn.scope.length ? 'Une information absente de ce périmètre resterait signalée comme non documentée ; aucune preuve extérieure ne viendrait la compléter.' : 'Sans ressource sélectionnée, seule la base publique déployée serait admissible, pas le Web ni des informations privées.'; turn.body.append(extra);
+  }
+ }
+ function submit() {
+  if (pending || !draft.value.trim()) return;
+  const following = reading.scrollHeight - reading.clientHeight - reading.scrollTop < 36;
+  pending = addTurn(draft.value,[...selected],'waiting');
+  draft.value=''; grow(); updateSend(); emit();
+  if (following) reading.scrollTop = reading.scrollHeight;
+  announce('Tour illustratif en attente. Brouillon et ressources du prochain tour restent éditables.');
+ }
+ $('composer').addEventListener('submit', e => { e.preventDefault(); submit(); });
+ function resolve(status) {
+  if (!pending) return;
+  const top = reading.scrollTop;
+  paintResult(pending,status); pending=null; updateSend(); reading.scrollTop=top; emit();
+  announce(status === 'error' ? 'Erreur simulée ; brouillon et sélection conservés.' : 'Réponse simulée reçue entière ; brouillon et sélection conservés.');
+ }
+ function scenario(which) {
+  pending=null; selected=new Set(); $('transcript').querySelectorAll('.turn').forEach(t => t.remove());
+  if (which === 'zero') addTurn('Question illustrative, sans ressource sélectionnée.',[],'success');
+  draft.value='Mon brouillon illustratif reste intact.';
+  if (which === 'multiple') { selected=new Set(['A','B']); addTurn('Question illustrative sur deux dossiers.',['A','B'],'success'); }
+  if (which === 'overflow') { selected=new Set(resources.map(r => r.id)); addTurn('Question illustrative sur les dossiers choisis.',[...selected],'success'); }
+  if (which === 'waiting') {
+   pending=addTurn('Question envoyée avec Projet A et Projet B.',['A','B'],'waiting');
+   selected=new Set(['C','D']); draft.value='Mon prochain brouillon, avec une autre sélection.';
+  }
+  renderSelected(); grow(); updateSend(); openLibrary(which === 'multiple',false); reading.scrollTop=0; row.scrollLeft=0; emit();
+ }
+ $('privacy').onclick = () => $('privacy-dialog').showModal();
+ $('close-privacy').onclick = () => { $('privacy-dialog').close(); $('privacy').focus({preventScroll:true}); };
+ new ResizeObserver(geometry).observe($('dock'));
+ window.addEventListener('resize', () => { geometry(); cue(); });
+ window.addEventListener('message', e => {
+  if (e.source !== parent || !e.data.wireframe) return;
+  if (e.data.action === 'scenario') scenario(e.data.value);
+  if (e.data.action === 'library') openLibrary(!libraryOpen);
+  if (e.data.action === 'resolve') resolve(e.data.value);
+ });
+ scenario('zero'); parent.postMessage({wireframe:true,ready:true},'*');
+})();
+</script>
+</body>
+</html>
