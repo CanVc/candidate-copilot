@@ -1,8 +1,24 @@
-# Architecture update needed — approved resource-selection UX
+# Historical architecture impact analysis — approved resource-selection UX
 
-Status: impact analysis / follow-up required, not an architecture amendment or implementation specification.
+**Current status — 2026-10-19:** the contract adaptations below are incorporated into the current architecture spine and runtime companion. This file preserves the earlier impact analysis; its “Existing”, “Gap” and “Follow-up” statements describe the historical baseline, not current contract absence. Documentation reconciliation is complete, not implementation or launch acceptance.
 
-Scope: reconcile the approved UX sketch with the existing architecture and runtime contracts. Only this note is written; architecture, runtime and UX sources are not modified. No runtime behavior, persistence, accessibility or model quality is verified here.
+## Current disposition
+
+| Historical adaptation | Current owner / outcome |
+| --- | --- |
+| Expanded session whitelist and editable next-turn state (§1/§5 below) | Architecture AD-3/10; [Runtime §5](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#5-browser-retry-next-turn-state-and-reload-behavior) defines capsule fields, lifecycle, rejection and reload reconciliation. Supported-browser lifecycle proof remains outstanding. |
+| Scoped payload/identity, original-scope recovery and question-local retry (§2) | Architecture AD-10/15/18; [Runtime §1](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#1-turn-admission-identity-and-ownership) and [§4 shared shapes](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#shared-submission-and-snapshot-shapes) replace the old question-only body. |
+| Trusted catalog, mappings and strict retrieval (§3) | Architecture AD-7/17/18; [Runtime catalog/publication contract](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#catalog-membership-and-revision-handling). Public JSON supplies display; D1 active publication governs runtime reads/admission. |
+| Historical scope alongside cited-source provenance (§4) | Architecture AD-4/18; Runtime §2/§4/§7/§8 defines immutable message snapshots, replay/export/deletion and migration constraints. |
+| Optional on-demand project placement (§6) | PRD FR-2/3 and current architecture capability map reflect approved UX; no landing showcase is required. |
+
+Use the [PRD addendum](addendum.md) for current cross-document navigation, [PRD §10](prd.md#10-open-questions) for remaining work and the [open acceptance register](../../reviews/open-acceptance-items.md) for unresolved audit questions. Contracts are specified; runtime, browser, model, migration and operational verification remain required.
+
+## Historical impact analysis — retained 2026-09-30 handoff
+
+Status at handoff: impact analysis / follow-up required, not an architecture amendment or implementation specification.
+
+Historical scope: reconcile the approved UX sketch with the then-existing architecture and runtime contracts. The original analysis below is retained; its source dates and line references are not current navigation. A/R/AM references can be recovered from Git snapshot `5965b5539bf084848767bb9a5d5f9f7bafcdd0fa`; U/UM references describe the approved 2026-09-30 snapshot preserved in `81fe5244eb5e34d798d411f7bac267c2ca5c6c90`. Linked paths below open current files, not those pinned historical versions. No runtime behavior, persistence, accessibility or model quality is verified here.
 
 ## Sources and reference notation
 

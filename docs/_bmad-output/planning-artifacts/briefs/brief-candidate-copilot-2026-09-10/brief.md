@@ -2,10 +2,12 @@
 title: "Product Brief: Candidate Copilot"
 status: final
 created: 2026-09-10
-updated: 2026-09-11
+updated: 2026-10-19
 ---
 
 # Product Brief: Candidate Copilot
+
+This brief and its [addendum](addendum.md) reflect the later approved product decisions recorded in the [PRD](../../prds/prd-candidate-copilot-2026-09-11/prd.md). The PRD governs detailed requirements; approved UX governs disposition/style, and the architecture/runtime contracts govern technical behavior. Historical decisions remain in the corresponding `.memlog.md` files. Synchronization does not claim implementation or launch readiness.
 
 ## Executive Summary
 
@@ -23,7 +25,7 @@ Candidate Copilot tests whether a documentary conversational interface can make 
 
 The primary user is a recruiter or other member of a recruiting team who wants to explore BC's documented work more deeply.
 
-BC is the product's author, subject, and operator. BC maintains the public knowledge base and may inspect retained conversations to identify documentary gaps and improve the product. Candidate Copilot is a personal product; support for other candidates, candidate accounts, generic onboarding, and multi-tenant operation are not part of its vision.
+BC is the product's author, subject, and operator. BC maintains the public knowledge base and may inspect retained conversations to understand recruiter questions, identify documentary gaps, misuse or answer-quality problems, and improve the product. Candidate Copilot is a personal product; support for other candidates, candidate accounts, generic onboarding, and multi-tenant operation are not part of its vision.
 
 ## The Product Experience
 
@@ -35,7 +37,7 @@ A recruiter visits a public site without creating an account. Before any interac
 - why its answers are credible;
 - how conversation data is handled.
 
-The landing experience is more than an empty chat box. Candidate highlights, selected projects, and suggested questions provide light guidance, but they do not replace conversation as the exploration path. Meaningful exploration happens through natural-language conversation. The interaction itself should require no tutorial. Recruiters ask a question, receive a structured answer with inspectable citations, and may follow up or move to another topic. Candidate Copilot itself may be one of the documented projects that recruiters ask about.
+The minimal landing is more than an empty chat box: suggested questions provide light factual capability cues alongside a distinct free-entry path. An optional guide and an on-demand project Resource Library support exploration in Conversation; projects are not a mandatory landing or permanent showcase. Meaningful exploration happens through natural-language conversation. The interaction itself should require no tutorial. Recruiters ask a question, receive a structured answer with inspectable citations, and may follow up or move to another topic. Candidate Copilot itself may be one of the documented projects that recruiters ask about.
 
 ## Product Principles
 
@@ -62,12 +64,13 @@ The MVP should use the simplest retrieval approach that testing shows to be adeq
 The MVP includes:
 
 - a public, anonymous, recruiter-facing web experience;
-- clear authorship, purpose, candidate highlights, and light question prompts;
+- clear authorship, purpose, light factual question prompts, an optional Conversation guide and on-demand project selection;
 - multi-turn natural-language questions about professional experience, projects, outcomes, technical skills, working methods, and documented design decisions;
 - grounded answers with inspectable citations and explicit handling of partial or missing evidence;
-- strict refusal of value judgments, undocumented intentions, commitments, and decisions on BC's behalf, with optional neutral redirection;
+- strict refusal of value judgments, undocumented intentions, commitments, and decisions on BC's behalf; value-judgment refusals redirect to scoped, cited factual examples when evidence is available, never an evaluative verdict;
 - a deployed runtime containing only the public candidate knowledge base;
-- isolated visitor conversations, disclosure of retention and manual review, server-side deletion triggered by the user, and automatic deletion of raw and derived conversation data within 90 days;
+- isolated visitor conversations, disclosure of retention and manual review, in-app Deletion Requests handled manually and non-immediately by BC, and automatic deletion of raw and derived conversation data no later than 90 days from Conversation creation;
+- a separately disclosed, indefinitely retained minimal Deletion Request audit containing identifiers, status and lifecycle timestamps only, never Conversation content, scope data, credentials or Visitor identity;
 - controlled operational access or secure manual export for BC to review retained conversations, without an administration interface.
 
 The MVP excludes:
@@ -88,7 +91,7 @@ Its recruiter utility is validated when at least one recruiter conducts a genuin
 
 - questions spanning multiple topics;
 - a question followed by a deeper follow-up;
-- a question prompted by a candidate highlight or other presentation cue.
+- a question prompted by an on-demand project, the optional guide or another factual presentation cue.
 
 A single generic question without follow-up is only a weak signal: it demonstrates usability, not meaningful value. The product intentionally avoids volume or conversion targets because recruitment cycles vary too much in length and interview frequency for those comparisons to be reliable. Progression through the hiring process is not attributed to Candidate Copilot because the product is introduced too late to isolate that relationship credibly.
 
@@ -102,15 +105,9 @@ A single generic question without follow-up is only a weak signal: it demonstrat
 
 ## Open Questions and Deferred Detail
 
-The PRD, UX work, privacy review, and architecture must define:
+The [PRD](../../prds/prd-candidate-copilot-2026-09-11/prd.md) now defines product scope, limits, refusal and privacy requirements, including no public contact/recruiting-channel UI. Approved UX defines layout and interaction; the [architecture and runtime contracts](../../architecture/architecture-candidate-copilot-2026-09-11/ARCHITECTURE-SPINE.md) define the stack, public Resource mappings, scoped admission, session reconciliation, delivery and retention behavior.
 
-- the exact landing-page hierarchy, highlights, prompts, and trust disclosures;
-- refusal language, evidence thresholds, and handling of partially answerable questions;
-- evaluation cases for grounding, citation coverage, abstention, completeness, and adversarial prompts;
-- anonymous session mechanics, access controls, auditability, deletion propagation, backups, and sensitive information entered by visitors;
-- abuse prevention, rate and cost limits, response-time targets, and availability expectations;
-- the boundary of public profile and contact information;
-- the implementation stack and deployment architecture.
+Remaining work is content, implementation and acceptance evidence: reviewed public projects, French copy and truthful processing disclosures, retrieval/model evaluation, browser lifecycle/accessibility checks, provider quota/billing verification, backup/deletion assessment, purge scheduling and an operator runbook. The [open acceptance register](../../reviews/open-acceptance-items.md) retains unresolved audit questions without selecting new policy. Defined contracts are not implemented or validated behavior.
 
 ## Outlook
 

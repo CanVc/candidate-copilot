@@ -8,12 +8,12 @@ sources:
   - ../../architecture/architecture-candidate-copilot-2026-09-11/ARCHITECTURE-SPINE.md
   - ../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md
   - .memlog.md
-updated: 2026-09-30
+updated: 2026-10-19
 ---
 
 # Candidate Copilot — Experience Sketch
 
-> **APPROVED SKETCH / rough draft.** Preserve the approved wireframe, resource interactions and v2 style. Copy evolves intentionally; complete journeys, detailed states and implementation contracts remain unfinished. Sketch acceptance is not production readiness or accessibility certification.
+> **APPROVED SKETCH / rough draft.** Preserve the approved wireframe, resource interactions and v2 style. Copy evolves intentionally; complete journeys, detailed states and implementation verification remain unfinished. Current technical contracts are defined in the architecture/runtime companion; their existence is not implementation proof. Sketch acceptance is not production readiness or accessibility certification.
 
 ## Foundation
 
@@ -21,7 +21,7 @@ Public anonymous responsive French web experience, desktop and mobile equally im
 
 Purpose and boundaries remain in the [brief](../../briefs/brief-candidate-copilot-2026-09-10/brief.md) and [PRD](../../prds/prd-candidate-copilot-2026-09-11/prd.md): factual exploration of BC's documented professional work, not an autonomous representative, hiring recommendation or candidate-role fit assessment. Explicit visitor context may orient factual questions; no inferred recruiter personalization, outside evidence or private material.
 
-Authority: [.memlog.md](.memlog.md) is canonical for UX decisions; confirmed product/runtime sources govern their domains. This sketch supersedes the PRD's required landing project showcase explicitly below; these spines win over mocks on settled UX, subject to pending upstream reconciliation. Runtime constraints below are inherited, not user-tested UX.
+Authority: [.memlog.md](.memlog.md) preserves UX decisions; the current PRD governs product requirements and architecture/runtime sources govern technical contracts. The approved on-demand-project and session decisions are now reconciled upstream. These spines win over mocks on settled UX; runtime constraints below are inherited, not user-tested UX. The [PRD authority map](../../prds/prd-candidate-copilot-2026-09-11/prd.md#0-document-purpose) identifies current owners and historical material.
 
 ## Information Architecture
 
@@ -33,7 +33,7 @@ Authority: [.memlog.md](.memlog.md) is canonical for UX decisions; confirmed pro
 | Source viewer | Activated by a passage's Citation token, showing only its relevant Source Excerpts. |
 | Privacy dialog | Permanent “Confidentialité” header link; handling disclosures, Conversation UUID and manual deletion-request control. |
 
-**Approved PRD override:** projects are available on demand in conversation, not as mandatory 2–3 landing highlights or a permanent showcase elsewhere. The PRD itself is unchanged. No permanent conversation suggestion row is approved.
+**Approved project discovery, incorporated into PRD FR-2/FR-3:** projects are available on demand in Conversation, not as mandatory 2–3 landing highlights or a permanent showcase elsewhere. This decision supersedes the older landing requirement; it is no longer a pending PRD override. No permanent Conversation suggestion row is approved.
 
 References: [approved resource layout](.working/wireframe-resources-2026-09-30.html) and [approved styled preview](.working/mockup-resources-v2-style-2026-09-30.html). They illustrate layout, selection, snapshots and waiting, not backend behavior, final content or complete citation/privacy coverage.
 
@@ -61,7 +61,7 @@ Visual counterparts are in [DESIGN.md](DESIGN.md#components); shared names disti
 | Source viewer | Available right-margin panel without chat coverage, shift or reading-width change; bottom sheet if room insufficient, even on desktop. Deduplicate by file for that passage; filenames and cited section titles, row expansion reveals relevant excerpts in place; single source shows excerpt directly. No generated summary or full source page. Another citation replaces content, never stacks windows; closing restores trigger focus and reading position. |
 | Privacy dialog | Permanent access while waiting and after turn limit. Explains retention/BC manual review and data processing, displays Conversation UUID and deletion-request control. Handling is manual, non-immediate; close preserves reading position and draft. `{colors.warm-white}` surface, not a separate block above chat. |
 
-**Evidence eligibility:** a nonempty selected set strictly limits eligible evidence to mapped public documents of those resources; any selected resource may contribute, none outside may supplement. Empty selection means the whole deployed Public Knowledge Base only, never the Web or private content. Removing the last token returns future submissions to that global public scope. Changes never alter past turns, their snapshots, answers or citations. Hide the active-token area when empty; no empty selection band.
+**Evidence eligibility:** a nonempty selected set strictly limits eligible evidence to mapped public documents of those resources; any selected resource may contribute, none outside may supplement. Empty selection freezes all active deployed public document IDs at admission, never the Web, private content or documents published later. Global scope has no Resource tokens but still a nonempty frozen document allowlist; recovery/retry cannot expand it. Removing the last token returns future submissions to global public admission, not a change to an earlier snapshot. Changes never alter past turns, their snapshots, answers or citations. Hide the active-token area when empty; no empty selection band.
 
 ## State Patterns
 
@@ -72,15 +72,15 @@ The following runtime behaviors are inherited from [architecture](../../architec
 | First entry / empty conversation | Guide open; free entry sends nothing. Detailed empty/cold-load presentation deferred. |
 | Waiting | Three-dot generic activity; historical scope already visible. Read/privacy controls available; next-turn draft/selection editable, sending unavailable. |
 | Completed | Structured `answered`, `partial`, `refused` or `clarification` result rendered as untrusted text, not trusted HTML. Source Excerpts belong to supported passages and retain provenance. These are not technical failures and have no retry button. |
-| Recorded technical failure | Safe actionable presentation; historical scope retained. Recoverable recorded failure may offer manual retry as a NEW logical turn; resource snapshot handling requires contract additions. No raw provider errors or crash output. |
+| Recorded technical failure | Safe actionable presentation; historical scope retained. A recoverable recorded failure offers the accessible “Réessayer” icon on that failed question in chat, never in the composer. Runtime §1/§4/§5 defines a NEW logical turn copied server-side from the original failed text/scope and interpreted against its original root context rather than later topics, preserving the newer draft/selection and applying normal admission/limits. No raw provider errors or crash output. |
 | Unknown outcome / interruption | Preserve original request identity/question and required scope snapshot. Manual recovery must reuse that submission, not current next-turn draft/selection. Do not infer failure from timeout, queue, auto-retry or blindly admit another turn. |
-| Same-tab refresh | Expected to preserve ongoing experience, including active resource selection; reconcile transcript/processing with authoritative server state, display each submission once, never duplicate send. Draft/selection/view-state storage extensions and lifecycle details pending; no durable cross-visit restoration guarantee. |
+| Same-tab refresh | Preserve ongoing experience, including active resource selection; reconcile transcript/processing with authoritative server state, display each submission once, never duplicate send. Runtime §5 defines separate pending, next-draft/selection and view-reference state and new-visit resets. Supported-browser lifecycle discrimination, storage-denied behavior and actual focus/layout restoration still require implementation evidence; no durable cross-visit restoration is authorized. |
 | Reload observation | Inherited bounded read-only observation (non-overlapping GETs every 3 seconds, at most 45 seconds); no renewed processing or automatic send. If unverifiable, offer manual verification rather than pretending completion. Detailed presentation deferred. |
 | Limits / invalid input | Inherited 1,000-character message maximum with visible counter, no silent truncation; 20 admitted turns per conversation; 10 new conversations/IP/UTC day with resume explanation. Server admission authoritative. Reads/privacy/deletion remain accessible at turn cap. Detailed limit visuals/copy deferred. |
 | Unavailable conversation | Neutral inaccessible/expired/deleted treatment; may offer a new conversation, never silently recreate or send pending content there. |
 | Deletion request | Inherited idempotent `open` / `handled` states; repeat submission preserves request/date. Confirmation states manual, non-immediate handling. Full pending/error/handled presentation deferred. |
 
-**Upstream work, not existing support:** stable resource IDs/catalog/evidence mapping; multi-resource strict retrieval; API submission, persisted history and GET/replay scope snapshots; recovery/idempotency identity including scope; session storage and server reconciliation for current draft/selection/view state. The [compatibility check](.working/resource-context-architecture-check.md) explains the gaps; its former one-resource examples and hint-vs-filter question are superseded by approved strict multiple selection. Current contracts submit only requestId/question and do not already implement this UX.
+**Defined contracts, implementation evidence pending:** architecture AD-17/18 and [Runtime §1](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#catalog-membership-and-revision-handling), [§4](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#shared-submission-and-snapshot-shapes) and [§5](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#5-browser-retry-next-turn-state-and-reload-behavior) now define stable Resource IDs/maps, public catalog/active publication, strict retrieval, immutable admission/history scopes, question-local retry and separate session state. The current submission carries question plus versioned selection, or a retry origin; it is not question-only. The [earlier compatibility check](.working/resource-context-architecture-check.md) and [historical impact analysis](../../prds/prd-candidate-copilot-2026-09-11/architecture-update-needed.md) document superseded baselines, not active contracts. Runtime/migration/browser/model/interaction verification remains outstanding; the [open acceptance register](../../reviews/open-acceptance-items.md) tracks additional unresolved questions without choosing new policies.
 
 **Privacy release requirement:** exact disclosures and pre-use presentation are unresolved but must satisfy PRD FR-16/FR-19 and actual runtime processing before launch: BC storage/review, deletion within 90 days from creation, provider processing, temporary IP abuse control and the indefinite minimal deletion-audit exception. The dialog mock is only a scaffold; privacy completion is safety-required launch work, not optional polish.
 
@@ -100,7 +100,7 @@ Implementation floor to verify, not a certification: keyboard-operable controls 
 
 ## Key Flows
 
-Brief sequences capture the approved sketch; named-protagonist journeys, climax narratives, complete failure paths and full flow coverage are intentionally deferred. [PRD UJ-1–UJ-4](../../prds/prd-candidate-copilot-2026-09-11/prd.md) remain the journey source, except the explicit landing-project override.
+Brief sequences capture the approved sketch; named-protagonist journeys, climax narratives, complete failure paths and full flow coverage are intentionally deferred. [PRD UJ-1–UJ-4](../../prds/prd-candidate-copilot-2026-09-11/prd.md#24-key-user-journeys) remain the journey source and already incorporate on-demand projects. [PRD FR-8](../../prds/prd-candidate-copilot-2026-09-11/prd.md#fr-8-show-working-status-during-generation) governs original-scope, original-context question-local retry; it is not a separate completed journey in this sketch.
 
 ### Enter and explore — UJ-1
 
