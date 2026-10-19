@@ -1,0 +1,31 @@
+[workflow]
+on_complete = """
+End with a practical verification handoff in the communication language.
+Adapt its length to the story, using these sections:
+
+1. Verified by the agent
+Summarize checks performed, their results and execution environment
+(host, container, mocks, preview). Explicitly identify verification limits.
+Automated success does not imply human acceptance.
+
+2. What you should test
+Derive a concrete checklist from the implemented story and its acceptance
+criteria. Provide prerequisites, startup commands or URL, and required test data.
+Describe the intended end-to-end user journey: actions and expected observable
+results. Include relevant alternative, error and regression scenarios.
+Include manual usability, responsive or accessibility checks when applicable.
+For technical stories, provide the equivalent developer/operator journey.
+Use actual delivered commands and behavior; never invent missing capabilities.
+Distinguish read-only checks from installation or state-changing operations.
+
+3. Remaining work
+List unresolved issues, unverified acceptance criteria, required configuration
+or decisions, and deferred work relevant to this story.
+Identify blockers and owners when known. If nothing remains, say so explicitly.
+Do not confuse future-story scope with unfinished current-story requirements.
+
+4. Next action
+State exactly what the user should do now, what results to report,
+and what must be resolved before acceptance or the next story.
+Clearly distinguish implementation completion from pending human verification.
+"""
