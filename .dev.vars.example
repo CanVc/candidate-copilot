@@ -1,0 +1,3 @@
+# Optional, nonsensitive template only. No variables are needed for Story 1.2.
+# Do not add real credentials here or expose server configuration via VITE_*.
+# Later stories will document any required Worker configuration.

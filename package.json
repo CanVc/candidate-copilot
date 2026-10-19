@@ -1,0 +1,33 @@
+{
+  "name": "candidate-copilot",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.22.0",
+    "npm": "11.19.1"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.frontend.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.tooling.json",
+    "test": "bash tests/toolchain/check-workstation.test.sh && vitest run",
+    "build": "npm run build:frontend && npm run build:worker",
+    "build:frontend": "vite build",
+    "build:worker": "node -e \"require('node:fs').rmSync('dist/worker', { recursive: true, force: true })\" && WRANGLER_SEND_METRICS=false wrangler deploy --dry-run --env-file /dev/null --outdir dist/worker"
+  },
+  "dependencies": {
+    "hono": "4.13.13",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260611.1",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.5",
+    "wrangler": "4.100.0"
+  }
+}

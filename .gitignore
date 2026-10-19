@@ -1,0 +1,18 @@
+# Dependencies and generated application artifacts
+node_modules/
+/dist/
+/coverage/
+*.tsbuildinfo
+
+# Local runtime/tooling state and environments
+.wrangler/
+.venv/
+venv/
+.env*
+.dev.vars*
+!.env.example
+!.dev.vars.example
+*.log
+
+# Local preparation material: never publish, even as an empty placeholder
+/content/private/

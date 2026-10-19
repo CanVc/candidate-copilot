@@ -1,0 +1,7 @@
+:root {
+  --color-background: #f7f7f8;
+  --color-text: #202124;
+  --font-body: system-ui, sans-serif;
+  --space-page: 2rem;
+  --width-content: 48rem;
+}
