@@ -112,3 +112,11 @@ No remaining intent gaps or irreversible operations. Footprint: manifest/lock, o
 - `node scripts/check-build-interactivity.mjs` — real protected build and synthetic prompt-rejection control pass in fresh disposable settings.
 - Repeat installation and checks in a credential-free clean copy; inspect exact direct pins, required peers, `npm audit --json` and `npm audit --omit=dev` separately.
 - `git diff --check` — no whitespace errors; inspect tracked exclusions and verify real agent-skill directories/configuration were not modified by this work.
+
+## Human Verification and Acceptance
+
+BC supplied a successful interactive-terminal verification transcript on 2026-10-19 at 23:52, then explicitly authorized recording acceptance and pushing the local commits. Tested implementation revision: `4d4fb3a9fa84c5d91c8b47432179c058b31bc92d`.
+
+The workstation gate passed on Ubuntu 24.04 with Git 2.43.0, Node 24.22.0 and npm 11.19.1. Human-executed `npm ci` preserved lockfile SHA-256 `1380780909df866f449e37da80a48a88bd79e3777d89ca54a614fd91d530d505`; `npm test` passed all 45 Bash fixtures and 10 Vitest cases; both builds succeeded with Wrangler 4.151.2 in dry-run mode and no bindings. The standalone terminal check passed both protected real builds (fresh settings and aged accepted metadata) and all eight explicitly synthetic rejection/cleanup controls. No skills-install/update prompt appeared in the reported terminal journey. Full `npm audit` reported zero vulnerabilities. The esbuild/workerd unapproved-install-script warnings remained informational; no approval was required for these checks.
+
+Story 1.2 is accepted within its application-skeleton scope and its sprint entry is set to `done`. The previously approved local Miniflare beta limitation remains explicit. This acceptance does not establish Story 1.3 startup/simulation, D1 readiness, hosted operation or recruiter-launch approval.
