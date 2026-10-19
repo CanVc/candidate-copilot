@@ -36,14 +36,14 @@
 # - Backup/restore reservation A06 remains open for Story 4.8.
 # - No recruiter-launch approval is implied.
 generated: 10-19-2026 21:56
-last_updated: 10-19-2026 21:57
+last_updated: 10-19-2026 22:20
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
 story_location: docs/_bmad-output/implementation-artifacts
 development_status:
-  epic-1: backlog
-  1-1-install-and-verify-the-workstation-toolchain: backlog
+  epic-1: in-progress
+  1-1-install-and-verify-the-workstation-toolchain: review
   1-2-initialize-a-reproducible-and-safely-configured-application: backlog
   1-3-start-the-frontend-and-worker-with-a-simulated-llm: backlog
   1-4-initialize-and-verify-local-d1-reproducibly: backlog
