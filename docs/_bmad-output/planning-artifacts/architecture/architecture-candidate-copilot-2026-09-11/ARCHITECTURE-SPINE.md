@@ -192,6 +192,18 @@ Inherited cold-start pins below were recorded on 2026-09-16; this update selects
 | Cloudflare D1 / SQLite FTS5 | managed service; docs checked 2026-09-11 and trigger support checked 2026-09-16 |
 | Cloudflare Workers AI | managed service; free quota docs checked 2026-09-11 |
 
+## Implementation Sequencing — Mandatory Epic 1
+
+**[ADOPTED] Epic 1 must be dedicated to the development workstation and reproducible local bootstrap, before functional epics.** Epic/story generation must extract this as an additional technical requirement, preserve its first position, and include the acceptance work below. This is a planning constraint, not a new product FR.
+
+- **Reference platform:** Ubuntu 24.04 LTS (BC's current workstation reports 24.04.5 LTS). macOS/Windows support is outside this epic's scope.
+- **Prerequisites and project bootstrap:** document installation and verification of Git, Node.js/npm, and the required local development/test tools; reverify the historical stack candidates above before selecting versions and generating the dependency lockfile. Initialize the architecture-aligned project skeleton and reproducible install commands.
+- **Python tooling:** Python/`uv` supports BMAD tooling, not the TypeScript application runtime. Create a gitignored local `.venv` only if the Python tooling's dependencies require one; routine application development must not require manual Python environment activation.
+- **Safe local configuration:** document configuration templates without real secrets; exclude local secrets, environments, generated runtime state and `content/private` from Git as applicable. Preserve AD-2/14 source and environment isolation.
+- **Local execution:** provide a minimal frontend and Worker bootstrap, reproducible local D1 initialization, and a simulated LLM path. Baseline local startup and deterministic tests must not require hosted Cloudflare resources, production access, or live LLM credentials. Installing tools/dependencies may require Internet access; this is not an offline-install guarantee.
+- **Acceptance:** from a fresh clone on the reference platform, follow the documented installation/configuration steps, install locked dependencies, initialize local D1, start frontend/Worker, and pass initial automated tests, type checks, build and a local smoke test. Include troubleshooting instructions. Tests validate the bootstrap, not the unimplemented business pipeline or real-model quality.
+- **Boundary:** real LLM integration, conversation/retrieval features, hosted delivery and production setup belong to later epics. This epic prepares their local foundation without implementing the product in advance.
+
 ## Structural Seed
 
 ```text
