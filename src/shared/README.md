@@ -1,3 +1,3 @@
 # Shared contracts
 
-Reserved for genuinely shared API/domain types used across boundaries. No contracts or business schemas exist in this foundation. Keep future shared code independent of browser globals, Hono, Cloudflare bindings and provider SDKs.
+`health.ts` defines and validates the minimal `{ "status": "ok" }` availability response shared by the Worker and frontend. It says nothing about product readiness. Keep shared code independent of browser globals, Hono, Cloudflare bindings and provider SDKs; no speculative business schemas.

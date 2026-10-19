@@ -1,3 +1,5 @@
 # Adapters
 
-Reserved for implementations of application ports and infrastructure translation. No database, simulation, model provider or SDK is configured here. Keep infrastructure details outside application policy; the separate Worker entrypoint is only an HTTP composition boundary for now.
+`llm/simulated.ts` implements `LLMProvider` with one exact fixture: `bootstrap-ping` → `Simulated LLM: bootstrap-pong`. Repeated calls return the same string; every other input rejects. It needs no key, configuration, SDK or model network call. Dedicated tests exercise it; the Worker health route never invokes it and no chat or public simulation endpoint exists.
+
+Keep infrastructure translation outside application policy. Database and real-provider adapters remain deferred.

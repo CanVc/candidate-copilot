@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
+import type { HealthResponse } from '../shared/health';
 
-// No routes or bindings yet. Hono's default unmatched response is 404.
 const app = new Hono();
+
+app.get('/api/health', (context) => context.json({ status: 'ok' } satisfies HealthResponse));
 
 export default app;

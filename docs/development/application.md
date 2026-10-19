@@ -1,4 +1,109 @@
-# Application foundation — Story 1.2
+# Local application — Story 1.3
+
+Current instructions for **Ubuntu 24.04 LTS**, **Node 24.22.0 / npm 11.19.1**. Story 1.3 adds local frontend-to-Worker availability and a test-only simulated LLM, not a chat interface or product readiness. The Story 1.2 records below are preserved as historical evidence; these instructions supersede their no-startup/no-browser statements.
+
+## Setup and verification
+
+1. Enter the repository and select its `.node-version` using [workstation.md](workstation.md). Do not change global/default tools or activate Python.
+2. Run `bash scripts/check-workstation.sh`.
+3. Install the locked graph (public registry downloads required, no account/token):
+
+   ```bash
+   sha256sum package-lock.json
+   npm ci
+   sha256sum package-lock.json  # must be identical
+   ```
+
+   Do not regenerate/delete the lockfile or approve install scripts blindly. The selected npm still warns about unapproved esbuild/workerd scripts; the checks below pass without approval.
+4. Configuration copying is **optional**. No variable, Cloudflare login, key, model service or D1 is required. `.dev.vars.example` contains comments only. Do not put server configuration in `VITE_*`; browser env-file loading and application env exposure remain disabled. Worker commands explicitly use `--env-file /dev/null`.
+5. For browser tests only, download this pinned Playwright's Chromium as your normal user:
+
+   ```bash
+   ./node_modules/.bin/playwright install chromium
+   ```
+
+   This downloads browser/headless-shell and FFmpeg binaries to Playwright's per-user cache (Internet and disk space required); `npm ci` alone does not install them. It is **not** required for ordinary two-terminal startup. Do not use `--with-deps` or run `install-deps` automatically: they may invoke OS package installation/privilege escalation. Missing Ubuntu libraries require explicit administrator review, not application-script sudo.
+6. With ports 5173/8787 free, run:
+
+   ```bash
+   npm run typecheck
+   npm test
+   npm run build
+   node scripts/check-build-isolation.mjs
+   node scripts/check-build-interactivity.mjs
+   npm run test:smoke
+   npm audit --json
+   npm audit --omit=dev
+   git diff --check
+   ```
+
+`npm test` retains all 45 workstation fixtures and the Git/build/real-terminal safeguards, and adds contract, health-failure and deterministic-simulation tests. `test:smoke` is separate: 17 serial Chromium/local-server and synthetic fixture checks, no server reuse, credentials or database. Browser test discovery is restricted to `tests/e2e/*.spec.ts`, and tooling typechecking includes only named configs/bootstrap/e2e sources. Results under `test-results/` and `playwright-report/` are ignored.
+
+## Two-terminal startup and shutdown
+
+Select the repository Node/npm and enter the repository in **each** terminal:
+
+```bash
+# Terminal 1
+npm run dev:worker
+
+# Terminal 2
+npm run dev:frontend
+```
+
+- Open **http://127.0.0.1:5173/**. The French technical shell initially displays “Vérification du Worker…”, then “Worker disponible.” only after validated JSON from a relative `GET /api/health`. Vite proxies `/api` to **http://127.0.0.1:8787**.
+- The Worker endpoint **http://127.0.0.1:8787/api/health** returns exactly `{"status":"ok"}`. It never invokes a model or database and exposes no configuration/diagnostics. Unrelated routes remain 404. Availability is explicitly not product readiness.
+- An absent Worker, HTTP error, invalid body or stalled request becomes “Worker indisponible. Rechargez la page pour réessayer.” within five seconds of the check (4.5-second deadline covering headers and body). Reload retries. Unmount/React StrictMode cleanup cancels old requests and prevents stale updates.
+- Both services bind IPv4 loopback, not public interfaces. Vite uses strict port 5173; Wrangler's explicit port 8787 also rejects occupancy rather than falling back. Worker execution is forced `--local`, noninteractive (`CI=true`), metrics disabled, with empty env-file input and loopback inspector. Wrangler may use additional loopback-only internal/inspector ports; they are not application URLs.
+- Stop **each owned command with Ctrl+C in its terminal**. Stopping only the Worker intentionally makes the page unavailable on reload. Do not kill an unknown listener or point the proxy at a hosted service to make a check pass. These scripts start two independent processes; there is no supervisor or combined startup command.
+- Wrangler's ignored `.wrangler/` may hold local generated state/logs. There is no D1 binding or migration. Vite's normal dependency cache is under ignored `node_modules/`. Builds remain separate under `dist/frontend/` and `dist/worker/`, and the Worker build remains a protected dry-run only.
+
+## Minimal implementation and safety boundaries
+
+- `src/shared/health.ts` contains the exact availability contract and validator; `src/worker/index.ts` is a thin Hono GET adapter.
+- `src/ports/LLMProvider.ts` defines only `generate(input: string): Promise<string>`. `src/adapters/llm/simulated.ts` accepts **exactly** `bootstrap-ping` and returns **exactly** `Simulated LLM: bootstrap-pong` on every call. All other inputs reject. Verify it with `npm test` (or `./node_modules/.bin/vitest run tests/bootstrap/simulation.test.ts`), with network transports forbidden. It consumes no configuration/key and has no model network call. It is not exposed by health, a public diagnostic route or a chat UI.
+- No Conversation/retrieval, catalog identity, real provider/SDK, database binding/schema, hosted operation or product readiness is delivered.
+- Vite keeps `publicDir: false`, `envDir: false` and `envPrefix: []`. Its strict filesystem allowlist is limited to frontend HTML/source and shared contracts (plus Vite's own required client handling), **not the repository root**. Deny rules cover env/private/preparation/tooling/generated paths and public asset directories. This shell has no client routes (`appType: 'mpa'`), so forbidden/missing files do not receive a successful SPA fallback. Never store private preparation in application source or import it into a bundle.
+- The existing 22-canary build and terminal verifiers remain unchanged; their explicit copy lists already include every new runtime/build input under `src/` and `frontend/src/`. No real private/env files are read by the fixtures.
+- `tests/e2e/local-fixture.ts` copies only application inputs, shares installed packages through per-package symlinks, and keeps Vite caches, HOME, XDG/npm/Wrangler settings, temporary files and browser profile disposable. Child/browser environments are allowlisted; real credentials/configuration are not forwarded. Chromium's installed binary is reused, not a running browser/server. Browser requests are restricted to loopback.
+- Smoke coverage includes rendered success through the real proxy/Worker, stopped-Worker failure and reload recovery, malformed/stalled health, conflicting StrictMode completions with observed obsolete-request cancellation, both occupied ports (listener left intact), failed Worker compilation, absent diagnostic routes, and **16 synthetic canaries** across private/public content, env, preparation, generated files and shell env. It scans loaded dev responses for raw/base64 markers and explicitly requires forbidden-file requests to return 403/404. Only owned fixtures are cleaned.
+- Startup is bounded to 25 seconds per command; retained output to 250,000 bytes per command. Unexpected questions/output overflow fail rather than receive input. Cleanup uses inherited random scope markers plus `/proc` PID/start-time identities, signals owned dev watchers and descendants together (avoiding leaf respawn), escalates survivors after 300ms, and allows six seconds plus two for pipe closure. Cleanup attempts all commands and retains a fixture if owned writers survive. Browser protocol closure starts alongside owned-scope cleanup rather than delaying it; its own completion has a two-second deadline. Failed smoke cases attach the existing byte-bounded startup logs. Recurring controls exercise this fixture's install/update/wrapped/generic prompt rejection, output cap, deadline, numeric-versus-signal exits, respawning descendants, repeated SIGINT/SIGTERM and suspended Chromium cleanup. These harmless synthetic programs are not Wrangler or installers. SIGINT/SIGTERM handlers remain installed through cleanup, including repeated interruption. This is trusted-tool regression coverage, not a sandbox: hostile marker removal, SIGKILL, host failure or unavailable/restricted `/proc` are not cleanup guarantees.
+
+## Startup and browser troubleshooting
+
+- **Tool/dependency mismatch:** select `.node-version`, rerun the gate, then `npm ci` with before/after lock hashes. Retain all prior pins, including the explicitly approved local Miniflare beta. Do not use a global Vite/Wrangler/Playwright, forced audit fix or Python/sudo workaround.
+- **Occupied ports:** inspect `ss -ltnp '( sport = :5173 or sport = :8787 )'`. Startup and smoke intentionally fail rather than reuse/terminate unrelated services. Stop only a listener you own via its original terminal, or ask its owner. Do not silently change ports; the default proxy and smoke require 5173/8787. Inspect any separately reported loopback inspector-port conflict the same way.
+- **Worker unavailable:** verify terminal 1 did not exit; run `curl --fail --show-error http://127.0.0.1:8787/api/health`, then the same path at port 5173. Expect 200 JSON with only `status: ok`. A frontend-only 200 is insufficient. Start the Worker and reload. For type/build errors use `npm run typecheck` / `npm run build:worker`; a secret or D1 setup will not fix them.
+- **Forbidden file / 403 / 404:** the dev server intentionally cannot publish repository-root files, env/private/preparation/public directories or local state. Do not broaden `server.fs.allow` or disable deny rules. A blank technical page should instead be diagnosed through failed application-module requests and Vite's terminal; required Vite client files must remain usable.
+- **Browser executable missing or mismatched after install:** run the local `playwright install chromium` command above again after the locked install. Check `./node_modules/.bin/playwright --version`. Do not substitute a system browser or auto-download a different package. To inspect expected paths without installing: `./node_modules/.bin/playwright install --dry-run chromium`.
+- **Missing shared libraries / browser launch failure:** inspect the reported library and `ldd` on the reported executable (`not found` entries), plus the [official browser requirements](https://playwright.dev/docs/browsers#install-system-dependencies). Ask the workstation administrator to install/reconcile the reviewed Ubuntu packages if needed; application tests never install libraries or invoke sudo. OS/container policy can also block launching Chromium; supported evidence is on the Ubuntu workstation, not arbitrary containers.
+- **Smoke deadline/output/cleanup failure:** inspect the first startup error and retained bounded output; ensure loopback and readable `/proc` are permitted. The failure reports a retained owned-fixture path if cleanup could not complete. Do not delete it under a surviving writer or use blanket `pkill`. Resolve/stop only the processes whose fixture ownership can be established, then remove only that disposable directory. Terminal-specific prerequisites and historical prompt controls remain documented below.
+- **Unexpected configuration/prompt:** stop the owned command; do not answer yes, log in or install global skills. Configuration copying remains optional, and real credentials should never be added to troubleshoot this story. Review command-local CI, local-mode, metrics and `/dev/null` protection without printing real env/configuration contents.
+
+## Story 1.3 official evidence and measured results
+
+Evidence supplied with the approved specification was checked on **2026-10-19**; versioned registry metadata and installed CLI behavior were rechecked during implementation on **2026-10-20** (local time). References:
+
+- [Wrangler commands](https://developers.cloudflare.com/workers/wrangler/commands/) and [local development](https://developers.cloudflare.com/workers/local-development/): installed `wrangler dev --help` confirms `--local`, `--ip`, `--port`, inspector loopback and `--env-file`. Actual occupied-port/startup smoke establishes behavior for the preserved Wrangler **4.151.2**, not an assumption about future versions.
+- [Vite server options](https://vite.dev/config/server-options): host, strictPort, proxy and filesystem allow/deny. Browser checks exercise the actual preserved **8.3.4**.
+- [@playwright/test 1.64.1](https://registry.npmjs.org/@playwright/test/1.64.1) → [playwright 1.64.1](https://registry.npmjs.org/playwright/1.64.1) → [playwright-core 1.64.1](https://registry.npmjs.org/playwright-core/1.64.1): exact chain, Node `>=20`, no required peers. Only the exact test dependency was added; other direct pins and Worker compatibility date **2026-06-11** are unchanged.
+- [Playwright introduction](https://playwright.dev/docs/intro) and [browsers](https://playwright.dev/docs/browsers): Ubuntu 24.04 / Node 24 support and separate browser/system-library installation. Downloaded Chromium **156.0.8078.4**, Playwright browser revision **1248** (plus FFmpeg revision 1013); no OS library/global tool/skill installation was performed.
+
+Verified **2026-10-20**, **Ubuntu 24.04.5 LTS / x86_64**, Git **2.43.0**, selected Node **24.22.0** / npm **11.19.1**. This is the uncommitted Story 1.3 working tree based on full revision **`de375a413b5565191655609cfb68e343ab53af23`**, not a claim about a later commit or fresh OS acquisition.
+
+- Workstation gate, locked `npm ci`, typechecking, all **45 Bash + 38 Vitest cases**, both builds, both standalone build verifiers and **six Playwright smoke checks** passed. Build isolation retains all **22 canaries**; both real PTY builds and all eight historical synthetic controls pass. Worker build reports no bindings and dry-run exit.
+- `npm ci` preserved lockfile bytes: SHA-256 **`f0c3e526cb4102bbf86bc7e8686f97ef105e78a78da6037a1f2fff74999e385f`**. The only added direct pin resolves to `@playwright/test@1.64.1`; the exact transitive Playwright chain resolves as above. esbuild/workerd scripts remained unapproved.
+- Full `npm audit --json` exited 0 with empty vulnerabilities and zero known findings; separate `npm audit --omit=dev` also reported zero. These are measured advisory results, not a security guarantee. `git diff --check` passed.
+- During development, the smoke suite caught an overbroad deny rule blocking Vite's own client and successful SPA fallbacks on forbidden URLs; both were corrected. A later full run exposed dev-watcher leaf respawn during cleanup; signaling all scope-owned processes together corrected it. The known retained synthetic fixture was then cleaned using its exact scope marker, never by killing an unknown listener.
+- A separate active-fixture interruption exercise started frontend, Worker and Chromium, sent SIGINT then SIGTERM during cleanup, and verified exit 130, no surviving fixture-owned processes and removal of the disposable copy/settings. No unrelated listener was reused/stopped. Successful smoke runs leave no owned fixture directories or port-5173/8787 listeners.
+
+**Final parent verification after review (2026-10-20):** independently repeated the gate, stable-lockfile installation, all typechecks, **45 Bash + 39 Vitest cases**, both builds, both standalone build verifiers and **17 smoke/fixture-control cases**. All passed, including streaming-error cancellation, conflicting mounted-component completions, suspended Chromium and repeated-interruption/respawn cleanup. Both audits still returned zero and the lockfile hash above remained unchanged. No dependency scripts were approved. No smoke fixture directories, fixture-owned processes or application-port listeners remained. The implementation worker additionally reported that two disposable lifecycle mutations (removing effect cleanup or stale-result protection) were rejected by the targeted browser test; the parent reran the complete corrected suite, not those mutation experiments.
+
+Limits: this verifies local availability plumbing and deterministic simulation only. No D1, grounding, retrieval, real-model behavior, hosted operation, production security, recruiter/product readiness or complete Epic 1/fresh-machine acceptance is claimed. Historical clean-copy evidence below belongs to Story 1.2, not a new Story 1.3 clean-install rehearsal.
+
+---
+
+# Historical application foundation — Story 1.2
 
 Selected and verified **2026-10-19** for **Ubuntu 24.04 LTS** with Story 1.1's **Node 24.22.0 / npm 11.19.1**. This is one private npm package, not a workspace or a published package. It establishes component foundations only, not full Epic 1 startup or product readiness.
 

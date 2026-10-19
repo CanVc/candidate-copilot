@@ -1,3 +1,5 @@
-# Optional, nonsensitive template only. No variables are needed for Story 1.2.
+# Optional, nonsensitive template only. Story 1.3 needs no variables or copy.
+# Health and the fixture-only simulated LLM require no key, account or D1.
 # Do not add real credentials here or expose server configuration via VITE_*.
-# Later stories will document any required Worker configuration.
+# Startup/build commands explicitly use an empty env-file input (/dev/null).
+# No database binding or real model provider is configured.

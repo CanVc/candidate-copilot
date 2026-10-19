@@ -9,7 +9,8 @@ import viteConfig from '../../vite.config';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const ignoredPaths = [
   'node_modules/example.js', 'dist/frontend/index.html', 'dist/worker/index.js',
-  'coverage/result.json', '.wrangler/state/db.sqlite', 'frontend/.wrangler/state.json',
+  'coverage/result.json', 'playwright-report/index.html', 'test-results/result.json',
+  '.wrangler/state/db.sqlite', 'frontend/.wrangler/state.json',
   '.venv/bin/python', 'venv/bin/python', '.env', '.env.local', '.env.production',
   'frontend/.env.local', '.dev.vars', '.dev.vars.local',
   'content/private/preparation.md', 'content/private/nested/.env.example',
@@ -17,12 +18,29 @@ const ignoredPaths = [
 
 describe('publication boundaries', () => {
   it('disables frontend env/asset loading and Worker env-file discovery', () => {
-    expect(viteConfig).toMatchObject({ publicDir: false, envDir: false, envPrefix: [] });
+    expect(viteConfig).toMatchObject({ appType: 'mpa', publicDir: false, envDir: false, envPrefix: [] });
     const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
     expect(manifest.scripts['build:worker']).toContain('--env-file /dev/null');
     // Inspect the command itself: inherited CI must not mask missing protection.
     expect(manifest.scripts['build:worker']).toContain('&& CI=true WRANGLER_SEND_METRICS=false wrangler deploy --dry-run');
     expect(manifest.scripts['build:frontend']).not.toContain('CI=true');
+  });
+
+  it('keeps startup loopback-only, strict and local with protected Worker settings', () => {
+    expect(viteConfig.server).toMatchObject({
+      host: '127.0.0.1', port: 5173, strictPort: true,
+      proxy: { '/api': 'http://127.0.0.1:8787' },
+      fs: { strict: true },
+    });
+    expect(viteConfig.server?.fs?.allow).toEqual([
+      join(root, 'frontend/index.html'), join(root, 'frontend/src'), join(root, 'src/shared'),
+    ]);
+    expect(viteConfig.server?.fs?.deny).toEqual(expect.arrayContaining(['**/.env*', '**/.dev.vars*', '**/content/**', '**/docs/**', '**/public/**']));
+    const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+    expect(manifest.scripts['dev:frontend']).toBe('vite');
+    expect(manifest.scripts['dev:worker']).toBe('CI=true WRANGLER_SEND_METRICS=false wrangler dev --local --ip 127.0.0.1 --port 8787 --inspector-ip 127.0.0.1 --env-file /dev/null');
+    expect(manifest.devDependencies['@playwright/test']).toBe('1.64.1');
+    expect(manifest.scripts['test:smoke']).toBe('playwright test');
   });
 
   it('ignores local/private paths but permits only intentional example templates', () => {
@@ -46,7 +64,7 @@ describe('publication boundaries', () => {
     const forbidden = tracked.filter((path) => {
       const segments = path.split('/');
       const name = segments.at(-1)!;
-      return ['content/private/', 'dist/', 'coverage/'].some((prefix) => path.startsWith(prefix)) || segments.some((segment) => ['node_modules', '.wrangler', '.venv', 'venv'].includes(segment)) ||
+      return ['content/private/', 'dist/', 'coverage/', 'test-results/', 'playwright-report/'].some((prefix) => path.startsWith(prefix)) || segments.some((segment) => ['node_modules', '.wrangler', '.venv', 'venv'].includes(segment)) ||
         (/^(\.env|\.dev\.vars)/.test(name) && !['.env.example', '.dev.vars.example'].includes(name));
     });
     expect(forbidden).toEqual([]);
