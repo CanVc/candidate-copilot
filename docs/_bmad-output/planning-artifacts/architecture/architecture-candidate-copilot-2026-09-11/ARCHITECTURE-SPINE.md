@@ -7,7 +7,7 @@ paradigm: lightweight hexagonal / ports-and-adapters serverless monolith
 scope: Candidate Copilot V1 whole-product architecture
 status: final
 created: 2026-09-11
-updated: 2026-09-30
+updated: 2026-10-19
 binds:
   - PRD FR-1..FR-22
 sources:
@@ -148,7 +148,7 @@ Business rules, safety rules, answer contracts, retrieval orchestration, retenti
 
 - **Binds:** FR-3, FR-6, FR-9, FR-10, FR-18, FR-21, FR-22
 - **Prevents:** browser-authored document eligibility, rename/path identity drift, stale catalog admission and mismatched catalog/index publication
-- **Rule:** Derive V1 project Resources from reviewed public Markdown descriptors with stable `resource_id`, factual name/description and explicit `document_ids`; every public document has a stable `document_id`. IDs are never recycled or inferred from titles/paths. Indexer validates unique identities and nonempty, non-dangling public mappings. Core's catalog port reads the active D1 publication; a content-addressed public JSON build artifact supplies the library, not authority. Catalog Git SHA/hash, mappings, document registry and chunks publish consistently. Upload and verify the immutable catalog asset before activating its D1 pointer/registry/index publication; shared digest bytes and golden vectors follow Runtime Contracts §1. New selection admission requires the active catalog identity; stale/invalid selection is rejected, never silently converted to global. Renames retain identities; deletions remove new availability without rewriting historical tokens/excerpts. No new route, upload, arbitrary selection-count cap or resource type beyond projects.
+- **Rule:** Derive V1 project Resources from reviewed public Markdown descriptors with stable `resource_id`, factual name/description and explicit `document_ids`; every public document has a stable `document_id`. IDs are never recycled or inferred from titles/paths. Indexer validates unique identities and nonempty, non-dangling public mappings. Core's catalog port reads the singleton `active_publication` record in each environment's D1 (`id = 1`, `catalog_revision`, `catalog_hash`); publication tooling alone writes this authority. `/api/health`, admission and evidence reads use that same coherent publication, never an identity inferred from individual Resource rows or deployment configuration. Derive `catalogAssetPath` from the active hash using the fixed asset naming contract. A content-addressed public JSON build artifact supplies the library, not authority. The singleton, Resources, mappings, document registry and chunks publish atomically; changing the pointer alone is not publication. Upload and verify the immutable catalog asset before activating its D1 pointer/registry/index publication; shared digest bytes and golden vectors follow Runtime Contracts §1. New selection admission requires the active catalog identity; stale/invalid selection is rejected, never silently converted to global. Renames retain identities; deletions remove new availability without rewriting historical tokens/excerpts. No new route, upload, arbitrary selection-count cap or resource type beyond projects.
 
 ### AD-18 — Every admitted question owns an immutable documentary scope
 
@@ -434,6 +434,8 @@ Core persists the mechanically accepted draft plus trusted source metadata. Appl
 ```mermaid
 erDiagram
   conversations ||--o{ messages : contains
+  messages ||--|| submitted_scope_snapshot : embeds_JSON
+  submitted_scope_snapshot ||--o{ submitted_resource_snapshot : resources
   conversations ||--o{ answers : receives
   messages ||--o| answers : answered_by
   answers ||--o{ answer_blocks : contains
@@ -441,6 +443,8 @@ erDiagram
   answer_blocks ||--o{ answer_block_sources : cites
   source_excerpts ||--o{ answer_block_sources : supports
   conversations |o..o| deletion_requests : historical_reference
+  active_publication ||..o{ public_resources : publishes
+  active_publication ||..o{ source_documents : publishes
   source_documents ||--o{ source_chunks : chunks
   public_resources ||--o{ resource_documents : maps
   source_documents ||--o{ resource_documents : eligible_for
@@ -461,9 +465,22 @@ erDiagram
     text role
     text content
     text submission_identity
-    json submitted_scope
+    json submitted_scope "immutable JSON expanded in snapshot boxes"
     uuid retry_of_request_id "nullable historical link within conversation"
     datetime created_at
+  }
+  submitted_scope_snapshot {
+    int version "1; legacy 0 has only version and mode"
+    text mode "global_public or selected_resources; legacy_scope_unavailable for v0"
+    text catalogRevision "v1 only; copied historical public Git SHA"
+    text catalogHash "v1 only; copied historical catalog SHA-256"
+    json resources "v1: empty global, nonempty selected; expanded below"
+    json eligibleDocumentIds "v1 only; nonempty frozen document ID array"
+  }
+  submitted_resource_snapshot {
+    text resourceId "historical ID; no live-catalog FK"
+    text name "historical Resource label"
+    json documentIds "nonempty original mapped document ID array"
   }
   answers {
     uuid id
@@ -508,12 +525,16 @@ erDiagram
     datetime handled_at
     datetime modified_at
   }
+  active_publication {
+    int id "singleton: 1 in each environment D1"
+    text catalog_revision
+    text catalog_hash
+    datetime modified_at
+  }
   public_resources {
     text resource_id
     text name
     text description
-    text catalog_revision
-    text catalog_hash
   }
   resource_documents {
     text resource_id
@@ -539,6 +560,12 @@ erDiagram
   }
 ```
 
+**Embedded JSON, not additional tables:** `submitted_scope_snapshot` expands the existing `messages.submitted_scope` field; `submitted_resource_snapshot` expands each item of its `resources` array. Their diagram links denote containment inside that one JSON value, not SQL relationships or extra columns. CamelCase property names match `SubmittedScope` in Runtime Contracts §4. For version 1, `catalogRevision`/`catalogHash` preserve the original admitted catalog identity (also copied unchanged by technical retry); `resources` holds historical IDs/names/maps, and `eligibleDocumentIds` holds the frozen union or global registry. Global mode has `resources: []`; selected mode requires at least one Resource, and every version-1 document map/eligible set is nonempty. Legacy version 0 is exactly `{ version: 0, mode: 'legacy_scope_unavailable' }`, with none of the version-1 provenance/document fields.
+
+The answer reaches that historical scope through its `message_id`; each cited `source_excerpts.source_revision` separately identifies the public-source publication actually retrieved for the response and retains the cited text. It may differ from the admitted catalog revision after a later processing/recovery attempt. Neither reference is a lookup of today's active publication.
+
+`active_publication` represents the one currently published catalog/index, not a publication-history table or per-Resource versioning. Its `publishes` associations denote the coherently activated dataset, not required row-level foreign keys. No historical message/scope/excerpt references this mutable singleton by FK: admitted catalog provenance and actual cited-source provenance remain copied historical values. Runtime Contracts §1/§8 bind readers and the atomic activation; migrations must enforce the singleton and demonstrate transaction behavior.
+
 The deletion-request association is a logical audit link, not a physical foreign key: `conversation_id` is nullable and may retain a UUID after its conversation is gone. Processing lease fields are nullable as a group when no attempt owns the conversation. `messages.request_id` identifies admitted user messages and is unique with `conversation_id`; `answers.message_id` is unique and marks terminal completion. `messages.submitted_scope` is immutable schema-versioned JSON, not a mutable catalog FK or an answer child; `submission_identity` records normalized input for conflict checks. Public registry mappings can change independently. Snapshot shape and API meanings are binding in Runtime Contracts §4; exact storage/index SQL remains migration-owned. Failure error/retry metadata is application-owned, not model-authored. The migrations must preserve these constraints even though exact SQL is deferred.
 
 ### Column semantics for non-obvious fields
@@ -547,6 +574,9 @@ This spine intentionally defers exact SQL and index definitions to migrations, b
 
 | Field | Meaning |
 | --- | --- |
+| `active_publication.id` | Fixed singleton key `1` in each environment's D1; exactly one authoritative active record after successful publication, not one per Resource/conversation. |
+| `active_publication.catalog_revision` / `catalog_hash` | Full public-snapshot Git SHA and canonical catalog SHA-256, read as one pair; API fields are `catalogRevision` / `catalogHash`. `catalogAssetPath` is derived as `/assets/resources-catalog.<catalogHash>.json`, not independently stored. |
+| `active_publication.modified_at` | Operational activation timestamp maintained on change; not source provenance, a hash input, or a Conversation retention timestamp. |
 | `answer_block_sources` | Canonical persisted citation graph from answer blocks to source excerpts; required so paragraph-level evidence can be reconstructed after the live response. |
 | `answer_blocks.kind` | Declared block type: `paragraph`, `summary`, `limitation`, `refusal`, `transition`, `clarification`, or `error`. Paragraph/summary blocks require citation references; the label itself does not prove the text's semantic type. |
 | `answer_blocks.sequence` | Stable display order of blocks within one answer; ordering must not rely on UUID or insertion order. |
@@ -563,7 +593,7 @@ This spine intentionally defers exact SQL and index definitions to migrations, b
 | `messages.request_id` | Browser-generated logical submission id, unique per conversation for admitted user messages; same-id recovery reuses the original immutable question, scope and message. |
 | `messages.retry_of_request_id` | Optional origin for a new logical retry of a canonical technical failure in the same conversation; not an automatic retry command and never a link across conversations. |
 | `messages.submission_identity` | Canonical normalized input: question plus selected ID set/catalog identity, or retry origin. Store enough to compare exactly; hashes alone must not introduce alternate equality rules. |
-| `messages.submitted_scope` | Immutable version-1 global/selected snapshot, historical names/maps/eligible document union/catalog SHA/hash; persists at admission and survives finalization failure. Legacy reads may use exactly `{ version: 0, mode: 'legacy_scope_unavailable' }`, with no generation recovery/retry. Both follow conversation retention, separate from citations (Runtime Contracts §4/§8). |
+| `messages.submitted_scope` | Single immutable JSON value expanded by the diagram's snapshot boxes, not extra tables. Version 1 contains `version`, `mode`, historical `catalogRevision`/`catalogHash`, `resources` (each `resourceId`, `name`, `documentIds`) and `eligibleDocumentIds`; persists at admission and survives finalization failure. Legacy reads may use exactly `{ version: 0, mode: 'legacy_scope_unavailable' }`, with no generation recovery/retry. Both follow conversation retention, separate from actual cited-source revision/text (Runtime Contracts §4/§8). |
 | `messages.role` | V1 admitted question rows use `user`; assistant output remains canonical in `answers` and its blocks, not a second independently owned transcript. |
 | `source_chunks.content_hash` | Deterministic hash of chunk content and relevant metadata, used to detect stale indexes and support reproducible launch-gate checks. |
 | `source_chunks.document_id` | Stable document-level identity used by the indexer/retriever to group chunks from one source document. |
