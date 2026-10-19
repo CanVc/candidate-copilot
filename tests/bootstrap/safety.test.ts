@@ -20,6 +20,9 @@ describe('publication boundaries', () => {
     expect(viteConfig).toMatchObject({ publicDir: false, envDir: false, envPrefix: [] });
     const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
     expect(manifest.scripts['build:worker']).toContain('--env-file /dev/null');
+    // Inspect the command itself: inherited CI must not mask missing protection.
+    expect(manifest.scripts['build:worker']).toContain('&& CI=true WRANGLER_SEND_METRICS=false wrangler deploy --dry-run');
+    expect(manifest.scripts['build:frontend']).not.toContain('CI=true');
   });
 
   it('ignores local/private paths but permits only intentional example templates', () => {
@@ -48,6 +51,21 @@ describe('publication boundaries', () => {
     });
     expect(forbidden).toEqual([]);
   });
+
+  it('builds in a real terminal and cleans up bounded synthetic failures', () => {
+    const output = execFileSync(process.execPath, ['scripts/check-build-interactivity.mjs'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, CI: 'true' },
+      // Two real build deadlines plus bounded synthetic failures and cleanup.
+      timeout: 200_000,
+    });
+    expect(output).toContain('without skills prompt (fresh settings)');
+    expect(output).toContain('without skills prompt (aged accepted metadata preserved)');
+    for (const control of ['skills-install', 'skills-update', 'wrapped-install', 'generic-confirmation', 'deadline', 'output-limit', 'interruption', 'orphan']) {
+      expect(output).toContain(`PASS: synthetic PTY ${control} rejected and cleaned (not Wrangler).`);
+    }
+  }, 210_000);
 
   it('keeps canaries out of both builds independently of Git ignores', () => {
     const output = execFileSync(process.execPath, ['scripts/check-build-isolation.mjs'], {

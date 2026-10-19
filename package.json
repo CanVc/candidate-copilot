@@ -12,7 +12,7 @@
     "test": "bash tests/toolchain/check-workstation.test.sh && vitest run",
     "build": "npm run build:frontend && npm run build:worker",
     "build:frontend": "vite build",
-    "build:worker": "node -e \"require('node:fs').rmSync('dist/worker', { recursive: true, force: true })\" && WRANGLER_SEND_METRICS=false wrangler deploy --dry-run --env-file /dev/null --outdir dist/worker"
+    "build:worker": "node -e \"require('node:fs').rmSync('dist/worker', { recursive: true, force: true })\" && CI=true WRANGLER_SEND_METRICS=false wrangler deploy --dry-run --env-file /dev/null --outdir dist/worker"
   },
   "dependencies": {
     "hono": "4.13.13",
@@ -20,7 +20,7 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260611.1",
+    "@cloudflare/workers-types": "5.20261019.1",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -28,6 +28,6 @@
     "typescript": "5.9.3",
     "vite": "8.3.4",
     "vitest": "5.0.5",
-    "wrangler": "4.100.0"
+    "wrangler": "4.151.2"
   }
 }
