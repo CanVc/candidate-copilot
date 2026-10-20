@@ -5,7 +5,7 @@ import { cpSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, r
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
 import { chromium, test as base } from '@playwright/test';
 import type { Browser, TestInfo } from '@playwright/test';
 
@@ -78,11 +78,15 @@ export class LocalFixture {
   constructor(limits: { startupTimeout?: number; outputLimit?: number } = {}) {
     this.startupTimeout = limits.startupTimeout ?? 25_000;
     this.outputLimit = limits.outputLimit ?? 250_000;
-    for (const path of ['package.json', 'frontend/index.html', 'frontend/src', 'src', 'vite.config.ts', 'wrangler.jsonc', 'tsconfig.json', 'tsconfig.frontend.json', 'tsconfig.worker.json']) {
+    for (const path of ['package.json', 'frontend/index.html', 'frontend/src', 'src', 'vite.config.ts', 'wrangler.jsonc', 'tsconfig.json', 'tsconfig.frontend.json', 'tsconfig.worker.json',
+      'migrations', 'scripts/local-d1.mjs', 'tests/e2e/d1-runtime.mjs', 'tests/e2e/d1-worker.ts']) {
       mkdirSync(dirname(join(this.project, path)), { recursive: true });
       cpSync(join(root, path), join(this.project, path), {
         recursive: true,
-        filter: (source) => lstatSync(source).isDirectory() || (lstatSync(source).isFile() && /\.(?:jsonc?|tsx?|css|html)$/.test(source)),
+        // Migrations copy SQL only; MJS remains limited to named script inputs.
+        filter: (source) => lstatSync(source).isDirectory() || (lstatSync(source).isFile() &&
+          (path === 'migrations' ? source.endsWith('.sql') :
+            /\.(?:jsonc?|tsx?|css|html)$/.test(source) || source === join(root, path))),
       });
     }
     // Share immutable installed packages, not Vite's writable dev caches.
@@ -141,6 +145,27 @@ export class LocalFixture {
   // Harmless synthetic programs exercise this same launcher, never installers.
   startSynthetic(code: string): Command {
     return this.launch(process.execPath, ['-e', code], 'synthetic control');
+  }
+
+  startCommand(executable: string, args: string[]): Command {
+    return this.launch(executable, args, args.join(' '));
+  }
+
+  // All one-shot outcomes use the same bounded owned-process cleanup.
+  // Signal exits are never success.
+  async completed(command: Command): Promise<string> {
+    try {
+      const deadline = Date.now() + this.startupTimeout;
+      while (!command.exited && !command.failure && Date.now() < deadline) await delay(25);
+      if (command.failure) this.reject(command, command.failure);
+      if (!command.exited) this.reject(command, this.error(command, 'DEADLINE', `Command exceeded ${this.startupTimeout}ms`));
+      if (command.code !== 0 || command.signal !== null) {
+        this.reject(command, this.error(command, 'COMMAND_FAILED', 'Expected a successful numeric exit'));
+      }
+      return command.output;
+    } finally {
+      await this.stop(command);
+    }
   }
 
   private launch(executable: string, args: string[], label: string): Command {

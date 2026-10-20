@@ -1,6 +1,92 @@
-# Local application — Story 1.3
+# Local application — Story 1.4
 
-Current instructions for **Ubuntu 24.04 LTS**, **Node 24.22.0 / npm 11.19.1**. Story 1.3 adds local frontend-to-Worker availability and a test-only simulated LLM, not a chat interface or product readiness. The Story 1.2 records below are preserved as historical evidence; these instructions supersede their no-startup/no-browser statements.
+Current instructions for **Ubuntu 24.04 LTS**, **Node 24.22.0 / npm 11.19.1**. Local D1 now joins the frontend/Worker availability shell and deterministic test-only LLM simulation. No business schema, public SQL diagnostic, hosted resource, account, credential or Python is required. The Story 1.3 and 1.2 sections below are historical records, not current no-D1 instructions.
+
+## Current setup and checks
+
+1. Select `.node-version` per [workstation.md](workstation.md), without changing global/default tools. Run `bash scripts/check-workstation.sh`.
+2. Run `sha256sum package-lock.json`, `npm ci`, then the hash again: bytes must be unchanged. Keep all pins; do not approve dependency scripts or run an automatic audit fix. Internet is needed for dependency downloads, not for a hosted database.
+3. Configuration copying remains optional. Use no credentials or real env files; protected Wrangler commands use `/dev/null`, command-local CI and disabled metrics. From the repository root:
+
+   ```bash
+   npm run db:types   # regenerate binding-only src/worker/env.d.ts
+   npm run db:init    # apply pending local migrations, then verify binding + SQL + ledger
+   npm run db:check   # dedicated SQL/state verification; never applies migrations
+   npm run typecheck
+   npm test
+   npm run test:d1    # no Chromium download or browser required
+   npm run build
+   node scripts/check-build-isolation.mjs
+   node scripts/check-build-interactivity.mjs
+   npm audit --json
+   npm audit --omit=dev
+   git diff --check
+   ```
+
+4. Start `npm run dev:worker` and `npm run dev:frontend` in separate terminals. Use **http://127.0.0.1:5173/** (frontend) and **http://127.0.0.1:8787/api/health** (Worker). Stop each owned command with Ctrl+C. The loopback/strict-port, privacy, simulation and availability contracts detailed in the historical Story 1.3 implementation remain unchanged. **Health returns only `{"status":"ok"}` and never touches D1**; startup/health still work before initialization. A healthy page is not proof of persistence readiness: run `db:check` and `test:d1` separately.
+5. Browser smoke is optional for ordinary startup/D1 checks, but required for the full workstation verification. Install only the pinned browser via `./node_modules/.bin/playwright install chromium` as described below, then run `npm run test:smoke`. It now discovers D1 tests as well as the retained browser/fixture controls. Tests never reuse an existing server. Chromium/system-library prerequisites and terminal `/usr/bin/script`/PTY/`/proc` requirements below still apply; no application command installs OS packages or global tools/skills.
+
+## Binding, storage and migrations
+
+- `wrangler.jsonc` configures exactly `DB`, database **`candidate-copilot-local`**, stable **`00000000-0000-0000-0000-000000000000`**, **`remote:false`**, `migrations_dir:migrations`. The all-zero UUID is local identity, not a provisioned hosted database. No `d1 create`, login, remote or preview operation is needed or supported here.
+- `scripts/local-d1.mjs` validates that identity before initialization/check/type generation. Migration settings must be omitted defaults or exactly `migrations_table:d1_migrations` and `migrations_pattern:migrations/*.sql`; ledger/pattern overrides are rejected before storage access. These commands accept **no extra arguments** (including remote, preview, alternate targets, environments or persistence paths), and inherited `CLOUDFLARE_ENV`/`WRANGLER_ENV` selectors are cleared before loading Wrangler. Local Wrangler is used, never a global executable or remote fallback. Initialization checks the bootstrap SQL exists, applies pending migrations with explicit config, `--local`, `--persist-to .wrangler/state`, `/dev/null`, CI and metrics protection, then invokes the private SQL helper through a local binding proxy. Errors are nonzero and never trigger reset.
+- `npm run dev:worker` uses the same explicit **`.wrangler/state`** persistence root. Wrangler CLI adds `v3`; `getPlatformProxy` instead receives **`.wrangler/state/v3`**, `remoteBindings:false` and `envFiles:['/dev/null']`. D1 lives beneath **`.wrangler/state/v3/d1`**. Proxy disposal is awaited on success and SQL failure. An unusable storage directory is rejected before starting the proxy runtime. `.wrangler/` remains ignored and excluded from application publication.
+- `migrations/0001_local_bootstrap.sql` runs only `SELECT 1`; Wrangler records **`0001_local_bootstrap.sql`** in its own **`d1_migrations`** ledger. Only ledger/SQLite metadata tables are created, not Conversation or other business tables. The helper checks both the exact SQL result and **exactly one matching ledger marker**; a working empty SQLite database is not initialized storage. There is no custom migration engine. Add ordered, uniquely numbered reviewed migrations; **never edit, rename or reorder an applied migration**. See [migrations/README.md](../../migrations/README.md).
+- `npm run db:types` invokes protected `wrangler types --include-runtime=false` with explicit config and empty env-file input. Commit the generated binding declarations, and regenerate after a reviewed config change. Worker and test typing use the generated `Cloudflare.Env`, not a handwritten Env. Workers runtime types are scoped to Worker/tooling configs; the frontend config still includes only browser/Vite/shared inputs. Node tooling explicitly imports Node's URL where its iterator types differ from Workers types.
+
+## D1 diagnosis and destructive local-only reset
+
+- **Missing/renamed/wrong binding:** `npm run db:check` must fail. Compare the nonsensitive binding identity above with the reviewed `wrangler.jsonc`; restore that configuration rather than logging in, supplying a hosted ID, adding a preview binding or changing health to run SQL. Health/404/build contracts do not diagnose D1 readiness.
+- **New, never-initialized storage:** run `npm run db:init`, then `npm run db:check`. Use the same repository and explicit persistence root for CLI/proxy/dev; the independent workerd harness is not that storage.
+- **Altered history in previously initialized storage:** stop and review the unexpected ledger/marker change before running initialization again. Initialization is **not history repair**: if a recorded name was renamed/deleted, Wrangler can replay that now-unrecorded migration, add its original name and leave the altered row. The bootstrap marker check can then pass without repairing that history. Do not forge ledger entries, edit applied SQL or blindly rerun initialization to hide the discrepancy.
+- **Missing/malformed migration:** inspect the reported SQL filename and restore the reviewed file. Do not delete state or change already-applied SQL as a repair. A failed migration exits nonzero; a later rerun applies remaining pending work, not a rebuild/reset.
+- **Unusable storage:** stop owned writers; inspect the reported local path, disk space and ownership/permissions without reading real private/env files. A directory obstructed by a file or inaccessible to the current user is an error. Do not use sudo, broad chmod/chown or automatic deletion to hide it. If proxy construction itself fails before returning a disposable handle, the command exits nonzero through upstream exit cleanup rather than hanging on runtime handles. A disposable obstructed-cache control checks that failure and absence of owned runtime survivors before fixture fallback cleanup.
+- **Test failure:** inspect bounded attachments under ignored `test-results/`. All D1 integration state, HOME/XDG/npm/Wrangler settings and env/content canaries are disposable. Only SQL files beneath `migrations/`, named scripts and the existing allowlisted application inputs are copied; real private/env files and developer D1 state are never copied or reset. Fixture-owned runtimes/descendants are stopped before deletion; a cleanup failure retains its fixture. The same trusted-tool, readable-`/proc`, SIGKILL/host-failure limits documented below apply.
+
+**DESTRUCTIVE RESET — deletes all local D1 data and its migration ledger. This is never initialization or a routine repair.** Stop all Worker/dev, proxy, test and other writers to this repository's local state first. Verify the absolute repository target and that you intend to lose its local D1 data; preserve anything needed before proceeding. Do not substitute another directory, use `--remote`, or delete all `.wrangler/` (which may contain other local state). There is deliberately no automatic reset script.
+
+Only after that manual review, from the verified repository root:
+
+```bash
+pwd -P  # verify the intended repository, not a parent/other checkout
+realpath -- .wrangler/state/v3/d1  # inspect the exact local target before deletion
+# STOP if either target is unexpected or any writer is still running.
+rm -r -- .wrangler/state/v3/d1    # DESTRUCTIVE: local D1 only
+npm run db:init
+npm run db:check
+```
+
+If the target is absent, there is nothing to reset: initialize instead. Verification exercises this deletion **only in fixture-owned disposable state**, with all one-shots closed; another synthetic state file must survive and reinitialization must work. No existing developer data is reset to prove this procedure.
+
+## Story 1.4 evidence and measured verification
+
+Official references supplied by the approved spec were checked **2026-10-20**, and all three URLs returned HTTP 200 during implementation:
+
+- [D1 local development](https://developers.cloudflare.com/d1/best-practices/local-development/): local bindings and storage, no hosted database prerequisite.
+- [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/): ordered SQL and Wrangler's ledger/application mechanism.
+- [Wrangler APIs](https://developers.cloudflare.com/workers/wrangler/api/): binding proxy and runtime lifecycle. Installed **4.151.2** schema/declarations corroborate `remote:false`, `getPlatformProxy` persistence/env/remote options, `createTestHarness`/scheduled events and migration application. The harness explicitly uses independent nonpersistent storage; it cannot establish CLI persistence sharing.
+
+Verified **2026-10-20**, **Ubuntu 24.04.5 LTS / x86_64**, Git **2.43.0**, selected Node **24.22.0 / npm 11.19.1**. Tested the uncommitted Story 1.4 working tree based on full VCS revision **`ec180e7d226825d37f9fab51ef8f5d3e972e2eab`**, not a later commit or fresh clone.
+
+- Workstation gate and `npm ci` passed; the lockfile remained byte-identical, SHA-256 **`f0c3e526cb4102bbf86bc7e8686f97ef105e78a78da6037a1f2fff74999e385f`**. No dependency/pin/compatibility-date change, install-script approval, global-tool/skill change or Python work was performed. esbuild/workerd installation warnings remain unapproved.
+- Protected binding generation, all three typechecks and `npm test` passed: **45 Bash + 40 Vitest cases**. Health/404 and deterministic simulation remain independent of D1 initialization.
+- **Nine D1 integration cases passed in about 55 seconds**, with `PLAYWRIGHT_BROWSERS_PATH` pointing to a newly created empty disposable directory (removed afterward). Documented `npm run db:init`, `db:check` and `db:types` execute inside the sanitized fixture with outer `CI=false`, fresh HOME/settings and only synthetic env files, not credentials. Bootstrap ledger/schema-free initialization, rerun preservation, exact marker and failure branches all pass.
+- CLI-created synthetic data survives repeated initialization, is read/updated through the binding proxy, and is read back by CLI with the original ledger row unchanged. Separately, the actual workerd scheduled handler invokes the private helper against independent harness storage, with uninitialized, missing-binding and wrong-marker negative controls. This is Worker-binding SQL evidence, not CLI persistence-sharing evidence.
+- Both builds and both standalone build verifiers passed: **22 build canaries**, two real protected PTY builds and all eight historical synthetic PTY controls. Worker dry-run reports only `env.DB (candidate-copilot-local)` and exits without upload. `npm run test:smoke` passed **27 cases**, including all retained browser/fixture controls, the bounded one-shot controls and all nine D1 cases.
+- Full `npm audit --json` and separate `npm audit --omit=dev` both exited 0 with **zero known findings**; this is a measured advisory result, not a security guarantee. `git diff --check` passed. No smoke/isolation/terminal/browserless fixture directories or application-port listeners remained; `.wrangler/state/v3/d1` is ignored and no `.wrangler/` path is tracked. Existing developer D1 data was never reset or inspected for verification.
+- During implementation, an obstructed D1 directory exposed an upstream proxy-construction rejection that retained runtime handles. Directory preflight plus explicit nonzero exit cleanup corrected it; an independent obstructed-cache constructor control now passes without fixture cleanup masking survivors. An active-D1 interruption control confirmed Miniflare's upstream synchronous SIGINT exit (130): asynchronous API disposal cannot be awaited on that signal. The fixture independently identifies/stops any owned descendants and removes only its disposable directory; successful and SQL-failing returned proxies/harnesses have disposal/closure awaited normally. Repeated-interruption controls for the supervising fixture remain passing.
+
+**Review corrections (2026-10-20):** reran only the focused D1/one-shot coverage: **12 D1 cases + one completion-control case passed**. Added inherited-environment isolation, rejected ledger/pattern overrides, subsequent-migration exactly-once success and transactional-failure preservation, and immediate cleanup assertions for all completion outcomes. The disposable helper now checks binding keys in actual production init/check calls with synthetic env files; separately removing only the copied wrapper's proxy `envFiles` option made both npm entrypoints fail that check. The earlier full-journey results above precede these corrections; a full rerun is not claimed here.
+
+**Final independent parent verification after review (2026-10-20):** repeated the entire documented verification on the same Ubuntu host and pinned toolchain: workstation gate, unchanged-lockfile `npm ci`, binding generation, all typechecks, **45 Bash + 40 Vitest cases**, both builds, both standalone build verifiers, **12 D1 cases with an empty disposable browser directory**, **30 complete smoke cases**, full/production audits, dependency resolution and whitespace checks. All passed. Both audits remain zero; the lock hash above and generated binding declarations remain unchanged. Matrix branches, pending-migration preservation, actual-command env isolation and bounded cleanup controls all executed. No fixture/application listeners remained and no D1 runtime path is tracked. All retained review corrections are resolved; no work was deferred. These results do not replace human acceptance.
+
+Limits: this is existing-workstation Story 1.4 evidence only, not hosted operation, Story 1.5 fresh-clone or full-Epic acceptance. No retrieval, grounding, real model, catalog identity, product readiness or production-security claim is made. Cleanup remains trusted-tool regression coverage with the `/proc`, SIGKILL and host-failure limits below; no reset was executed against existing developer data.
+
+---
+
+# Historical local startup — Story 1.3
+
+Historical instructions for **Ubuntu 24.04 LTS**, **Node 24.22.0 / npm 11.19.1**, superseded by Story 1.4 above. Story 1.3 added local frontend-to-Worker availability and a test-only simulated LLM, not a chat interface or product readiness. The Story 1.2 records below are also preserved as historical evidence.
 
 ## Setup and verification
 

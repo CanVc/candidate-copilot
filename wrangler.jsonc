@@ -3,5 +3,14 @@
   "name": "candidate-copilot",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-06-11",
-  "send_metrics": false
+  "send_metrics": false,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "candidate-copilot-local",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "remote": false,
+      "migrations_dir": "migrations"
+    }
+  ]
 }

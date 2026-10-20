@@ -72,6 +72,25 @@ test('rejected accepts numeric nonzero exits but not success or signal terminati
   expect(signalled.signal).toBe('SIGTERM');
 });
 
+test('completed bounds one-shots and cleans every outcome before returning', async ({ control }) => {
+  const success = control.startSynthetic("console.log('ONE_SHOT_OK')");
+  await expect(control.completed(success)).resolves.toContain('ONE_SHOT_OK');
+  expect(ownedProcesses(success)).toHaveLength(0);
+  for (const [program, code] of [
+    ['process.exit(7)', 'COMMAND_FAILED'],
+    ["process.kill(process.pid, 'SIGTERM')", 'COMMAND_FAILED'],
+    [wait, 'DEADLINE'],
+    [`process.stdout.write('x'.repeat(131072)); ${wait}`, 'OUTPUT_LIMIT'],
+    [`console.log('Continue? [y/N]'); ${wait}`, 'UNEXPECTED_PROMPT'],
+  ] as const) {
+    const command = control.startSynthetic(program);
+    await expect(control.completed(command)).rejects.toMatchObject({ code });
+    // No explicit stop or fixture teardown may mask a completed() cleanup gap.
+    expect(ownedProcesses(command)).toHaveLength(0);
+    expect(command.exited).toBe(true);
+  }
+});
+
 // Both parent and leaves are harmless Node controls. The parent creates a new
 // owned leaf during TERM cleanup, so a one-time PID snapshot is insufficient.
 const respawner = `const { spawn } = require('node:child_process');
