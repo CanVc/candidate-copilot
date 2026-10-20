@@ -13,5 +13,10 @@
     "skipLibCheck": true,
     "types": []
   },
-  "files": []
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.frontend.json" },
+    { "path": "./tsconfig.worker.json" },
+    { "path": "./tsconfig.tooling.json" }
+  ]
 }

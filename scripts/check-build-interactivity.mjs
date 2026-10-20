@@ -210,7 +210,7 @@ async function check(control, accepted = false) {
     const project = join(temporary, 'project');
     const home = join(temporary, 'home');
     const settings = join(temporary, 'settings');
-    for (const path of ['package.json', 'frontend/index.html', 'frontend/src', 'src', 'vite.config.ts', 'wrangler.jsonc', 'tsconfig.json', 'tsconfig.frontend.json', 'tsconfig.worker.json']) {
+    for (const path of ['package.json', 'frontend/index.html', 'frontend/src', 'src', 'vite.config.ts', 'wrangler.jsonc', 'tsconfig.json', 'tsconfig.frontend.json', 'tsconfig.worker.json', 'tsconfig.tooling.json']) {
       mkdirSync(dirname(join(project, path)), { recursive: true });
       cpSync(join(root, path), join(project, path), {
         recursive: true,

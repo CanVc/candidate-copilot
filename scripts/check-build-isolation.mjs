@@ -11,7 +11,7 @@ const temporary = mkdtempSync(join(tmpdir(), 'candidate-copilot-isolation-'));
 
 // Never read, modify or remove real private files. All canaries live in our own copy.
 try {
-  for (const path of ['package.json', 'frontend/index.html', 'frontend/src', 'src', 'vite.config.ts', 'wrangler.jsonc', 'tsconfig.json', 'tsconfig.frontend.json', 'tsconfig.worker.json']) {
+  for (const path of ['package.json', 'frontend/index.html', 'frontend/src', 'src', 'vite.config.ts', 'wrangler.jsonc', 'tsconfig.json', 'tsconfig.frontend.json', 'tsconfig.worker.json', 'tsconfig.tooling.json']) {
     mkdirSync(dirname(join(temporary, path)), { recursive: true });
     cpSync(join(root, path), join(temporary, path), {
       recursive: true,

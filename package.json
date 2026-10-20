@@ -15,7 +15,7 @@
     "db:types": "node scripts/local-d1.mjs types",
     "test:d1": "playwright test d1.spec.ts",
     "test:smoke": "vitest run tests/bootstrap/simulation.test.ts && playwright test",
-    "typecheck": "tsc -p tsconfig.frontend.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.tooling.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.frontend.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.tooling.json",
     "test": "bash tests/toolchain/check-workstation.test.sh && vitest run",
     "build": "npm run build:frontend && npm run build:worker",
     "build:frontend": "vite build",
