@@ -1,6 +1,17 @@
-# Ubuntu workstation toolchain — Story 1.1
+# Ubuntu workstation toolchain
 
-Selected and verified **2026-10-19**. Target: **Ubuntu 24.04 LTS, Bash**, including 24.04.5. These are deliberately selected versions, not claims that every pin is the latest release. This guide prepares application prerequisites **before** initialization; application/dependency compatibility belongs to Story 1.2.
+Selected and verified **2026-10-19**. Target: **Ubuntu 24.04 LTS, Bash**, including 24.04.5. These are deliberately selected versions, not claims that every pin is the latest release. **Start here for acquisition and tool selection, then continue with the ordered [current application journey](application.md#current-setup-and-checks)** (locked packages, configuration, D1, browser/system/PTY prerequisites, checks and two-terminal startup). [Fresh-clone evidence](fresh-clone-verification.md) records the integrated rehearsal; the Story 1.1 evidence below proves tools only.
+
+## Supported Bash entry
+
+Start a clean Bash explicitly, **even from Zsh or an existing Bash terminal**. Run this shell-entry block **alone**:
+
+<!-- fresh-terminal:bash -->
+```bash
+bash --noprofile --norc
+```
+
+**Wait for the new Bash prompt before copying any following block.** This child shell reads no startup profiles, changes no login/default shell and returns to the original shell on `exit`. Do not paste the shell-entry command together with subsequent commands into Zsh. All Bash-specific commands below run in this new Bash; no `.bashrc` edit or automatic cd hook is required. `bash scripts/check-workstation.sh` only executes the checker in a child process: it cannot select Node or configure the parent shell.
 
 ## Platform
 
@@ -26,14 +37,21 @@ apt-cache policy git                  # inspect installed/candidate Ubuntu packa
 
 Use Ubuntu's configured official repositories, not a third-party Git PPA. Keep distribution security updates enabled. Git's upstream version output need not show the Ubuntu package's security revision; `apt-cache policy git` does. The read-only gate checks the executed version, not package provenance.
 
-If the repository is not cloned yet, clone it using its actual authorized URL and enter it. For an existing clone, enter its root now. Set this variable for subsequent commands (replace the example path):
+If the repository is not cloned yet, create its parent directory and clone using its actual authorized URL (replace the placeholder; do not run it literally):
+
+```bash
+mkdir -p "$HOME/dev"
+git clone '<AUTHORIZED_REPOSITORY_URL>' "$HOME/dev/candidate-copilot"
+```
+
+For an existing clone, skip acquisition and enter its root now. Set this variable for subsequent commands (replace the example path):
 
 ```bash
 cd "$HOME/dev/candidate-copilot"
 export PROJECT_ROOT="$PWD"
 ```
 
-Do not proceed with Story 1.2 until the application gate passes.
+Do not install application packages until the application gate below passes. For current operator inspections, use `git --no-pager diff` and `git --no-pager status --short` so an empty interactive pager cannot look like a stalled check; do not change global Git configuration.
 
 ## Node and npm
 
@@ -56,47 +74,58 @@ rm -rf -- "$FNM_SETUP_DIR"             # only this disposable download directory
 
 If `curl` fails, **stop**; do not execute a missing, partial or previously downloaded installer. `--release` pins the binary as well as the installer source; `--skip-shell` prevents automatic shell configuration changes. The installer downloads the architecture-specific GitHub release and needs `curl`/`unzip`.
 
-With your editor, add the following **once** to your own `~/.bashrc`, not `/etc/profile` or another global shell file. Also execute these two lines in the current Bash session (or open a new interactive Bash):
+In the explicitly entered Bash above, initialize the clone path and fnm environment **for this shell only** (replace the example path). Do not edit `.bashrc`, `.zshrc`, `/etc/profile` or tool defaults:
 
 ```bash
-export PATH="$HOME/.local/share/fnm:$PATH"
-eval "$(fnm env --use-on-cd --shell bash)"
+export PROJECT_ROOT="$HOME/dev/candidate-copilot" &&
+cd "$PROJECT_ROOT" &&
+export PATH="$HOME/.local/share/fnm:$PATH" &&
+FNM_ENV=$(fnm env --shell bash) &&
+eval "$FNM_ENV" &&
+fnm --version                         # fnm 1.39.0
 ```
 
-Then select the repository pin; `fnm install` needs Internet, and `fnm use` selects it only for your shell. fnm creates a default alias on the first install: capture whether one exists and remove only the newly created default, preserving the existing default or its absence. Do not change the global/default Node version to satisfy this project:
+Stop if that block fails. Acquisition is separate from routine selection: only if the pinned distribution is missing, download it with `fnm install` (Internet required). fnm creates a default alias on the first install: capture whether one exists and remove only the newly created default, preserving the existing default or its absence. Do not change the global/default Node version to satisfy this project:
 
 ```bash
-fnm --version                         # fnm 1.39.0
-cd "$PROJECT_ROOT"
 NODE_VERSION=$(cat .node-version)
 NODE_DEFAULT_BEFORE=$(fnm default 2>/dev/null || true)
 fnm install "$NODE_VERSION" &&
 { if [[ -z $NODE_DEFAULT_BEFORE ]]; then fnm unalias default; fi; } &&
 fnm use "$NODE_VERSION"
-hash -r
-node --version                        # v24.22.0
-npm --version                         # 11.19.1, bundled with that Node
 ```
+
+On success, continue with the explicit selection/gate below. On failure, stop and use troubleshooting; never install application dependencies to compensate.
 
 Do **not** use `sudo npm`, `npm install -g npm`, or an unpinned global npm upgrade. Do not install application packages yet. The committed pin, rather than a duplicated Node installation command, is the source of the selected Node version.
 
 ## Verify
 
-From the repository root:
+For **every fresh terminal**, first run the separate [Bash-entry block](#supported-bash-entry) and wait for its Bash prompt. Then run this complete initialization block, even after acquisition; replace the clone path. It neither downloads tools nor changes defaults/profiles:
 
+<!-- fresh-terminal:init -->
 ```bash
-bash scripts/check-workstation.sh
+WORKSTATION_READY=false
+export PROJECT_ROOT="$HOME/dev/candidate-copilot" &&
+cd "$PROJECT_ROOT" &&
+export PATH="$HOME/.local/share/fnm:$PATH" &&
+FNM_ENV=$(fnm env --shell bash) &&
+eval "$FNM_ENV" &&
+fnm use "$(cat .node-version)" &&
+hash -r &&
+node --version &&
+npm --version &&
+bash scripts/check-workstation.sh &&
+WORKSTATION_READY=true
 ```
 
-Or from any directory, with the absolute path to the clone:
+Require **v24.22.0 / 11.19.1**, successful gate output and `WORKSTATION_READY=true` before application installation. A missing tool, failed fnm environment/selection or wrong version stops the `&&` chain. Keep installation contingent on this result as shown in the [application setup](application.md#current-setup-and-checks); on failure, return to [acquisition](#node-and-npm)/troubleshooting, not an unguarded `npm ci`.
 
-```bash
-bash "$PROJECT_ROOT/scripts/check-workstation.sh"
-```
+Once this shell is initialized, the checker can also be repeated from another directory with `bash "$PROJECT_ROOT/scripts/check-workstation.sh"`. That is only a diagnostic check; it does not switch or initialize the calling shell.
 
 A successful run prints the platform and Git/Node/npm versions and exits **0**. Missing tools, failing version commands, malformed/incorrect versions, unsupported platform and unsupported arguments exit **nonzero** and point to corrective guide sections. Only `--bmad` is supported as an optional argument; default mode neither requires nor executes Python/uv. The gate uses no network, sudo, package manager, writes or application dependencies. It executes each relevant tool's `--version` command; checking a file's existence alone is not considered success.
 
-The gate establishes tool readiness, not package compatibility, full fresh-clone readiness, executable provenance or hosted/product readiness. Fix all failures before Story 1.2.
+The gate establishes tool readiness, not package compatibility, full fresh-clone readiness, executable provenance or hosted/product readiness. Fix all failures, then continue at [Current setup and checks](application.md#current-setup-and-checks).
 
 ## BMAD tooling
 
@@ -124,7 +153,7 @@ UV_INSTALL_DIR="$HOME/.local/bin" UV_NO_MODIFY_PATH=1 \
 rm -rf -- "$UV_SETUP_DIR"              # only this disposable download directory
 ```
 
-`UV_NO_MODIFY_PATH=1` prevents automatic shell-file edits. Add this line once to your own `~/.bashrc` and execute it in the current session:
+`UV_NO_MODIFY_PATH=1` prevents automatic shell-file edits. Execute this only in the current Bash; no profile edit is needed:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
@@ -144,9 +173,9 @@ Expect exit 0 and JSON containing `"core.project_name": "candidate-copilot"`. Th
 
 ## Troubleshooting
 
-- **Missing command or wrong PATH:** run `type -a git node npm fnm python3 uv` (missing optional tools are fine in application mode). Inspect `printf '%s\n' "$PATH"`. Open a fresh Bash or execute the relevant per-user PATH/fnm setup above, then `hash -r`. `which`/`command -v` alone do not prove execution; rerun `--version` and the gate. A stale system Node/npm, alias, shim or older user installation can shadow the selected tools.
+- **Missing command or wrong PATH:** run `type -a git node npm fnm python3 uv` (missing optional tools are fine in application mode). Inspect `printf '%s\n' "$PATH"`. Enter Bash using the separate [shell-entry block](#supported-bash-entry), wait for its prompt, then repeat the complete [selection/gate block](#verify). `which`/`command -v` alone do not prove execution; rerun `--version` and the gate. A stale system Node/npm, alias, shim or older user installation can shadow the selected tools.
 - **Git missing/old/malformed:** return to [Git](#git), inspect `apt-cache policy git`, and install/update Ubuntu's Git. Fix package-source/download errors rather than adding a PPA or accepting a version below 2.43.0. Gate success does not prove your Git package is Ubuntu-maintained.
-- **Node or npm mismatch/broken execution:** return to [Node and npm](#node-and-npm). In a correctly initialized Bash, run `fnm use "$(cat "$PROJECT_ROOT/.node-version")"`, `hash -r`, and inspect `type -a node npm`. Both must come from the selected Node installation. If that installation is corrupt or its bundled npm was upgraded, reinstall that specific Node version using fnm (confirm any other projects using it first). Do not repair it with sudo or a global npm upgrade. The historical Node 24.15.0/npm 11.12.1 must fail this gate.
+- **Node or npm mismatch/broken execution:** return to [Node and npm](#node-and-npm). Repeat the [explicit Bash selection/gate](#verify) in this terminal, then inspect `type -a node npm`. Both must come from the selected Node installation. If that installation is corrupt or its bundled npm was upgraded, reinstall that specific Node version using fnm (confirm any other projects using it first). Do not repair it with sudo or a global npm upgrade. The historical Node 24.15.0/npm 11.12.1 must fail this gate.
 - **Downloads/TLS/permissions:** check Internet, DNS, proxy configuration, system time, CA certificates and access to the official URLs below. Retry into a fresh temporary directory; do not use `curl -k`, ignore a failed download, or execute partial scripts. `Permission denied` in user installation directories usually means an earlier root-owned install: inspect `ls -ld "$HOME/.local" "$HOME/.local/bin" "$HOME/.local/share/fnm"`. Have the owner/admin correct only the affected paths; do not broadly `chmod 777`, recursively change ownership of your home, or rerun installers with sudo. If sudo is unavailable, an administrator must perform the explicit apt steps.
 - **Python/uv failure:** return to [BMAD tooling](#bmad-tooling), check `python3 --version`, `uv --version` and PATH. Install Ubuntu's Python, not a replacement for `/usr/bin/python3`; use uv 0.11.15, not an arbitrary self-update. Recheck `--bmad`, then the resolver. Configuration errors after version success concern the existing BMAD setup, not application runtime dependencies.
 - **Unsupported platform/usage:** see [Platform](#platform) and [Verify](#verify). Invoke with no argument or just `--bmad`. Do not change the gate's platform data or version pins to suppress failures.
@@ -179,4 +208,4 @@ Executed on **2026-10-19**, Ubuntu **24.04.5 LTS/x86_64**, starting from the exi
 
 **Not proven:** a full graphical Ubuntu workstation installation, interactive pager/confirmation usability, other CPU architectures, future application dependency compatibility, or later-story fresh-clone application startup. The container establishes clean tool acquisition and persisted Bash setup, not desktop or application acceptance. No installation/default changes were made to the host.
 
-**Story boundary:** no application skeleton/dependencies/lockfile, database or business tables, hosted resources, secrets or real-model calls are created. Later stories own initialization, locked dependency compatibility, frontend/Worker/local D1 startup, and full fresh-clone validation. Do not start those tasks to make this gate pass.
+**Historical Story 1.1 boundary:** this tool-only rehearsal created no application skeleton/dependencies/lockfile, database or business tables, hosted resources, secrets or real-model calls. The [current application journey](application.md#current-setup-and-checks) and [Story 1.5 fresh-clone record](fresh-clone-verification.md) separately cover the integrated workflow; they are not prerequisites for the tool-only gate.

@@ -79,7 +79,8 @@ export class LocalFixture {
     this.startupTimeout = limits.startupTimeout ?? 25_000;
     this.outputLimit = limits.outputLimit ?? 250_000;
     for (const path of ['package.json', 'frontend/index.html', 'frontend/src', 'src', 'vite.config.ts', 'wrangler.jsonc', 'tsconfig.json', 'tsconfig.frontend.json', 'tsconfig.worker.json',
-      'migrations', 'scripts/local-d1.mjs', 'tests/e2e/d1-runtime.mjs', 'tests/e2e/d1-worker.ts']) {
+      'migrations', 'scripts/local-d1.mjs', 'tests/e2e/d1-runtime.mjs', 'tests/e2e/d1-worker.ts',
+      'vitest.config.ts', 'tests/bootstrap/simulation.test.ts']) {
       mkdirSync(dirname(join(this.project, path)), { recursive: true });
       cpSync(join(root, path), join(this.project, path), {
         recursive: true,

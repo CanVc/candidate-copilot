@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium, expect, test as base } from '@playwright/test';
 import { LocalFixture, ownedProcesses, scopeKey } from './local-fixture';
@@ -88,6 +89,49 @@ test('completed bounds one-shots and cleans every outcome before returning', asy
     // No explicit stop or fixture teardown may mask a completed() cleanup gap.
     expect(ownedProcesses(command)).toHaveLength(0);
     expect(command.exited).toBe(true);
+  }
+});
+
+test('real simulation failure stops smoke before a proven Playwright tripwire', async ({}, testInfo) => {
+  test.setTimeout(40_000);
+  const local = new LocalFixture({ startupTimeout: 10_000 });
+  try {
+    const bin = join(local.project, 'node_modules/.bin');
+    // Unlink only the fixture's shared bin directory before writing a tripwire;
+    // never write through a symlink into the source checkout's dependencies.
+    expect(lstatSync(bin).isSymbolicLink()).toBe(true);
+    rmSync(bin);
+    mkdirSync(bin);
+    symlinkSync(join(local.project, 'node_modules/vitest/vitest.mjs'), join(bin, 'vitest'));
+    const marker = join(local.directory, 'playwright-executed');
+    local.env.PLAYWRIGHT_TRIPWIRE = marker;
+    writeFileSync(join(bin, 'playwright'), '#!/bin/sh\nprintf "Playwright reached\\n" > "$PLAYWRIGHT_TRIPWIRE"\n', { mode: 0o755 });
+
+    // Run the unchanged npm smoke command with the real existing simulation
+    // suite first: success must reach the tripwire through npm's actual PATH.
+    await local.completed(local.startCommand('npm', ['run', 'test:smoke']));
+    expect(readFileSync(marker, 'utf8')).toBe('Playwright reached\n');
+    rmSync(marker);
+
+    const adapter = join(local.project, 'src/adapters/llm/simulated.ts');
+    const source = readFileSync(adapter, 'utf8');
+    const output = "return 'Simulated LLM: bootstrap-pong';";
+    expect(source.split(output)).toHaveLength(2);
+    writeFileSync(adapter, source.replace(output, "return 'DELIBERATE_SIMULATION_FAILURE';"));
+    const failed = local.startCommand('npm', ['run', 'test:smoke']);
+    try {
+      const output = await local.rejected(failed);
+      expect(output).toContain('tests/bootstrap/simulation.test.ts');
+      expect(output).toContain('DELIBERATE_SIMULATION_FAILURE');
+      expect(failed.code).toBe(1);
+      expect(failed.signal).toBeNull();
+      expect(existsSync(marker)).toBe(false);
+    } finally { await local.stop(failed); }
+    expect(ownedProcesses(failed)).toHaveLength(0);
+  } finally {
+    try {
+      if (testInfo.status !== testInfo.expectedStatus) await local.attachLogs(testInfo);
+    } finally { await local.dispose(); }
   }
 });
 

@@ -1,5 +1,6 @@
-# Optional, nonsensitive template only. Story 1.3 needs no variables or copy.
-# Health and the fixture-only simulated LLM require no key, account or D1.
+# Optional, nonsensitive, comment-only template. No variables or copy required.
+# Health and the test-only simulated LLM require no key or account.
+# Local D1 uses the reviewed DB binding in wrangler.jsonc, not runtime variables.
 # Do not add real credentials here or expose server configuration via VITE_*.
-# Startup/build commands explicitly use an empty env-file input (/dev/null).
-# No database binding or real model provider is configured.
+# Startup/build/D1 commands explicitly use empty env-file input (/dev/null).
+# No hosted database or real model provider is configured.

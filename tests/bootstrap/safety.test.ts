@@ -1,5 +1,5 @@
-import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
@@ -40,7 +40,7 @@ describe('publication boundaries', () => {
     expect(manifest.scripts['dev:frontend']).toBe('vite');
     expect(manifest.scripts['dev:worker']).toBe('CI=true WRANGLER_SEND_METRICS=false wrangler dev --local --persist-to .wrangler/state --ip 127.0.0.1 --port 8787 --inspector-ip 127.0.0.1 --env-file /dev/null');
     expect(manifest.devDependencies['@playwright/test']).toBe('1.64.1');
-    expect(manifest.scripts['test:smoke']).toBe('playwright test');
+    expect(manifest.scripts['test:smoke']).toBe('vitest run tests/bootstrap/simulation.test.ts && playwright test');
   });
 
   it('keeps local D1 commands and generated types behind explicit safety boundaries', () => {
@@ -114,5 +114,179 @@ describe('publication boundaries', () => {
       timeout: 120_000,
     });
     expect(output).toContain('PASS: frontend and Worker artifacts exclude');
+  });
+});
+
+// Execute the marked guide blocks themselves, not a separately maintained
+// selection script. /bin/sh supplies a non-Bash launcher; Zsh is not required.
+function guideBlocks(name: string) {
+  const text = readFileSync(join(root, 'docs/development', name), 'utf8');
+  const blocks: Record<string, string[]> = {};
+  for (const match of text.matchAll(/^[ \t]*<!-- fresh-terminal:([a-z]+) -->\n([ \t]*)```bash\n([\s\S]*?)\n\2```/gm)) {
+    const block = match[3]!.split('\n').map((line) => line.slice(match[2]!.length)).join('\n');
+    (blocks[match[1]!] ??= []).push(block);
+  }
+  return blocks;
+}
+
+const application = guideBlocks('application.md');
+const workstation = guideBlocks('workstation.md');
+const handoffs = [
+  { name: 'application setup', entry: application.bash?.[0], init: application.init?.[0], next: application.install?.[0], command: 'ci' },
+  { name: 'Worker terminal', entry: application.bash?.[1], init: application.init?.[1], next: application.worker?.[0], command: 'run dev:worker' },
+  { name: 'frontend terminal', entry: application.bash?.[1], init: application.init?.[1], next: application.frontend?.[0], command: 'run dev:frontend' },
+  { name: 'workstation handoff', entry: workstation.bash?.[0], init: workstation.init?.[0], next: application.install?.[0], command: 'ci' },
+];
+
+describe('documented fresh-terminal handoff', () => {
+  it.each(handoffs)('$name selects pins from an old PATH and stops failures before installation/startup', ({ name, entry, init, next, command }) => {
+    expect(entry).toBe('bash --noprofile --norc');
+    expect(init).toBeTypeOf('string');
+    expect(next).toBeTypeOf('string');
+    const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
+    for (const mode of ['selected', 'missing-fnm', 'failed-env', 'failed-use', 'stale-selection', 'wrong-npm']) {
+      const temporary = mkdtempSync(join(tmpdir(), 'candidate-copilot-terminal-'));
+      try {
+        const home = join(temporary, 'home');
+        const project = join(home, 'dev/candidate-copilot');
+        const old = join(temporary, 'old');
+        const selected = join(temporary, 'selected');
+        const fnm = join(home, '.local/share/fnm');
+        const shellState = join(home, '.local/state/fnm-shell');
+        for (const path of [join(project, 'scripts'), old, selected, join(fnm, 'aliases'), shellState]) mkdirSync(path, { recursive: true });
+        copyFileSync(join(root, '.node-version'), join(project, '.node-version'));
+        copyFileSync(join(root, 'scripts/check-workstation.sh'), join(project, 'scripts/check-workstation.sh'));
+        writeFileSync(join(project, 'package-lock.json'), 'SYNTHETIC_LOCK\n');
+        const executable = (path: string, body: string) => writeFileSync(path, `#!/bin/bash\n${body}\n`, { mode: 0o755 });
+        executable(join(old, 'node'), 'printf "v24.15.0\\n"');
+        executable(join(old, 'npm'), `if [[ $* == --version ]]; then printf '11.12.1\\n'; else printf 'OLD_NPM %s\\n' "$*" >> "$HOME/commands"; exit 91; fi`);
+        executable(join(old, 'git'), 'if [[ $* == --version ]]; then printf "git version 2.43.0\\n"; else [[ $* == "--no-pager diff --exit-code -- package-lock.json" ]]; fi');
+        executable(join(old, 'cat'), 'if [[ $* == /etc/os-release ]]; then printf \'ID=ubuntu\\nVERSION_ID="24.04"\\n\'; else exec /bin/cat "$@"; fi');
+        // Selected versions are explicitly simulated, independent of the Node
+        // launching Vitest. The copied real gate still enforces its exact pins.
+        // No package install/server runs; other npm commands are tripwires.
+        executable(join(selected, 'node'), '[[ $* == --version ]] || exit 99; printf "v24.22.0\\n"');
+        executable(join(selected, 'npm'), `if [[ $* == --version ]]; then
+  if [[ $FIXTURE_MODE == wrong-npm ]]; then printf '11.12.1\\n'; else printf '11.19.1\\n'; fi
+else printf '%s\\n' "$*" >> "$HOME/commands"; fi`);
+        symlinkSync(old, join(shellState, 'bin'));
+        if (mode !== 'missing-fnm') executable(join(fnm, 'fnm'), `case "$*" in
+  'env --shell bash')
+    [[ $FIXTURE_MODE != failed-env ]] || exit 17
+    printf 'export PATH="$HOME/.local/state/fnm-shell/bin:$PATH"\\n' ;;
+  "use $(/bin/cat "$HOME/dev/candidate-copilot/.node-version")")
+    [[ $FIXTURE_MODE != failed-use ]] || exit 18
+    if [[ $FIXTURE_MODE != stale-selection ]]; then /bin/ln -sfn ${quote(selected)} "$HOME/.local/state/fnm-shell/bin"; fi ;;
+  *) exit 99 ;;
+esac`);
+        const protectedFiles = [join(home, '.bashrc'), join(home, '.profile'), join(fnm, 'aliases/default'), join(temporary, 'empty-npmrc')];
+        for (const path of protectedFiles) writeFileSync(path, 'SYNTHETIC_SETTING_MUST_NOT_CHANGE\n');
+        const result = spawnSync('/bin/sh', ['-c', `${entry}\nstatus=$?\nprintf 'PARENT_NODE='; node --version\nexit "$status"`], {
+          cwd: temporary,
+          input: `[[ -n \${BASH_VERSION:-} ]] || exit 90
+printf 'INITIAL_NODE='; node --version
+printf 'INITIAL_NPM='; npm --version
+${init}
+init_status=$?
+printf 'READY=%s\\n' "$WORKSTATION_READY"
+${next}
+next_status=$?
+if [[ $init_status != 0 ]]; then exit "$init_status"; fi
+exit "$next_status"
+`,
+          encoding: 'utf8', timeout: 10_000, maxBuffer: 100_000,
+          env: {
+            HOME: home, PATH: `${old}:/usr/bin:/bin`, SHELL: '/bin/sh', LANG: 'C.UTF-8', FIXTURE_MODE: mode,
+            npm_config_userconfig: '/dev/null', npm_config_globalconfig: join(temporary, 'empty-npmrc'),
+            npm_config_cache: join(temporary, 'npm-cache'), npm_config_update_notifier: 'false',
+          },
+        });
+        const label = `${name}: ${mode}\n${result.stdout}\n${result.stderr}`;
+        expect(result.error, label).toBeUndefined();
+        expect(result.signal, label).toBeNull();
+        expect(result.stdout, label).toContain('INITIAL_NODE=v24.15.0');
+        expect(result.stdout, label).toContain('INITIAL_NPM=11.12.1');
+        expect(result.stdout, label).toContain('PARENT_NODE=v24.15.0');
+        if (mode === 'selected') {
+          expect(result.status, label).toBe(0);
+          expect(result.stdout, label).toContain('PASS: Node v24.22.0');
+          expect(result.stdout, label).toContain('PASS: npm 11.19.1');
+          expect(result.stdout, label).toContain('READY=true');
+          expect(readFileSync(join(home, 'commands'), 'utf8'), label).toBe(`${command}\n`);
+        } else {
+          expect(result.status, label).not.toBe(0);
+          expect(result.stdout, label).toContain('READY=false');
+          expect(existsSync(join(home, 'commands')), label).toBe(false);
+        }
+        for (const path of protectedFiles) expect(readFileSync(path, 'utf8'), label).toBe('SYNTHETIC_SETTING_MUST_NOT_CHANGE\n');
+        expect(readFileSync(join(project, 'package-lock.json'), 'utf8'), label).toBe('SYNTHETIC_LOCK\n');
+      } finally { rmSync(temporary, { recursive: true, force: true }); }
+    }
+  });
+});
+
+describe('documented validation fail-fast chain', () => {
+  it.each([
+    { mode: 'gate', status: 1 },
+    { mode: 'npm-test', status: 23 },
+    { mode: 'success', status: 0 },
+  ])('$mode preserves the documented gate-first and fail-fast ordering', ({ mode, status }) => {
+    const validation = application.validate?.[0];
+    expect(validation?.split('\n')[0]).toBe('bash scripts/check-workstation.sh &&');
+    const temporary = mkdtempSync(join(tmpdir(), 'candidate-copilot-validation-'));
+    try {
+      const project = join(temporary, 'project');
+      const bin = join(temporary, 'bin');
+      const home = join(temporary, 'home');
+      for (const path of [join(project, 'scripts'), bin, home]) mkdirSync(path, { recursive: true });
+      copyFileSync(join(root, '.node-version'), join(project, '.node-version'));
+      copyFileSync(join(root, 'scripts/check-workstation.sh'), join(project, 'scripts/check-workstation.sh'));
+      const executable = (name: string, body: string) => writeFileSync(join(bin, name), `#!/bin/bash\n${body}\n`, { mode: 0o755 });
+      executable('cat', 'if [[ $* == /etc/os-release ]]; then printf \'ID=ubuntu\\nVERSION_ID="24.04"\\n\'; else exec /bin/cat "$@"; fi');
+      executable('node', `if [[ $* == --version ]]; then
+  if [[ $FIXTURE_MODE == gate ]]; then printf 'v24.15.0\\n'; else printf 'v24.22.0\\n'; fi
+else printf 'node %s\\n' "$*" >> "$HOME/calls"; printf 'node stage\\n' >> "$HOME/later-stage"; fi`);
+      executable('npm', `if [[ $* == --version ]]; then
+  if [[ $FIXTURE_MODE == gate ]]; then printf '11.12.1\\n'; else printf '11.19.1\\n'; fi
+else
+  printf 'npm %s\\n' "$*" >> "$HOME/calls"
+  case "$*" in
+    'run typecheck') ;;
+    test) [[ $FIXTURE_MODE != npm-test ]] || exit 23 ;;
+    *) printf 'npm stage\\n' >> "$HOME/later-stage" ;;
+  esac
+fi`);
+      executable('git', `if [[ $* == --version ]]; then printf 'git version 2.43.0\\n'; else
+  case "$*" in
+    '--no-pager diff --exit-code -- package-lock.json src/worker/env.d.ts'|'--no-pager diff --check'|'--no-pager status --short') ;;
+    *) exit 99 ;;
+  esac
+  printf 'git %s\\n' "$*" >> "$HOME/calls"
+  printf 'git stage\\n' >> "$HOME/later-stage"
+fi`);
+      // No set -e wrapper: the guide's actual && chain must stop execution.
+      // All application commands are inert tripwires, not D1/build/browser work.
+      const result = spawnSync('/bin/bash', ['--noprofile', '--norc', '-c', validation!], {
+        cwd: project, encoding: 'utf8', timeout: 10_000, maxBuffer: 100_000,
+        env: { HOME: home, PATH: `${bin}:/usr/bin:/bin`, LANG: 'C.UTF-8', FIXTURE_MODE: mode },
+      });
+      const label = `${mode}\n${result.stdout}\n${result.stderr}`;
+      expect(result.error, label).toBeUndefined();
+      expect(result.signal, label).toBeNull();
+      expect(result.status, label).toBe(status);
+      const calls = existsSync(join(home, 'calls')) ? readFileSync(join(home, 'calls'), 'utf8') : '';
+      if (mode === 'success') {
+        expect(result.stdout, label).toContain('PASS: Node v24.22.0');
+        expect(result.stdout, label).toContain('PASS: npm 11.19.1');
+        expect(existsSync(join(home, 'later-stage')), label).toBe(true);
+        expect(calls, label).toContain('npm run test:d1\n');
+        expect(calls, label).toContain('npm run test:smoke\n');
+        expect(calls, label).toContain('git --no-pager status --short\n');
+      } else {
+        expect(existsSync(join(home, 'later-stage')), label).toBe(false);
+        expect(calls, label).toBe(mode === 'gate' ? '' : 'npm run typecheck\nnpm test\n');
+        expect(result.stdout + result.stderr, label).toContain(mode === 'gate' ? 'Workstation NOT ready' : 'PASS: npm 11.19.1');
+      }
+    } finally { rmSync(temporary, { recursive: true, force: true }); }
   });
 });

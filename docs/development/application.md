@@ -1,30 +1,210 @@
-# Local application — Story 1.4
+# Local application — current fresh-clone journey (Story 1.5)
 
-Current instructions for **Ubuntu 24.04 LTS**, **Node 24.22.0 / npm 11.19.1**. Local D1 now joins the frontend/Worker availability shell and deterministic test-only LLM simulation. No business schema, public SQL diagnostic, hosted resource, account, credential or Python is required. The Story 1.3 and 1.2 sections below are historical records, not current no-D1 instructions.
+Current instructions for **Ubuntu 24.04 LTS / Bash**, **Node 24.22.0 / npm 11.19.1**. This verifies local frontend/Worker availability, local D1 and deterministic test-only LLM simulation, not a business pipeline or launch readiness. No hosted resource, Cloudflare/model credential, login or Python is required. [Measured fresh-clone evidence and limitations](fresh-clone-verification.md) are separate from the preserved, dated Story 1.4/1.3/1.2 evidence below. **Historical instructions are not the current procedure.**
 
 ## Current setup and checks
 
-1. Select `.node-version` per [workstation.md](workstation.md), without changing global/default tools. Run `bash scripts/check-workstation.sh`.
-2. Run `sha256sum package-lock.json`, `npm ci`, then the hash again: bytes must be unchanged. Keep all pins; do not approve dependency scripts or run an automatic audit fix. Internet is needed for dependency downloads, not for a hosted database.
-3. Configuration copying remains optional. Use no credentials or real env files; protected Wrangler commands use `/dev/null`, command-local CI and disabled metrics. From the repository root:
+Run in order; stop at the first failing command and use [troubleshooting](#current-troubleshooting), not a forced upgrade or hosted fallback.
 
+1. **Shell entry — run this block alone**, even if your current terminal uses Zsh or already uses Bash:
+
+   <!-- fresh-terminal:bash -->
    ```bash
-   npm run db:types   # regenerate binding-only src/worker/env.d.ts
-   npm run db:init    # apply pending local migrations, then verify binding + SQL + ledger
-   npm run db:check   # dedicated SQL/state verification; never applies migrations
-   npm run typecheck
-   npm test
-   npm run test:d1    # no Chromium download or browser required
-   npm run build
-   node scripts/check-build-isolation.mjs
-   node scripts/check-build-interactivity.mjs
-   npm audit --json
-   npm audit --omit=dev
-   git diff --check
+   bash --noprofile --norc
    ```
 
-4. Start `npm run dev:worker` and `npm run dev:frontend` in separate terminals. Use **http://127.0.0.1:5173/** (frontend) and **http://127.0.0.1:8787/api/health** (Worker). Stop each owned command with Ctrl+C. The loopback/strict-port, privacy, simulation and availability contracts detailed in the historical Story 1.3 implementation remain unchanged. **Health returns only `{"status":"ok"}` and never touches D1**; startup/health still work before initialization. A healthy page is not proof of persistence readiness: run `db:check` and `test:d1` separately.
-5. Browser smoke is optional for ordinary startup/D1 checks, but required for the full workstation verification. Install only the pinned browser via `./node_modules/.bin/playwright install chromium` as described below, then run `npm run test:smoke`. It now discovers D1 tests as well as the retained browser/fixture controls. Tests never reuse an existing server. Chromium/system-library prerequisites and terminal `/usr/bin/script`/PTY/`/proc` requirements below still apply; no application command installs OS packages or global tools/skills.
+   **Wait for the new Bash prompt before copying the next block.** This starts a child Bash without reading profiles; `exit` returns to your original shell. It does not change your login/default shell. Running `bash scripts/check-workstation.sh` later only runs a check in a child process: it does **not** switch or configure the calling shell.
+
+   Only after entering that Bash, if Git/the clone, fnm or the pinned Node distribution is missing, complete [workstation acquisition](workstation.md#git) and [Node/npm acquisition](workstation.md#node-and-npm) separately. Run their acquisition commands in this Bash, not the original Zsh. Do not install application packages to fix a tool-selection failure. Keep profiles and existing defaults (including an absent fnm default) unchanged.
+
+   In that Bash, initialize the clone path explicitly (replace the example path), initialize fnm for **this** shell, select the repository pin, then run the gate. No `.bashrc`, automatic cd hook or inherited `PROJECT_ROOT` is needed:
+
+   <!-- fresh-terminal:init -->
+   ```bash
+   WORKSTATION_READY=false
+   export PROJECT_ROOT="$HOME/dev/candidate-copilot" &&
+   cd "$PROJECT_ROOT" &&
+   export PATH="$HOME/.local/share/fnm:$PATH" &&
+   FNM_ENV=$(fnm env --shell bash) &&
+   eval "$FNM_ENV" &&
+   fnm use "$(cat .node-version)" &&
+   hash -r &&
+   node --version &&
+   npm --version &&
+   bash scripts/check-workstation.sh &&
+   WORKSTATION_READY=true
+   ```
+
+   Require **v24.22.0 / 11.19.1**, a successful gate and `WORKSTATION_READY=true`. On any failure, stop and use [workstation troubleshooting](workstation.md#troubleshooting); do not continue with installation. The `&&` chain stops selection/checks at the first failure, and the following install guard refuses to run after a failed handoff.
+
+2. Only after successful selection/gate **in the same Bash**, install the locked graph as your normal user, with Internet access to the public registry/platform packages and no token. `npm ci` replaces only this clone's dependencies:
+
+   <!-- fresh-terminal:install -->
+   ```bash
+   [[ ${WORKSTATION_READY:-false} == true ]] &&
+   sha256sum package-lock.json &&
+   npm ci &&
+   sha256sum package-lock.json &&
+   git --no-pager diff --exit-code -- package-lock.json
+   ```
+
+   Both lock hashes must match. If the guard fails, repeat step 1, not an unguarded install.
+
+   Do not delete/regenerate the lockfile, use `npm install`, approve dependency scripts blindly or run `npm audit fix --force`. The selected npm warns about unapproved esbuild/workerd scripts; the verified workflow needs no approval. Use package-local tools, never global Vite/Wrangler/Playwright.
+
+3. **Configuration is optional and empty.** No copy is needed. `.dev.vars.example` is comment-only; if desired, copy it only when no local file already exists:
+
+   ```bash
+   test -e .dev.vars || cp -- .dev.vars.example .dev.vars
+   ```
+
+   Never inspect/copy real private or env files for verification, add credentials or use `VITE_*` for server settings. Protected Worker/build/D1 commands explicitly use `/dev/null`, command-local CI and disabled metrics. D1's `DB` binding is reviewed in `wrangler.jsonc`, not provided by an env variable.
+
+4. Generate binding-only declarations and initialize the clone's local D1 (safe to rerun without deletion):
+
+   ```bash
+   npm run db:types
+   git --no-pager diff --exit-code -- src/worker/env.d.ts
+   npm run db:init
+   npm run db:check
+   ```
+
+   The generated declarations must match the reviewed configuration. Storage, migration identity and [warned D1-only reset](#d1-diagnosis-and-destructive-local-only-reset) are detailed below. Health does **not** check D1.
+
+5. Provision the [explicit browser/system and PTY prerequisites](#browser-system-and-terminal-prerequisites). They must be available **before** `npm test` (real PTY builds) and full smoke. As your normal user, download Chromium selected by the locked Playwright (Internet/disk required, no global browser or inherited cache needed):
+
+   ```bash
+   ./node_modules/.bin/playwright --version  # 1.64.1
+   ./node_modules/.bin/playwright install chromium
+   ```
+
+   Browser installation is separate from `npm ci` and optional for ordinary startup or `test:d1`, but **required for full verification**. Never use automatic `--with-deps`/`install-deps` privilege escalation.
+
+6. With ports 5173/8787 free and no manually started servers, run every validation. This pasted block checks the toolchain first and stops at the first failure; do not run later stages separately to bypass a failed check:
+
+   <!-- fresh-terminal:validate -->
+   ```bash
+   bash scripts/check-workstation.sh &&
+   npm run typecheck &&
+   npm test &&
+   npm run test:d1 &&  # browser-free: no page/browser fixture requested
+   npm run build &&
+   node scripts/check-build-isolation.mjs &&
+   node scripts/check-build-interactivity.mjs &&
+   npm run test:smoke &&
+   npm audit --json &&
+   npm audit --omit=dev &&
+   npm ls --all &&
+   git --no-pager diff --exit-code -- package-lock.json src/worker/env.d.ts &&
+   git --no-pager diff --check &&
+   git --no-pager status --short
+   ```
+
+   `test:smoke` runs the **existing** `tests/bootstrap/simulation.test.ts` first (exact repeatable output, unsupported-input rejection, forbidden network transports), then Playwright via fail-fast `&&`. A simulation failure prevents Playwright execution. Playwright covers browser/Worker availability, actual Worker-binding SQL and fixture negatives; its sanitized copies reuse installed dependencies, so those copies alone are **not fresh-clone evidence**. Tests never reuse existing servers. Build verifiers retain 22 canaries, real terminal builds and synthetic prompt/cleanup controls. Worker build is dry-run only, never upload/deploy. Audits require registry access; findings require review, not automatic fixes.
+
+7. Perform the [two-terminal startup/shutdown checks](#current-two-terminal-startup-and-shutdown) on this clone's own servers. Stop both before rerunning smoke. Check `ss` and `git --no-pager status --short` afterward: no application listener or tracked runtime/private file may remain. Expected local dependencies, build output, optional comment-only config, logs and D1 are ignored, not committed.
+
+## Browser, system and terminal prerequisites
+
+These are **explicit administrator actions**, not application behavior. Review the following Ubuntu 24.04 x86_64 packages before asking an administrator to install them; use the workstation's official Ubuntu repositories. The browser libraries match [Playwright 1.64.1's Noble Chromium list](https://github.com/microsoft/playwright/blob/v1.64.1/packages/playwright-core/src/server/registry/nativeDeps.ts); the two font packages support this headless shell. No desktop/Xvfb, Firefox or WebKit is needed for this suite.
+
+```bash
+sudo apt-get update
+sudo apt-get install --yes bsdutils util-linux procps iproute2 \
+  fonts-liberation fonts-noto-color-emoji \
+  libasound2t64 libatk-bridge2.0-0t64 libatk1.0-0t64 libatspi2.0-0t64 \
+  libcairo2 libcups2t64 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0t64 \
+  libnspr4 libnss3 libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 \
+  libxdamage1 libxext6 libxfixes3 libxkbcommon0 libxrandr2
+```
+
+No application/test script runs sudo or installs OS packages. Check actual terminal/procfs access, not just package presence:
+
+```bash
+/usr/bin/script --version
+dpkg-query -S /usr/bin/script  # bsdutils, from util-linux
+ls -l /dev/ptmx /dev/pts/ptmx
+findmnt /proc
+findmnt /dev/pts
+/usr/bin/script -q -e -c 'test -t 0 && test -t 1 && test -t 2' /dev/null
+```
+
+Require readable same-user `/proc` (including `self/stat` and `self/environ`) and working PTYs. `npm test` runs the real in-terminal probe, two protected builds and eight synthetic controls. Cleanup is trusted-tool regression coverage, not a sandbox: hostile marker removal, SIGKILL, host failure or restricted `/proc` are not covered. Container/headless success does not prove graphical-workstation usability or browser sandbox/security guarantees.
+
+## Current two-terminal startup and shutdown
+
+In **each** terminal, first run this shell-entry block **alone** (including when starting in Zsh):
+
+<!-- fresh-terminal:bash -->
+```bash
+bash --noprofile --norc
+```
+
+**Wait for the new Bash prompt before the next block.** Then explicitly initialize the clone path (replace the example), fnm's Bash environment and the repository-pinned Node, and rerun the gate. Do not rely on `.bashrc`, cd hooks, another terminal's exports or a previous selection:
+
+<!-- fresh-terminal:init -->
+```bash
+WORKSTATION_READY=false
+export PROJECT_ROOT="$HOME/dev/candidate-copilot" &&
+cd "$PROJECT_ROOT" &&
+export PATH="$HOME/.local/share/fnm:$PATH" &&
+FNM_ENV=$(fnm env --shell bash) &&
+eval "$FNM_ENV" &&
+fnm use "$(cat .node-version)" &&
+hash -r &&
+node --version &&
+npm --version &&
+bash scripts/check-workstation.sh &&
+WORKSTATION_READY=true
+```
+
+Stop on failure; missing tools/versions use the separate [acquisition guide](workstation.md#node-and-npm), never automatic installation or a default/profile change. Only after success, run **one** command in each prepared Bash:
+
+Terminal 1:
+
+<!-- fresh-terminal:worker -->
+```bash
+[[ ${WORKSTATION_READY:-false} == true ]] && npm run dev:worker
+```
+
+Terminal 2 (separately):
+
+<!-- fresh-terminal:frontend -->
+```bash
+[[ ${WORKSTATION_READY:-false} == true ]] && npm run dev:frontend
+```
+
+Both services bind IPv4 loopback with fixed ports; neither reuses an occupied port or selects a hosted fallback. Worker uses `--local`, explicit `.wrangler/state`, empty env-file input, CI, disabled metrics and a loopback inspector. Internal loopback runtime/inspector ports are not application URLs.
+
+Open **http://127.0.0.1:5173/**. The French technical shell should show “Worker disponible.” Check both endpoints from another terminal:
+
+```bash
+curl --fail --show-error --connect-timeout 2 --max-time 5 http://127.0.0.1:8787/api/health
+curl --fail --show-error --connect-timeout 2 --max-time 5 http://127.0.0.1:5173/api/health
+```
+
+Each returns exactly `{"status":"ok"}` (200); health is availability-only, with no SQL, model call, configuration or public diagnostic. A frontend HTML 200 alone is insufficient. Run `db:check`/`test:d1` for persistence evidence. The simulated provider is test-only, never a public route or chat UI.
+
+Stop **only the owned Worker with Ctrl+C in terminal 1**; leave frontend running and reload. Within five seconds expect “Worker indisponible. Rechargez la page pour réessayer.” Direct curl must fail to connect and proxied health must not return a successful health response. Restart the Worker, reload and confirm recovery. Finally Ctrl+C **each** owned command in its terminal and check:
+
+```bash
+ss -ltnp '( sport = :5173 or sport = :8787 )'  # no application listeners
+```
+
+No combined supervisor, blanket `pkill`, unknown-process killing, login or deployment is part of this journey.
+
+## Current troubleshooting
+
+| Failure | Diagnose without reading private configuration | Corrective action |
+| --- | --- | --- |
+| Missing/wrong tool or PATH | `type -a git node npm fnm`; `node --version`; `npm --version`; `bash scripts/check-workstation.sh` | Follow [workstation troubleshooting](workstation.md#troubleshooting), reselect the pin and `hash -r`. Administrator restores Ubuntu Git if needed. Never force engine checks, change defaults or globally upgrade npm. |
+| Missing/inconsistent packages or native binary | `npm ls --all`; `npm config get registry`; `npm config get omit`; `npm cache verify`; `git --no-pager diff -- package.json package-lock.json` | Fix first download/DNS/CA/permission error; restore matching reviewed manifest/lock and run `npm ci --include=dev --include=optional` to override inherited development/optional dependency omissions. Public registry needs no token. Never disable TLS, dump token-bearing config, delete the lock or install a global bundler. |
+| Port occupied (5173/8787 or reported inspector port) | `ss -ltnp '( sport = :5173 or sport = :8787 )'` (substitute reported inspector port if needed) | Stop only your own listener in its original terminal, or ask its owner. Keep ports fixed; smoke deliberately fails instead of reusing/stopping an unknown service. |
+| Wrong configuration/binding or uninitialized D1 | `npm run db:check`; compare reviewed `wrangler.jsonc` with `git --no-pager diff -- wrangler.jsonc`; inspect reported migration/path, not real env files | Restore exactly the local `DB` identity below. New storage: `db:init`, then `db:check`. For altered history or unusable storage, follow [D1 diagnosis](#d1-diagnosis-and-destructive-local-only-reset); never hosted IDs, login, remote flags or automatic deletion. |
+| Worker unavailable, build/type error, unexpected prompt | Check owned terminal's first error; direct and proxied curls above; `npm run typecheck`; `npm run build:worker` | Restart only the corrected local Worker and reload. Stop on questions; do not approve skills or provide credentials. Check command-local CI/local/metrics/empty-env safeguards. A secret or D1 reset cannot fix compilation or availability. |
+| Missing/mismatched browser or library | `./node_modules/.bin/playwright --version`; `./node_modules/.bin/playwright install --dry-run chromium`; `ldd /reported/browser/executable` (look for `not found`) | Rerun the pinned Chromium install after `npm ci`. Administrator reviews the explicit Ubuntu library list above. No system browser substitution or automatic install-deps. OS policy may block launch. |
+| PTY, `/proc`, deadline/output or cleanup failure | Run prerequisite commands above and `node scripts/check-build-interactivity.mjs`; inspect first bounded error and retained owned-fixture path | Administrator repairs bsdutils/procfs/devpts policy as appropriate; no npm PTY workaround, blind chmod/remount or security weakening. Stop only provably owned survivors before removing that fixture; do not delete beneath a writer. |
+| Forbidden dev file (403/404) or isolation failure | Inspect failed application-module requests and Vite output; `node scripts/check-build-isolation.mjs` | Keep env/private/content/preparation/state excluded. Do not broaden filesystem allowlists, enable SPA fallback or import private material to silence a test. |
 
 ## Binding, storage and migrations
 
@@ -56,9 +236,9 @@ npm run db:init
 npm run db:check
 ```
 
-If the target is absent, there is nothing to reset: initialize instead. Verification exercises this deletion **only in fixture-owned disposable state**, with all one-shots closed; another synthetic state file must survive and reinitialization must work. No existing developer data is reset to prove this procedure.
+If the target is absent, there is nothing to reset: initialize instead. Verification exercises this deletion **only in owned disposable state**, with all one-shots closed; another synthetic state file must survive and reinitialization must work. No existing developer data is reset to prove this procedure.
 
-## Story 1.4 evidence and measured verification
+## Historical Story 1.4 evidence and measured verification
 
 Official references supplied by the approved spec were checked **2026-10-20**, and all three URLs returned HTTP 200 during implementation:
 
