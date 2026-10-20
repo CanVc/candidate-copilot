@@ -73,7 +73,7 @@ Post-review corrections were applied in the original implementation session: abo
 
 Final parent verification repeated the complete documented sequence after patches: gate, unchanged-lockfile npm ci, typechecks, 45 Bash + 39 Vitest cases, both builds, 22-canary isolation, both protected real PTY builds/eight synthetic controls, 17 smoke/fixture-control cases, full/production audits and whitespace checks. Every check passed; audits remain zero, the same lock hash was retained and no smoke fixtures/application listeners remained. Matrix rows remain covered by executed tests. Both approved intent and existing direct pins remain unchanged. All retained review patches are resolved; two separately recorded exceptional constructor-I/O findings were rejected under the rare low-impact complexity rule, not deferred.
 
-Implementation and automated review are complete. Sprint tracking remains at review pending BC's practical workstation/browser verification and acceptance; automated success is not human acceptance. No work was deferred.
+Implementation and automated review are complete; no work was deferred. On 2026-10-20, BC explicitly requested closure after verification. A fresh workstation gate, typecheck, 45 Bash + 40 Vitest cases and all 30 smoke cases (including 12 D1 cases) passed against revision `d09dc1af847b4ba5e7324410f9c5813921bb7845`; sprint tracking was synchronized to `done`. This records BC's closure instruction, not a claim of additional manual workstation/browser checks.
 
 ## Spec Change Log
 
