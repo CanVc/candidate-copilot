@@ -23,6 +23,12 @@ The [architecture impact analysis](architecture-update-needed.md) preserves the 
 
 Contract reconciliation is complete; implementation, migrations/atomic publication, supported-browser lifecycle proof, model/retrieval evaluation, privacy/accessibility checks, provider billing/quota verification and the runbook are not. PRD §10 and the [open acceptance register](../../reviews/open-acceptance-items.md) retain the remaining work without selecting unresolved policies. This documentation synchronization adds no API, schema, storage mechanism or launch guarantee; concurrency, recovery, usage, cost, privacy and security constraints are unchanged.
 
+## Content-authoring prerequisite — 2026-10-21
+
+BC authorized [Story 2.0](../../epics.md#story-20-define-and-pilot-the-content-authoring-workflow) before Story 2.1: define and pilot the authoring workflow, one interview agent, the finite V1 document-type inventory, per-type Markdown output formats and one real BC-validated pilot per type. [PRD §4.3.1](prd.md#431-bc-assisted-content-authoring) owns product acceptance; [architecture AD-2 and the authoring handoff](../../architecture/architecture-candidate-copilot-2026-09-11/ARCHITECTURE-SPINE.md#content-authoring-handoff--story-20) preserve private/public and tooling/runtime boundaries.
+
+Notes/drafts/checkpoints stay private; reusable nonsensitive workflow/agent/templates remain outside indexed content. Document actual authoring-model/session-log processing and obtain BC consent before remote processing of nonpublic material. Story 2.1 completes and technically validates the public corpus and explicitly copies approved Markdown; Story 3.1 owns project descriptors/maps. Real-pilot acceptance does not close full-corpus/catalog choices or permit automatic publication. No taxonomy, extra selectable Resource type, runtime provider, API, storage schema, UI or launch acceptance is selected by this planning amendment.
+
 ## Original brief guardrails retained
 
 Input reconciliation also recovers two original qualitative boundaries without expanding the V1 update: success is not a hiring-conversion target or attribution of hiring-process progression to Candidate Copilot; no post-MVP roadmap is committed. Future capabilities respond to observed use. Automated conversation monitoring/analysis remains a separate project, not an implicit expansion of this portfolio.

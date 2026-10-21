@@ -35,8 +35,13 @@
 #   2.20 browser lifecycle proof).
 # - Backup/restore reservation A06 remains open for Story 4.8.
 # - No recruiter-launch approval is implied.
+# CONTENT-AUTHORING AMENDMENT (BC scope authorization, 2026-10-21):
+# - After Epic 1: 2.0 defines/pilots workflow, interview agent, document types,
+#   per-type Markdown formats and one real BC-validated pilot per type.
+# - 2.1 then completes/validates/promotes the corpus; 3.1 keeps project maps.
+# - Story 2.0 is planned, not implemented; it and Epic 2 remain in backlog.
 generated: 10-19-2026 21:56
-last_updated: 10-20-2026 18:01
+last_updated: 10-21-2026 09:43
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -51,6 +56,7 @@ development_status:
   epic-1-retrospective: optional
 
   epic-2: backlog
+  2-0-define-and-pilot-the-content-authoring-workflow: backlog
   2-1-prepare-an-explicitly-public-knowledge-base: backlog
   2-2-build-reproducible-public-catalog-and-search-artifacts: backlog
   2-3-activate-a-coherent-local-public-publication: backlog

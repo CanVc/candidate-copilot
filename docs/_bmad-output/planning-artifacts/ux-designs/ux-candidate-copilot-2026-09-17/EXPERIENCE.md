@@ -8,7 +8,7 @@ sources:
   - ../../architecture/architecture-candidate-copilot-2026-09-11/ARCHITECTURE-SPINE.md
   - ../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md
   - .memlog.md
-updated: 2026-10-19
+updated: 2026-10-21
 ---
 
 # Candidate Copilot — Experience Sketch
@@ -22,6 +22,8 @@ Public anonymous responsive French web experience, desktop and mobile equally im
 Purpose and boundaries remain in the [brief](../../briefs/brief-candidate-copilot-2026-09-10/brief.md) and [PRD](../../prds/prd-candidate-copilot-2026-09-11/prd.md): factual exploration of BC's documented professional work, not an autonomous representative, hiring recommendation or candidate-role fit assessment. Explicit visitor context may orient factual questions; no inferred recruiter personalization, outside evidence or private material.
 
 Authority: [.memlog.md](.memlog.md) preserves UX decisions; the current PRD governs product requirements and architecture/runtime sources govern technical contracts. The approved on-demand-project and session decisions are now reconciled upstream. These spines win over mocks on settled UX; runtime constraints below are inherited, not user-tested UX. The [PRD authority map](../../prds/prd-candidate-copilot-2026-09-11/prd.md#0-document-purpose) identifies current owners and historical material.
+
+**Authoring boundary — Story 2.0:** BC's interview workflow, editorial agent, document types/templates and real pilot documents are author-side preparation outside the recruiter experience, as defined in [PRD §4.3.1](../../prds/prd-candidate-copilot-2026-09-11/prd.md#431-bc-assisted-content-authoring). They add no authoring/admin screen, full-document browser or selectable Resource type; V1 Resources remain projects. Private drafts never become public mock content. Only explicitly approved material handed through Story 2.1 may inform the deployed corpus, while Story 3.1 retains Resource descriptors/maps. Approved layout, style, French UI copy obligations and accessibility/state acceptance remain unchanged.
 
 ## Information Architecture
 

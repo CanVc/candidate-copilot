@@ -2,7 +2,7 @@
 title: Candidate Copilot PRD
 status: final
 created: 2026-09-11
-updated: 2026-10-19
+updated: 2026-10-21
 ---
 
 # PRD: Candidate Copilot
@@ -18,7 +18,7 @@ This PRD defines the first public version of Candidate Copilot: a simple, recrui
 | Technical contracts | [Architecture spine](../../architecture/architecture-candidate-copilot-2026-09-11/ARCHITECTURE-SPINE.md) and [runtime companion](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md), which now include Resource scope, publication and session contracts. |
 | Reconciliation and remaining acceptance | [PRD addendum](addendum.md) links current contracts; [architecture impact analysis](architecture-update-needed.md) is historical, not a live contract-absence report. §10 and the [open acceptance register](../../reviews/open-acceptance-items.md) distinguish unresolved work from defined but unimplemented contracts. |
 
-This synchronization changes no approved product policy, API or schema and makes no implementation or launch-readiness claim.
+The 2026-10-21 amendment adds BC's approved content-authoring prerequisite in §4.3.1 and Story 2.0 before public-corpus preparation. It changes no recruiter interaction, runtime API or schema and makes no claim that the workflow, agent, pilots or launch acceptance have been implemented.
 
 ## 1. Vision
 
@@ -188,6 +188,7 @@ The UI must show a clear working indicator while Candidate Copilot retrieves and
 Candidate Copilot must answer only from the deployed Public Knowledge Base. The Public Knowledge Base must be maintained as human-readable, version-controlled public Markdown, with any runtime search or index artifacts derived from that source.
 
 **Acceptance / Planning Notes:**
+- Before public-corpus preparation, BC defines and pilots the authoring workflow, interview agent, V1 document types and per-type formats described in [§4.3.1](#431-bc-assisted-content-authoring). This is author-side preparation, not a new recruiter feature or selectable Resource type.
 - Private material must not be deployed and hidden through prompts or runtime filtering.
 - If BC knows something that is not in the Public Knowledge Base, Candidate Copilot must not invent it.
 - Runtime retrieval artifacts cannot become a separate opaque source of truth.
@@ -217,6 +218,19 @@ When support is absent, weak, or partial, Candidate Copilot must say so rather t
 - Partial answers distinguish what is supported from what is unavailable.
 - Finding no suitable passage is reported as insufficient retrieved evidence within the Submitted Scope, not proof that the information does not exist anywhere in the Public Knowledge Base.
 - Partial/missing selected evidence never triggers a fallback to unselected Resources or other public documents. Factual examples offered after a refusal remain subject to the same scope.
+
+### 4.3.1 BC-Assisted Content Authoring
+
+Story 2.0 makes content production explicit before Story 2.1's public-corpus preparation. BC uses an editorial interview agent outside the deployed app to turn free narration and existing notes into faithful, reviewable Markdown. This supports FR-9; it is not a multi-candidate onboarding product or an administration interface.
+
+- Define a repeatable workflow: choose a topic/type, narrate freely, answer small batches of targeted questions, correct a synthesis, draft, and explicitly review. Demonstrate resumption in a fresh authoring session from a private checkpoint preserving BC corrections, confirmed/unknown facts, decisions and next questions, without hidden prior-session context.
+- Deliver one reusable invocable interview-agent definition with usage instructions and type-specific prompts/templates. Distinguish BC's own contribution from team achievements; never invent dates, metrics, outcomes or supporting evidence. Material unknowns/conflicts trigger clarification, remain identified in preparation or are omitted from public-ready claims.
+- Agree with BC on a finite V1 document-type inventory. Each type has a purpose, representative recruiter questions, boundaries and relationships to other documents. The final taxonomy is a deliverable of 2.0, not an already selected list. Editorial document types are distinct from the project's selectable Resource type.
+- Define one Markdown output template per approved type: required/optional sections, attribution, available evidence and missing-information handling, plus common public metadata compatible with architecture AD-2. Drafts must not fabricate approval; public promotion requires valid document_id, visibility: public, created_at, reviewed_by and reviewed_at. Revisions retain the stable document_id, identify changed facts and renew factual/publication review before revised text becomes publication-eligible.
+- Exercise the entire workflow with BC to produce at least one real corrected pilot per type. BC validates factual accuracy and publication eligibility; fictional examples or empty templates do not count. Refine prompts/templates from pilots, rerun affected steps and reconfirm affected pilots against the final delivered versions. A private evidence record binds each type to agent/template versions, an opaque pilot identifier/revision and dated BC approval. Version only a nonsensitive summary with safe type/version references, opaque pilot identifiers/revisions and dated approval outcomes; actual content, sensitive identifiers/mappings, private facts/paths and private content hashes stay out of it. Missing real information blocks pilot acceptance rather than inviting fabrication.
+- Local working sources, interview notes, drafts and resume checkpoints belong under gitignored content/private and never enter Git, hosted builds, the deployed assistant's prompts or its index. Nonsensitive reusable instructions/agent/templates are versioned outside content/private and content/public. Pilots remain private until the explicit public-corpus handoff; any tool/provider-managed processing copies are distinct from these working files and require the handling/disclosure below.
+- Before remote transmission, BC controls input review, selection and sanitization, including inspection/control of automatic attachments/context so only authorized material is sent. Exclude secrets and unauthorized third-party confidential data without claiming comprehensive automatic redaction. Document actual processing, retention, deletion procedures and unavoidable copies/limits for working files and tool/provider-managed session/log copies, and obtain BC's explicit consent before transmitting nonpublic material. Local files imply neither a local model nor zero provider retention; authoring does not automatically inherit the runtime Conversation's 90-day policy, relax FR-16's deployed-app prompt boundary or add a mandatory paid service.
+- Sequence: Epic 1 → 2.0's method/types/formats/pilots → 2.1's corpus completion, BC-approved coverage record, source-safety validation and explicit approved copying into content/public → 2.2's derived artifacts. The coverage record maps intended recruiter questions to actual public documents and records accepted limitations/deferred gaps without implying universal answerability. Story 3.1 retains factual project Resource descriptors/maps. Pilot acceptance is neither automatic publication, complete corpus coverage nor closure of OPEN-1. No index, recruiter UI, hosted Cloudflare resources or runtime model integration is needed to demonstrate 2.0.
 
 ### 4.4 Refusals and Professional Boundaries
 
@@ -447,6 +461,7 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 
 - Anonymous web app accessible through a shared, unlisted link.
 - French-only UI.
+- BC-only content-authoring workflow and interview agent, finite V1 document types, per-type Markdown formats and one real BC-validated pilot per type before completing/validating the public corpus; no authoring screen in the deployed app.
 - Minimal landing with authorship, purpose, trust/privacy explanation, suggested questions and free entry; optional initially open Conversation guide.
 - On-demand project Resource Library, immediate multi-selection/removal, persistent Active Selection and immutable per-question Submitted Scope/Historical Resource Tokens; no mandatory project showcase.
 - Free-form multi-turn Q&A about documented professional topics, with strict selected-document scope or the entire public base when nothing is selected, never the Web.
@@ -499,11 +514,11 @@ Candidate Copilot must not be shown to recruiters if the minimal test set reveal
 - **Privacy risk:** Visitor conversation data or private BC material could be exposed. Mitigation: public-by-construction source base, conversation isolation, retention disclosure, Deletion Requests, and 90-day deletion.
 - **Professional credibility risk:** The app could feel like a gimmick or unfinished AI demo. Mitigation: minimal finished UI, clear boundaries, working states, no raw crashes, and no unnecessary features.
 - **Operational risk:** Latency, cost, abuse, or downtime could undermine a recruitment interaction. Mitigation: simple architecture, cost ceiling, progress states, basic abuse controls, and professional failure messages.
-- **Content currency risk:** The Public Knowledge Base may become stale. Mitigation: BC maintains the source material and reviews retained conversations for gaps during the retention window.
+- **Content readiness/currency risk:** An implicit authoring process may leave the corpus sparse, overstated or stale. Mitigation: Story 2.0's interview workflow, per-type real pilots and BC factual/publication review, then corpus completion and source-safety checks in 2.1; BC maintains sources and reviews retained conversations for gaps during the retention window. Authoring-provider/session-log confidentiality must be assessed before nonpublic material is processed.
 
 ## 10. Open Questions
 
-1. Which reviewed public projects, names, factual descriptions and document mappings populate the V1 Resource Library? BC owns content; stable IDs, descriptor format, mapping/version/invalid-resource policy and publication authority are already defined in [Runtime Contracts §1](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#catalog-membership-and-revision-handling). Implementers must validate and publish that content coherently; no landing showcase is required.
+1. Which finite V1 document types, per-type formats and real pilots does BC approve in Story 2.0, which reviewed documents complete the initial public corpus in 2.1, and which projects/names/factual descriptions/document maps populate the V1 Resource Library in 3.1? BC owns content and publication approval; the workflow obligations are in §4.3.1, while stable IDs, Resource descriptor format, mapping/version/invalid-resource policy and publication authority are already defined in [Runtime Contracts §1](../../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#catalog-membership-and-revision-handling). Pilot validation does not close full corpus/catalog acceptance. Implementers must validate and publish approved content coherently; no landing showcase is required.
 2. What exact French copy should be used for entry questions, guide, Resource labels, trust/privacy, refusal and recovery/limit/deletion states? BC/UX owns editorial completion before public launch; the approved disposition/style is not reopened.
 3. Does the initial lexical retrieval baseline find sufficient evidence on representative questions, including selected-resource scope, and what evaluation result would justify semantic/vector retrieval? BC/implementation owns evaluation evidence before public launch; architecture retains the simplest sufficient approach.
 4. What exact operator commands and runbook will implement the chosen controlled local CLI/script access, deletion, purge, export, and deployment procedures? Implementation/operations owns the usable runbook and tested procedures before public launch under §5.5.

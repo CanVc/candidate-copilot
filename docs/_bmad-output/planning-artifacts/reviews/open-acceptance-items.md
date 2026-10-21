@@ -2,7 +2,7 @@
 title: Candidate Copilot — Open acceptance questions
 status: open
 created: 2026-10-19
-updated: 2026-10-19
+updated: 2026-10-21
 ---
 
 # Open acceptance questions
@@ -71,5 +71,7 @@ The audit report and [original findings JSON](alignment-review-2026-10-19.json) 
 **Evidence to close:** Inspect rendered pairings/sizes and verify contrast for the actual treatment, using the approved palette where possible. The issue does not reopen the approved layout, fonts or palette.
 
 ## Other existing acceptance obligations
+
+**OPEN-1 content handoff, amended 2026-10-21:** [PRD §4.3.1](../prds/prd-candidate-copilot-2026-09-11/prd.md#431-bc-assisted-content-authoring) and [Story 2.0](../epics.md#story-20-define-and-pilot-the-content-authoring-workflow) require BC to approve the finite document types/formats and validate one real pilot per type, using an interview workflow/agent with explicit private/remote-processing boundaries. Story 2.1 completes and validates the public corpus and explicitly copies approved documents; Story 3.1 retains project descriptors/maps. Pilot acceptance does not close the remaining corpus/catalog choices. This is an author-side obligation, not resolution of A05 or permission for the deployed app to process private sources; audit A05–A10 remain open.
 
 This register does not replace [PRD §10](../prds/prd-candidate-copilot-2026-09-11/prd.md#10-open-questions) or [Runtime §9](../architecture/architecture-candidate-copilot-2026-09-11/RUNTIME-CONTRACTS.md#9-required-verification-before-implementation-sign-off). Those retain BC's reviewed project content and French copy, supported-browser reload/new-visit discrimination and storage denial, actual provider processing/billing/quota checks, retrieval/real-model evaluation, D1/publication/migration tests, accessibility/mobile-keyboard proof, purge/review cadence and operator/deployment runbook. Defined contracts and approved UX sketches are not evidence that these obligations have been completed.

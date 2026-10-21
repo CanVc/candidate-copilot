@@ -11,6 +11,9 @@ finalValidationStatus: document-checks-complete-readiness-conditional
 workflowStatus: completed
 userApprovalScope: epic-structure-and-story-titles
 approvedStoryOutlineCount: 54
+additionalStoryScopeApprovals:
+  - '2.0'
+lastAmendment: 2026-10-21
 validationScope: document-only
 requirementCoverage:
   functional: 22
@@ -22,6 +25,7 @@ readinessNotes:
   - BC approved the complete epic and story outline; detailed acceptance criteria beyond the individually approved stories were not separately confirmed.
   - Owner decisions and evidence checkpoints remain prerequisites where explicitly identified.
   - No runtime, browser, real-model, deployment, purge or billing verification was performed in this planning workflow.
+  - On 2026-10-21 BC authorized adding Story 2.0's five editorial deliverables and synchronizing affected documents; its generated detailed criteria and the amended 2.1 handoff are not separately approved or executed.
 storyDesignCompletedEpics:
   - 1
   - 2
@@ -35,8 +39,8 @@ generatedEpics:
   - 3
   - 4
   - 5
-storyCount: 54
-acceptanceScenarioCount: 249
+storyCount: 55
+acceptanceScenarioCount: 258
 approvedStories:
   - '1.1'
   - '1.2'
@@ -59,7 +63,7 @@ inputDocuments:
 
 ## Overview
 
-This document contains the confirmed requirements inventory and approved five-epic, 54-story outline for candidate-copilot, decomposing the PRD, approved UX sketch and binding architecture/runtime contracts into implementable stories. BC individually approved Stories 1.1–1.5 and 2.1, requested completion of all remaining epics without intermediate approval, then approved the complete ordered epic/story title outline. Detailed acceptance criteria for the remaining stories were not separately confirmed. Planning completion and outline approval do not imply implementation, resolution of owner decisions or launch readiness.
+This document contains the confirmed requirements inventory and current five-epic, 55-story plan for candidate-copilot, decomposing the PRD, approved UX sketch and binding architecture/runtime contracts into implementable stories. BC individually approved Stories 1.1–1.5 and the original 2.1, requested completion of all remaining epics without intermediate approval, then approved the original 54-story outline. On 2026-10-21 BC authorized adding Story 2.0 to define and pilot content creation before 2.1, with corresponding document synchronization and no renumbering. That scope authorization is not separate confirmation of the generated detailed criteria or execution of the new story. Detailed acceptance criteria for the other remaining stories were not separately confirmed. Planning completion and outline approval do not imply implementation, resolution of owner decisions or launch readiness.
 
 The seven input documents were confirmed by BC. PRD FR-1 through FR-22 retain their original identifiers. NFR, AR and UX-DR identifiers below are extraction-local traceability labels, not new product policies. The final PRD governs product requirements; the architecture spine and runtime companion govern technical contracts. DESIGN and EXPERIENCE are sketch-approved drafts: preserve their disposition/style and settled behavior without treating placeholder copy, mock measurements or sketch approval as production, privacy or accessibility evidence. Historical reviews and superseded impact analyses are not active requirements. Referenced source sections retain their full authority; this inventory does not replace their schemas or edge-case contracts.
 
@@ -87,7 +91,7 @@ FR-7: Answer in the current question's language where practical, including Frenc
 
 FR-8: Show an accessible generic assistant badge/three-dot waiting state, without invented stages. Return complete results only after validation and durable atomic answer/evidence recording, never unchecked streaming. Network/timeout/5xx uncertainty retains the original identity, question and scope for manual same-request recovery without another turn or duplicate display. Only a recorded recoverable technical failure has a question-local accessible “Réessayer” icon, never a composer action: new identity/turn, original failed text/scope and original root interpretation context (including retry-of-retry), ordinary admission/limits, unchanged old failure/newer draft/selection. Missing original context asks clarification; unavailable original scope never widens to global. No technical retry for answered/partial/refused/clarification/unknown results. No automatic processing retries; document the distinction from read-only “Vérifier à nouveau” in the short user guide.
 
-FR-9: Answer only from deployed, human-readable, version-controlled public Markdown; indexes are derived artifacts, never a second truth. Never deploy private material and rely on prompts to hide it. Selected scope is the exact admission-time union of trusted mapped public document IDs; global scope freezes all active public document IDs, not an empty/wildcard allowlist. No Web/private/unselected supplements or later additions; removed members fail safely without narrowing/substitution/widening. Validate Resource identity/maps/catalog revision against trusted metadata; invalid/unavailable Resources never silently become global. Selection changes cannot rewrite pending/history/answers/excerpts.
+FR-9: Establish an owner-assisted editorial workflow, interview agent, finite V1 document types/output formats and one BC-validated real pilot per type before public-corpus preparation (PRD §4.3.1). Answer only from deployed, human-readable, version-controlled public Markdown; indexes are derived artifacts, never a second truth. Never deploy private material and rely on prompts to hide it. Selected scope is the exact admission-time union of trusted mapped public document IDs; global scope freezes all active public document IDs, not an empty/wildcard allowlist. No Web/private/unselected supplements or later additions; removed members fail safely without narrowing/substitution/widening. Validate Resource identity/maps/catalog revision against trusted metadata; invalid/unavailable Resources never silently become global. Selection changes cannot rewrite pending/history/answers/excerpts.
 
 FR-10: Provide paragraph-local inspectable Source Excerpts and distinguish supported/partial/missing information. Desktop uses clickable file-title tokens beside the passage; mobile uses one passage-level overlapping-circle control (at most three then +N), with actual distinct-file count and every file inspectable. Show only that passage's relevant excerpts, grouped by file without duplicate rows, retaining sections/excerpts, visible file/section titles, inline expansion and direct display for one source. No generated source summaries/full documents. Another citation replaces the viewer; close restores focus/reading position. Preserve original excerpt text and source-version provenance after live changes/removal; sensitive-history remediation is separate. Evaluate actual citation support/completeness; schemas/reference checks do not certify semantics.
 
@@ -170,7 +174,7 @@ AR6: D1 is canonical for admitted messages/identities/scopes/retry links, leases
 
 #### Public content, catalog and publication
 
-AR7: Use only `content/public/**/*.md` as deployed/indexed truth. `content/private` is local-only/gitignored/untracked and excluded from preview/production contexts; public promotion requires human+AI review/edit and explicit copying. Require public frontmatter `document_id`, `visibility: public`, `created_at`, `reviewed_by`, `reviewed_at`; optional public title/topics/aliases aid retrieval.
+AR7: Use only `content/public/**/*.md` as deployed/indexed truth. `content/private` is local-only/gitignored/untracked and excluded from preview/production contexts; public promotion requires human+AI review/edit, explicit BC approval and copying. Story 2.0's editorial agent is authoring tooling, not the deployed assistant: version nonsensitive workflow/agent/templates outside indexed content, keep raw notes/drafts/resume material private, and document provider/session-log processing with BC consent before remote transmission of nonpublic material. Require public frontmatter `document_id`, `visibility: public`, `created_at`, `reviewed_by`, `reviewed_at`; optional public title/topics/aliases aid retrieval. Editorial document types do not add selectable Resource types.
 AR8: Define project Resources through reviewed `content/public/resources/*.md` descriptors with immutable nonrecycled `resource_id`, factual name/description and explicit nonempty `document_ids`; descriptors also have stable document IDs and are selected evidence only if explicitly mapped. Reject duplicate identities and malformed/empty/dangling/nonpublic/unreviewed mappings; allow shared documents. Paths/titles are not identity; do not infer maps or add Resource types/uploads/count caps.
 AR9: Generate an immutable public `/assets/resources-catalog.<catalogHash>.json` envelope `{catalogHash,payload}`, where payload is exactly `{version:1,catalogRevision,resources,documents}` with the runtime-defined Resource/document fields. Normalize IDs/sets by unsigned UTF-16 code-unit comparison, reject duplicate entities and serialize payload with RFC 8785 JCS as UTF-8 without BOM/whitespace/newline. Hash payload bytes only with lowercase SHA-256, excluding envelope hash/runtime timestamps/URLs; revision is the full indexed Git snapshot SHA. Share digest rules/golden vectors including the supplied fixture hash `aefae89a06c759fbf9b82ef17b8f57e532731af585f0df1f138cfda52c897223`, reorder/overlap/Unicode/escape/mapping/revision cases.
 AR10: Each environment has one authoritative D1 `active_publication` row (`id=1`, catalog revision/hash, operational modified timestamp), writable only by publication tooling. Health, admission, ResourceCatalog and evidence reads share its coherent dataset; derive asset path from hash, never alternate deployment/browser/per-Resource authority. Upload/verify immutable asset before atomically activating singleton/Resources/maps/document registry/chunks/FTS; activation failure leaves the previous publication intact. Prove publication/admission/multi-query read races and rollback without mixed data; no active state fails new processing closed, not saved history/deletion.
@@ -225,7 +229,7 @@ AR44: Implement deterministic launch gates for public-source review/frontmatter/
 
 Source: PRD §10, architecture Deferred and open acceptance register. Preserve owners and closure evidence when allocating later stories; do not silently decide these during decomposition.
 
-- OPEN-1 — BC/content: choose and review V1 public project content, names/descriptions/maps before publication; identity/publication policy is already defined, no landing showcase is required.
+- OPEN-1 — BC/content: approve the bounded V1 document-type inventory, per-type formats and real pilots through Story 2.0; complete/review the public corpus through 2.1 and choose project names/descriptions/maps through 3.1 before publication. Pilot acceptance does not close corpus/catalog acceptance. Identity/publication policy is already defined; no landing showcase is required.
 - OPEN-2 — BC/UX: finalize exact French entry/guide/Resource/trust/privacy/refusal/recovery/limit/deletion copy before launch, retaining approved disposition/style. Complete actual provider-path/audit/counter disclosure and comprehension evidence.
 - OPEN-3 — Implementation/BC: evaluate FTS retrieval and actual model outputs; choose actual model/prompts and component budgets/reason codes through implementation tests, not invented planning constants. Use evaluation evidence before proposing semantic retrieval.
 - OPEN-4 — Implementation/operations: implement exact SQL/indexes/transaction proof, CLI/runbook, purge cadence/margin/cutoff/review/failure handling, deployment commands/credentials and current free-plan verification. Architecture provides constraints, not completed tools/evidence; choose domain/slug when ownership/DNS is known.
@@ -277,7 +281,7 @@ FR-5: Epic 2 — Anonymous isolated unlisted Conversation access; Epic 5 verifie
 FR-6: Epic 2 — Multi-turn interpretation, clarification, single processing and independent next-turn editing; Epic 3 adds selected-resource scope and historical tokens.
 FR-7: Epic 2 — Per-question/explicit-request answer language and original-language excerpts.
 FR-8: Epic 2 — Working state, unknown-outcome recovery and question-local new-turn technical retry; Epic 3 preserves original selected scope through all paths.
-FR-9: Epic 2 — Public Markdown, trusted publication and immutable global document membership; Epic 3 adds exact selected-document eligibility.
+FR-9: Epic 2 — Owner-assisted content creation and per-type real pilots before public Markdown validation, trusted publication and immutable global document membership; Epic 3 adds exact selected-document eligibility.
 FR-10: Epic 2 — Passage-local citations, trusted historical excerpts and responsive viewer; Epic 3 verifies selected-scope citation boundaries.
 FR-11: Epic 2 — Explicit partial/missing evidence without guessing; Epic 3 prevents outside-selection supplementation.
 FR-12: Epic 2 — Refuse value judgments and redirect to eligible factual examples.
@@ -304,7 +308,7 @@ FR-22: Epic 5 — Block public recruiter sharing on unresolved critical failures
 | FR-6 | 2.7–2.10, 2.17–2.21, 3.2, 3.5, 3.6 |
 | FR-7 | 2.9–2.12, 2.14, 5.5 |
 | FR-8 | 2.8, 2.13, 2.17–2.21, 3.5, 3.6 |
-| FR-9 | 2.1–2.4, 2.7, 2.11, 3.1–3.3 |
+| FR-9 | 2.0–2.4, 2.7, 2.11, 3.1–3.3 |
 | FR-10 | 2.8, 2.11, 2.16, 3.3, 3.5 |
 | FR-11 | 2.4, 2.11, 2.14, 3.3, 3.8 |
 | FR-12 | 2.9, 2.11, 2.14, 3.8, 5.5 |
@@ -336,7 +340,7 @@ FR-22: Epic 5 — Block public recruiter sharing on unresolved critical failures
 | NFR11 | 2.21 |
 | NFR12 | 2.17–2.21, 3.5, 3.7 |
 | NFR13 | 2.12, 2.13, 2.17, 5.5 |
-| NFR14 | 2.1–2.4, 5.1 |
+| NFR14 | 2.0–2.4, 5.1 |
 | NFR15 | 2.5, 2.8, 5.9 |
 | NFR16 | 2.20, 5.9, 5.10 |
 | NFR17 | 2.8, 4.1, 4.4–4.6, 4.9 |
@@ -369,7 +373,7 @@ FR-22: Epic 5 — Block public recruiter sharing on unresolved critical failures
 | AR4 | 1.1–1.5 |
 | AR5 | 1.2, 1.3, 2.4, 2.9, 2.12 |
 | AR6 | 2.5, 2.7, 2.8, 4.1, 4.4 |
-| AR7 | 2.1, 2.2, 5.1 |
+| AR7 | 2.0, 2.1, 2.2, 5.1 |
 | AR8 | 2.1, 2.2, 3.1 |
 | AR9 | 2.2, 3.1 |
 | AR10 | 2.3, 2.7, 5.4, 5.6 |
@@ -444,7 +448,7 @@ These assignments preserve unresolved policy ownership. A story requiring a deci
 
 | Item | Owner checkpoint stories | Final verification |
 | --- | --- | --- |
-| OPEN-1 | 2.1, 3.1 — BC-reviewed actual public corpus/projects/maps | 3.8, 5.5, 5.10 |
+| OPEN-1 | 2.0 — BC-approved types/formats and real pilots; 2.1 — complete/review public corpus; 3.1 — project descriptors/maps | 3.8, 5.5, 5.10 |
 | OPEN-2 | 2.15, 2.22, 3.8, 4.2 — BC/UX final French copy | 4.9, 5.5 |
 | OPEN-3 | 2.4, 2.12, 2.14 — retrieval/model evaluation and implementation configuration | 3.8, 5.5 |
 | OPEN-4 | 1.5, 4.7, 5.2, 5.3, 5.7 — implementation/operations procedures and deployment choices | 5.9, 5.10 |
@@ -471,7 +475,7 @@ BC can start from a fresh clone on Ubuntu 24.04 LTS, install verified locked too
 A recruiter can enter through a suggestion or free entry, explore public professional documentation through questions/follow-ups, inspect passage-local evidence, receive clarification/refusal where appropriate, recover interruptions and continue a same-tab session without losing newer drafts or restoring prior visits. BC can exercise this end-to-end path in controlled use before public sharing.
 
 **FRs covered:** FR-1, FR-2, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18; initial processing information contributes to FR-16 without claiming completion of Epic 4.
-**Implementation notes:** Deliver frontend, core, adapters, persistence and feature tests together. Include public Markdown promotion/index/provenance, coherent active publication/catalog infrastructure needed for global admission, immutable nonempty global document scope, FTS evidence evaluation, replaceable real provider plus deterministic simulation, safety/language/clarification, atomic leased processing, limits, canonical citations/results, responsive viewer and accessible recovery/session states. Public catalog infrastructure is authoritative even before project selection UI is enabled. Preserve approved visual style and controlled unlisted access. Implement origin/creation-loss/provider-input/usage decisions with their owners and evidence rather than inventing policies. Feature tests, real-model checks and browser lifecycle proof belong here, not deferred wholesale to launch.
+**Implementation notes:** Begin with Story 2.0's reusable editorial workflow, interview agent, finite document types, per-type Markdown formats and real BC-validated pilots; then complete/validate/promote the initial public corpus in 2.1. Authoring remains outside the recruiter app and does not introduce new Resource types. Deliver frontend, core, adapters, persistence and feature tests together. Include public Markdown promotion/index/provenance, coherent active publication/catalog infrastructure needed for global admission, immutable nonempty global document scope, FTS evidence evaluation, replaceable real provider plus deterministic simulation, safety/language/clarification, atomic leased processing, limits, canonical citations/results, responsive viewer and accessible recovery/session states. Public catalog infrastructure is authoritative even before project selection UI is enabled. Preserve approved visual style and controlled unlisted access. Implement origin/creation-loss/provider-input/usage decisions with their owners and evidence rather than inventing policies. Feature tests, real-model checks and browser lifecycle proof belong here, not deferred wholesale to launch.
 **Boundary:** Global-public questions are complete and useful without Resource selection. Newer publications cannot widen their admitted membership. No fake deletion affordance or claim that privacy/deletion/retention acceptance is complete; controlled development/evaluation only until subsequent obligations pass. Collect no real recruiter traffic before Epic 5 approval.
 **Dependency:** Epic 1 only. No later epic is required to demonstrate the global Conversation experience.
 
@@ -510,7 +514,8 @@ The deliberately broad Epic 2 keeps the same Conversation/core/adapter path toge
 - **Responsive/accessibility:** NFR28–NFR35 and UX-DR1–UX-DR8, UX-DR12–UX-DR15, UX-DR18–UX-DR25 apply to Epic 2's delivered surfaces; Epic 3 owns UX-DR9–UX-DR11 and extends shared interactions; Epic 4 owns UX-DR16–UX-DR17 and its shared accessibility checks. Epic 5 verifies integrated supported-device evidence without deferring basic accessibility until launch.
 - **Privacy/retention/operator lifecycle:** AR36–AR39 and relevant portions of AR42–AR44 belong to Epic 4; minimal safe data handling/identity originate in Epic 2 and new scope data from Epic 3 inherits the same versioned contracts/deadline. Epic 5 activates/verifies hosted operations.
 - **Delivery/migration/launch:** NFR25–NFR27, AR40–AR43 and final integrated AR44/FR-21/FR-22 acceptance belong to Epic 5. Feature-local migration and verification work remains in the epic that creates or changes the data.
-- **Open-item ownership:** OPEN-1/OPEN-3 begin with public corpus/model evaluation in Epic 2 and selected project completion in Epic 3; OPEN-2/OPEN-5 follow each UI surface. OPEN-4 spans bootstrap, data/privacy procedures and delivery. A05/A07/A08/A09 require owner decisions/evidence in Epic 2; A10 follows rendered UI/accessibility; A06 belongs to Epic 4's retention/backup assessment. Epic 5 checks all applicable closures before sharing. These assignments do not resolve the questions or select new policies.
+- **Content sequencing:** After Epic 1, Story 2.0 defines and pilots the editorial method before 2.1 completes/validates/promotes the corpus; 2.2 onward derives public artifacts. Story 3.1 still owns project Resource descriptors/maps. A real pilot per editorial type proves the method, not full V1 coverage, indexing or release readiness.
+- **Open-item ownership:** OPEN-1 begins with BC-approved types/formats/pilots in 2.0, continues with the public corpus in 2.1 and project catalog completion in 3.1; OPEN-3 begins with retrieval/model evaluation in Epic 2. OPEN-2/OPEN-5 follow each UI surface. OPEN-4 spans bootstrap, data/privacy procedures and delivery. A05/A07/A08/A09 require owner decisions/evidence in Epic 2; A10 follows rendered UI/accessibility; A06 belongs to Epic 4's retention/backup assessment. Epic 5 checks all applicable closures before sharing. These assignments do not resolve the questions or select new policies.
 
 ## Epic 1: Establish a Reproducible Local Development Workstation
 
@@ -695,11 +700,70 @@ So that I can reproduce the development environment without implicit knowledge o
 
 Recruiters can enter anonymously, ask professional questions and follow-ups against an immutable global-public scope, inspect passage-local evidence, receive appropriate clarification/refusal and recover interruptions without losing newer drafts. Delivery remains controlled development/evaluation until privacy, retention and release acceptance are complete. Covers FR-1, FR-2, FR-4–FR-15, FR-17, FR-18 and initial truthful FR-16 information; selected-project interaction belongs to Epic 3. Each story includes its own tests; later integration evidence does not substitute for them.
 
+### Story 2.0: Define and Pilot the Content-Authoring Workflow
+
+As BC documenting my professional work,
+I want an interview agent and reusable document formats that help me turn unstructured recollections into faithful reviewed documents,
+So that I can build the Public Knowledge Base without inventing achievements or exposing private preparation material.
+
+**Dependencies and boundary:** After Epic 1 and before Story 2.1. Deliver the authoring workflow and real pilots, not the full V1 corpus, index, deployed assistant, recruiter UI, admin product or project Resource catalog. BC participates in the interviews and owns factual correction, type approval and publication eligibility. The final taxonomy and agent packaging are defined with BC during this story, not assumed by implementers.
+
+**Acceptance Criteria:**
+
+**Given** BC's unstructured notes or free narration,
+**When** the authoring workflow is followed,
+**Then** documented stages cover topic/type choice, free narration, small batches of targeted follow-up questions, a synthesis for BC correction, Markdown drafting and explicit review,
+**And** a private checkpoint preserves BC corrections, confirmed facts, uncertainties, decisions and next questions; a demonstrated resume in a fresh authoring session uses that checkpoint without relying on hidden prior-session context.
+
+**Given** the agreed workflow,
+**When** the editorial agent is delivered,
+**Then** a versioned invocable definition and usage instructions implement one interview agent with type-specific prompts/templates,
+**And** BC can start and resume an interview using documented steps without the future Conversation UI, index or deployed model integration.
+
+**Given** representative professional questions recruiters may ask,
+**When** BC and the agent define the V1 document inventory,
+**Then** BC approves a finite list of distinct document types, each with its purpose, intended questions, boundaries and relationships to other documents,
+**And** editorial types neither create new selectable Resource types nor duplicate Story 3.1's project descriptor/mapping responsibility (FR-9, OPEN-1).
+
+**Given** each approved document type,
+**When** its Markdown output format is defined,
+**Then** a reusable template specifies required/optional sections, shared publication metadata, factual attribution, available supporting evidence and explicit handling of missing information,
+**And** public-ready output preserves document_id, visibility: public, created_at, reviewed_by and reviewed_at; a draft must not fabricate review approval or satisfy a missing required fact with invented content. Revising a reviewed document retains its stable document_id, identifies changed facts and requires renewed factual/publication review before the revised text becomes publication-eligible (AR7).
+
+**Given** uncertain recollections, team achievements, absent metrics or conflicting accounts,
+**When** the agent interviews BC and drafts a document,
+**Then** it distinguishes BC's personal contribution from team/context, asks for clarification and lets BC correct its synthesis before finalization,
+**And** unsupported claims, dates, outcomes and metrics are not invented; unresolved material uncertainties remain visible for correction or omission from public-ready text.
+
+**Given** private source material and the chosen authoring tool/provider,
+**When** the workflow reads, saves or transmits interview material,
+**Then** local working notes, drafts and resume checkpoints stay under gitignored content/private, while nonsensitive reusable workflow/agent/templates are versioned outside content/private and content/public,
+**And** before remote transmission BC controls input review, selection and sanitization, including inspection/control of automatic attachments and context so only authorized material is sent; secrets and unauthorized third-party confidential data are excluded without claiming comprehensive automatic redaction,
+**And** actual processing, retention, deletion procedures and unavoidable copies/limits are documented for working files and tool/provider-managed session/log copies, with BC's explicit consent before transmitting nonpublic material. Local working-file storage is distinct from processing copies, guarantees neither local-only model processing nor zero retention, and does not automatically inherit the runtime Conversation's 90-day policy (AR7).
+
+**Given** the BC-approved type list and real professional information supplied by BC,
+**When** the complete workflow is exercised,
+**Then** at least one real pilot document per approved type is interviewed, synthesized, corrected, formatted and validated by BC for factual accuracy and publication eligibility,
+**And** fictional achievements, empty templates and synthetic test fixtures do not count; unavailable real material blocks that type's pilot acceptance rather than being fabricated (OPEN-1).
+
+**Given** the completed pilots,
+**When** BC accepts the authoring method,
+**Then** templates and prompts incorporate lessons from the pilots; affected steps are rerun and affected pilots reconfirmed against the final delivered agent/template versions before method acceptance,
+**And** a private evidence record binds every approved type to its agent/template versions, an opaque pilot identifier/revision and dated BC approval; actual pilot content and sensitive identifiers/mappings stay private. Only a nonsensitive acceptance summary is versioned, using safe type/version references, opaque pilot identifiers/revisions and dated approval outcomes without private facts, paths or content hashes,
+**And** pilots remain private until Story 2.1's explicit public-corpus review, validation and copying; no interview completion or agent action automatically promotes files.
+
+**Given** this story's delivery evidence,
+**When** its acceptance is assessed,
+**Then** workflow, agent, complete approved type list, per-type formats and one validated real pilot per type are all demonstrable without hosted Cloudflare resources, indexing, recruiter UI or runtime model credentials,
+**And** the authoring provider/tool path is documented without a new mandatory paid service; acceptance does not close full-corpus/catalog selection, retrieval/model evaluation, privacy or launch gates (FR-9, AR7, OPEN-1).
+
 ### Story 2.1: Prepare an Explicitly Public Knowledge Base
 
 As a BC maintaining the portfolio,
 I want to prepare and validate the documents allowed to feed Candidate Copilot,
 So that I control which information recruiters can access.
+
+**Dependency and handoff:** Use Story 2.0's BC-approved workflow, agent, document types, formats and real pilots to complete the initial V1 corpus. Reuse validated pilots rather than re-interviewing unnecessarily; this story owns corpus coverage, technical public-source validation, truthful review metadata and explicit copying into content/public. Pilot approval alone is not promotion or proof of corpus completeness; Resource descriptors/maps remain Story 3.1's responsibility.
 
 **Acceptance Criteria:**
 
@@ -730,8 +794,8 @@ So that I control which information recruiters can access.
 
 **Given** actual professional content for the initial corpus,
 **When** that corpus is prepared,
-**Then** BC selects and approves the public information,
-**And** synthetic test fixtures are never presented as BC's achievements; acceptance covers files, local validation and the procedure, without requiring indexing, model calls or a Conversation UI (OPEN-1).
+**Then** BC selects and approves the public information and a coverage record mapping intended recruiter questions to actual public documents, with accepted limitations and deferred gaps recorded explicitly,
+**And** pilot approvals do not substitute for that coverage review, imply universal answerability or alone close OPEN-1; synthetic test fixtures are never presented as BC's achievements. Acceptance covers files, coverage evidence, local validation and the procedure, without requiring indexing, model calls or a Conversation UI (OPEN-1).
 
 ### Story 2.2: Build Reproducible Public Catalog and Search Artifacts
 
@@ -1386,6 +1450,8 @@ So that its trust and recovery features are usable on desktop and mobile.
 Recruiters can choose reviewed public projects on demand and keep separate editable next-question context and immutable historical documentary scope. This extends the complete global path without uploads, full-document browsing, arbitrary selection limits or scope widening. Covers FR-3 and selected-scope extensions to FR-6, FR-8–FR-11, FR-15 and FR-18, especially UX-DR9–UX-DR11. Stories depend on Epic 2 and earlier stories here, not later privacy/release work.
 
 ### Story 3.1: Make Reviewed Public Projects Available as Resources
+
+**Content handoff:** Reuse Story 2.0's editorial method and Story 2.1's approved public documents. This story authors and validates project Resource descriptors and their explicit public document maps; editorial document types are not additional selectable Resource types.
 
 As a BC maintaining public projects,
 I want reviewed factual project descriptors with explicit document mappings,

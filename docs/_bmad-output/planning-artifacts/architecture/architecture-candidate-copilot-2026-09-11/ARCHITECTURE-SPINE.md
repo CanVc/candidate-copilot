@@ -7,7 +7,7 @@ paradigm: lightweight hexagonal / ports-and-adapters serverless monolith
 scope: Candidate Copilot V1 whole-product architecture
 status: final
 created: 2026-09-11
-updated: 2026-10-19
+updated: 2026-10-21
 binds:
   - PRD FR-1..FR-22
 sources:
@@ -58,7 +58,7 @@ Business rules, safety rules, answer contracts, retrieval orchestration, retenti
 
 - **Binds:** FR-9, FR-10, FR-16, FR-21, FR-22
 - **Prevents:** private drafts, D1 indexes, or runtime artifacts becoming the source of truth for public evidence
-- **Rule:** `content/public/**/*.md` is the only versioned, deployed, indexable Public Knowledge Base. `content/private/` is local-only, gitignored, and excluded from preview/production build contexts. Promotion means human+AI editorial review/edit followed by copying approved Markdown into `content/public`.
+- **Rule:** `content/public/**/*.md` is the only versioned, deployed, indexable Public Knowledge Base. `content/private/` is local-only, gitignored, and excluded from preview/production build contexts. Promotion means human+AI editorial review/edit, explicit BC approval and copying approved Markdown into `content/public`. Story 2.0's editorial agent/workflow/templates are authoring tooling outside this corpus and the deployed assistant; see the [content-authoring handoff](#content-authoring-handoff--story-20).
 
 ### AD-3 — Backend owns the answer pipeline; browser is untrusted
 
@@ -203,6 +203,18 @@ Inherited cold-start pins below were recorded on 2026-09-16; this update selects
 - **Local execution:** provide a minimal frontend and Worker bootstrap, reproducible local D1 initialization, and a simulated LLM path. Baseline local startup and deterministic tests must not require hosted Cloudflare resources, production access, or live LLM credentials. Installing tools/dependencies may require Internet access; this is not an offline-install guarantee.
 - **Acceptance:** from a fresh clone on the reference platform, follow the documented installation/configuration steps, install locked dependencies, initialize local D1, start frontend/Worker, and pass initial automated tests, type checks, build and a local smoke test. Include troubleshooting instructions. Tests validate the bootstrap, not the unimplemented business pipeline or real-model quality.
 - **Boundary:** real LLM integration, conversation/retrieval features, hosted delivery and production setup belong to later epics. This epic prepares their local foundation without implementing the product in advance.
+
+## Content-Authoring Handoff — Story 2.0
+
+After Epic 1, Story 2.0 defines and exercises the [PRD's BC-assisted content-authoring workflow](../../prds/prd-candidate-copilot-2026-09-11/prd.md#431-bc-assisted-content-authoring): one interview agent, finite BC-approved document types, per-type Markdown templates and one real BC-validated pilot per type. Final taxonomy, invocation/packaging and tool choice are delivered during that story; no new runtime component or dependency is selected here.
+
+- Local working sources, interview notes, drafts and pause/resume checkpoints remain under gitignored `content/private/`, excluded from Git, hosted application builds and runtime prompts/indexes. Demonstrate a fresh authoring-session resume from the checkpoint, preserving BC corrections, confirmed/unknown facts and next questions without hidden session context. Pilots remain private until the explicit public-corpus handoff; tool/provider-managed processing copies are separately disclosed below.
+- Version nonsensitive reusable workflow instructions, invocable agent definition, templates and only a nonsensitive acceptance summary outside `content/private/` and `content/public/`. Private evidence binds each type to final agent/template versions, an opaque pilot identifier/revision and dated BC approval; the summary exposes only safe type/version references, opaque pilot identifiers/revisions and dated approval outcomes, never private content, sensitive identifiers/mappings, paths or private content hashes. Exact tooling location is chosen in 2.0; no retrieved tooling evidence or public authoring/admin endpoint/UI is introduced.
+- The editorial agent's processing is separate from the deployed `LLMProvider` path. Before remote transmission, BC controls input review/selection/sanitization and automatic attachments/context so only authorized material is sent, excluding secrets and unauthorized confidential data without claiming comprehensive automatic redaction. Document actual processing, retention, deletion procedures and unavoidable copies/limits for working files and tool/provider-managed session/log copies, and obtain BC's explicit consent before transmitting nonpublic material. Local storage guarantees neither local-only model processing nor zero retention; authoring does not automatically inherit the runtime Conversation's 90-day policy. The application's public-only evidence/prompt boundary and no-mandatory-paid-service constraint remain unchanged.
+- Per-type output uses factual, attributable Markdown and existing AD-2 public metadata; unknown facts remain marked for correction or omitted from public-ready claims, never fabricated review fields. Revisions preserve document_id, identify changed facts and renew factual/publication review before revised text becomes eligible. Real pilots require BC factual/publication-eligibility validation; after pilot-driven changes rerun affected steps and reconfirm affected pilots against final delivered agent/template versions.
+- Story 2.1 reuses the method/pilots, completes the initial corpus with a BC-approved coverage record mapping intended recruiter questions to actual public documents and accepted limitations/deferred gaps, applies source-safety/metadata/provenance validation and explicitly copies approved Markdown into `content/public/`. Coverage review does not imply universal answerability; pilot approval alone does not close OPEN-1. Story 2.2 derives artifacts only from that committed public snapshot, and 3.1 retains project Resource descriptors/maps. Editorial types are not new selectable Resource types and require no change to API/catalog/D1 schemas.
+
+Acceptance of 2.0 proves the editorial method on every approved type, not full-corpus coverage, indexing, real runtime-model behavior or release readiness. OPEN-1 continues through the corpus and project catalog; existing launch and private-source gates remain binding.
 
 ## Structural Seed
 
@@ -669,7 +681,7 @@ Deterministic index/provenance tests must cover missing or mismatched revisions,
 | FR-6 multi-turn questions + clarification + immutable scope | classifier + bounded context + leased/idempotent turn service + editable next-turn UI | AD-3, AD-4, AD-6, AD-10, AD-15..18 |
 | FR-7 per-turn answer language | turn classifier + answer service + LLMProvider | AD-5, AD-6, AD-8 |
 | FR-8 working status + manual recovery/question-local retry | React UI + complete scoped results + bounded reload observation + origin-copy admission | AD-3, AD-8, AD-10, AD-15, AD-16, AD-18 |
-| FR-9 public Markdown only | `content/public`, index scripts, D1 source tables | AD-2, AD-7, AD-13 |
+| FR-9 authoring then public Markdown only | Authoring tooling outside corpus; private preparation → explicit approved public copy; `content/public`, index scripts, D1 source tables | AD-2, AD-7, AD-13; Story 2.0 handoff |
 | FR-10 Source Excerpts | answer blocks + source excerpts | AD-5, AD-7 |
 | FR-11 partial/missing evidence | retrieval + answer validation | AD-5, AD-6, AD-7 |
 | FR-12 value-judgment refusal | safety gate + answer service | AD-6 |

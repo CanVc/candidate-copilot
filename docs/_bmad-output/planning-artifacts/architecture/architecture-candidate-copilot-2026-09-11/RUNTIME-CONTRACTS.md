@@ -3,7 +3,7 @@ name: candidate-copilot-v1-runtime-contracts
 type: architecture-companion
 status: final
 created: 2026-09-17
-updated: 2026-10-19
+updated: 2026-10-21
 binds:
   - ARCHITECTURE-SPINE.md AD-3..AD-8, AD-10, AD-12..AD-18
 ---
@@ -11,6 +11,8 @@ binds:
 # Runtime and Delivery Contracts — Candidate Copilot V1
 
 This companion completes [ARCHITECTURE-SPINE.md](ARCHITECTURE-SPINE.md). These are approved application contracts and initial configuration values, not implemented code, measured performance, provider guarantees, or an operator runbook. Shared types, SQL, tests, and delivery stories must preserve them.
+
+Story 2.0's editorial interview agent is outside these deployed runtime contracts. Its private preparation, remote-processing consent, versioned tooling and explicit handoff into Story 2.1 follow the [architecture authoring boundary](ARCHITECTURE-SPINE.md#content-authoring-handoff--story-20) and [PRD §4.3.1](../../prds/prd-candidate-copilot-2026-09-11/prd.md#431-bc-assisted-content-authoring). Editorial document types add no selectable Resource types or API/schema fields. Only explicitly approved public Markdown may feed this runtime; real pilots do not automatically publish or close corpus/catalog acceptance. All contracts below are unchanged by this authoring-planning amendment.
 
 ## 1. Turn admission, identity, and ownership
 

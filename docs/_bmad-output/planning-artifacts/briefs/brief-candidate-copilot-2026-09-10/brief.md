@@ -2,7 +2,7 @@
 title: "Product Brief: Candidate Copilot"
 status: final
 created: 2026-09-10
-updated: 2026-10-19
+updated: 2026-10-21
 ---
 
 # Product Brief: Candidate Copilot
@@ -51,6 +51,12 @@ Accuracy, completeness, and traceability matter more than conversational persuas
 
 Only material explicitly designated as public may enter the deployed product. Private candidate material must not be deployed and then hidden through prompts or runtime filtering. Public Markdown remains the human-readable, version-controlled source of truth; search indexes are derived from it.
 
+### BC-assisted documentary preparation
+
+Before populating the public base, BC uses an editorial interview workflow to turn free narration into faithful documents: targeted questions, a synthesis to correct, Markdown drafting and explicit review. Story 2.0 defines the workflow, one reusable interview agent, a finite BC-approved V1 document-type inventory, each type's output format and one real BC-validated pilot per type. It must not invent achievements or turn team outcomes into unsupported personal claims. The taxonomy is defined during that story, not assumed here.
+
+Raw notes and drafts remain local and gitignored in `content/private/`; reusable nonsensitive instructions/templates are versioned outside the indexed corpus. Remote authoring-model and session/log processing requires explicit disclosure and BC consent before nonpublic material is transmitted. Story 2.1 completes and validates the corpus, then explicitly copies approved Markdown into `content/public/`; pilot validation alone is not publication or corpus completeness. This is author-side preparation, not a new recruiter interface, selectable Resource type or multi-candidate platform.
+
 ### Trust before novelty
 
 The interface must feel professional, polished, and dependable before a recruiter sends a message. Session isolation, data-use disclosure, citations, strict abstention, and reliable availability are part of the product experience, not background implementation concerns.
@@ -68,7 +74,7 @@ The MVP includes:
 - multi-turn natural-language questions about professional experience, projects, outcomes, technical skills, working methods, and documented design decisions;
 - grounded answers with inspectable citations and explicit handling of partial or missing evidence;
 - strict refusal of value judgments, undocumented intentions, commitments, and decisions on BC's behalf; value-judgment refusals redirect to scoped, cited factual examples when evidence is available, never an evaluative verdict;
-- a deployed runtime containing only the public candidate knowledge base;
+- a BC-assisted authoring workflow/agent with document types, per-type formats and real validated pilots, followed by a deployed runtime containing only the explicitly approved public candidate knowledge base;
 - isolated visitor conversations, disclosure of retention and manual review, in-app Deletion Requests handled manually and non-immediately by BC, and automatic deletion of raw and derived conversation data no later than 90 days from Conversation creation;
 - a separately disclosed, indefinitely retained minimal Deletion Request audit containing identifiers, status and lifecycle timestamps only, never Conversation content, scope data, credentials or Visitor identity;
 - controlled operational access or secure manual export for BC to review retained conversations, without an administration interface.
@@ -107,7 +113,7 @@ A single generic question without follow-up is only a weak signal: it demonstrat
 
 The [PRD](../../prds/prd-candidate-copilot-2026-09-11/prd.md) now defines product scope, limits, refusal and privacy requirements, including no public contact/recruiting-channel UI. Approved UX defines layout and interaction; the [architecture and runtime contracts](../../architecture/architecture-candidate-copilot-2026-09-11/ARCHITECTURE-SPINE.md) define the stack, public Resource mappings, scoped admission, session reconciliation, delivery and retention behavior.
 
-Remaining work is content, implementation and acceptance evidence: reviewed public projects, French copy and truthful processing disclosures, retrieval/model evaluation, browser lifecycle/accessibility checks, provider quota/billing verification, backup/deletion assessment, purge scheduling and an operator runbook. The [open acceptance register](../../reviews/open-acceptance-items.md) retains unresolved audit questions without selecting new policy. Defined contracts are not implemented or validated behavior.
+Remaining work is content, implementation and acceptance evidence: Story 2.0's authoring workflow/agent, BC-approved types/formats and real pilots; Story 2.1's complete reviewed public corpus and Story 3.1's project descriptors/maps; French copy and truthful processing disclosures, retrieval/model evaluation, browser lifecycle/accessibility checks, provider quota/billing verification, backup/deletion assessment, purge scheduling and an operator runbook. The [open acceptance register](../../reviews/open-acceptance-items.md) retains unresolved audit questions without selecting new policy. Defined contracts are not implemented or validated behavior.
 
 ## Outlook
 

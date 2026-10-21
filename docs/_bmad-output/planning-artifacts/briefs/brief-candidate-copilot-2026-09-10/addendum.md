@@ -2,12 +2,18 @@
 title: "Candidate Copilot Product Brief — Addendum"
 status: final
 created: 2026-09-10
-updated: 2026-10-19
+updated: 2026-10-21
 ---
 
 # Candidate Copilot — Downstream Requirements Addendum
 
 This addendum carries product guardrails into the [PRD](../../prds/prd-candidate-copilot-2026-09-11/prd.md), architecture, privacy review and evaluation strategy. It is synchronized with later approved decisions on manual Deletion Requests, the minimal audit exception and factual refusal redirection; it does not reopen those decisions.
+
+## Content-Authoring Handoff — Story 2.0
+
+BC authorized an explicit content-creation prerequisite on 2026-10-21: define and exercise an interview workflow, one editorial agent, a finite V1 document-type inventory, a Markdown format per type and one real BC-validated pilot per type. [PRD §4.3.1](../../prds/prd-candidate-copilot-2026-09-11/prd.md#431-bc-assisted-content-authoring) and [Story 2.0](../../epics.md#story-20-define-and-pilot-the-content-authoring-workflow) specify the handoff.
+
+Private notes/drafts/checkpoints stay in local gitignored content/private; reusable nonsensitive tooling is versioned outside the indexed content. Disclose remote model/session-log processing and obtain BC consent before transmitting nonpublic material; exclude secrets and unauthorized confidential data. BC factual validation and publication eligibility are not automatic publication: Story 2.1 completes/reviews/validates the corpus and explicitly copies approved Markdown into content/public. Story 3.1 retains project Resource descriptors/maps; editorial document types do not extend Resource types or recruiter UI. This amendment plans the work without delivering the agent, selecting the taxonomy or inventing pilot content.
 
 ## Data Lifecycle and Conversation Monitoring
 
