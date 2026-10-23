@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "document_id": "",
+  "type": "A",
+  "revision": 1,
+  "checkpoint_seq": 1,
+  "created_at": "",
+  "stage": "choose",
+  "versions": {"agent": "1.0.1", "template": "1.0.1", "guide": "1.0.0", "criteria": "1.0.0"},
+  "scope": null,
+  "draft": null,
+  "handling": {"route": "UNKNOWN — intake blocked", "automatic_context": "UNKNOWN — intake blocked", "material_scope": [], "consent": null},
+  "authorized_sources": [],
+  "provenance": [],
+  "facts": [],
+  "corrections": [],
+  "decisions": [],
+  "uncertainties": [],
+  "gaps": {"required": [], "optional": []},
+  "criteria": {
+    "C1": {"applicability": "required", "rationale": "", "passages": [], "gap": "À établir"},
+    "C2": {"applicability": "required", "rationale": "", "passages": [], "gap": "À établir"},
+    "C3": {"applicability": "required", "rationale": "", "passages": [], "gap": "À établir"},
+    "C4": {"applicability": "required", "rationale": "", "passages": [], "gap": "À établir"},
+    "C5": {"applicability": "unresolved", "rationale": "", "passages": [], "gap": "À établir"}
+  },
+  "next_questions": [],
+  "changed_facts": [],
+  "approvals": {"facts": null, "comprehension": null, "eligibility": null},
+  "review_history": []
+}

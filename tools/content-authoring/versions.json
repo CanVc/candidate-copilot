@@ -1,0 +1,9 @@
+{
+  "release": "1.0.1",
+  "checkpoint_schema": 1,
+  "agent": "1.0.1",
+  "types": {
+    "A": {"template": "1.0.1", "guide": "1.0.0", "criteria": "1.0.0"},
+    "B": {"template": "1.0.1", "guide": "1.0.0", "criteria": "1.0.0"}
+  }
+}

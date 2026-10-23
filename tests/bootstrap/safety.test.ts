@@ -14,6 +14,12 @@ const ignoredPaths = [
   '.venv/bin/python', 'venv/bin/python', '.env', '.env.local', '.env.production',
   'frontend/.env.local', '.dev.vars', '.dev.vars.local',
   'content/private/preparation.md', 'content/private/nested/.env.example',
+  'content/private/authoring/sources/synthetic.md',
+  'content/private/authoring/pilots/synthetic.md',
+  'content/private/authoring/checkpoints/synthetic.json',
+  'content/private/authoring/evidence/synthetic.json',
+  'content/private/authoring/probes/synthetic.json',
+  'content/private/authoring/sessions/synthetic.jsonl',
 ];
 
 describe('publication boundaries', () => {
@@ -69,10 +75,16 @@ describe('publication boundaries', () => {
     const temporary = mkdtempSync(join(tmpdir(), 'candidate-copilot-git-'));
     try {
       copyFileSync(join(root, '.gitignore'), join(temporary, '.gitignore'));
+      // Materialize only disposable synthetic authoring canaries, never real inputs.
+      for (const path of ignoredPaths.filter((path) => path.startsWith('content/private/authoring/'))) {
+        const destination = join(temporary, path);
+        mkdirSync(join(destination, '..'), { recursive: true });
+        writeFileSync(destination, 'SYNTHETIC_AUTHORING_ONLY\n');
+      }
       execFileSync('git', ['init', '--quiet', temporary]);
       const ignored = execFileSync('git', ['check-ignore', '--no-index', '--stdin'], {
         cwd: temporary,
-        input: `${ignoredPaths.join('\n')}\n.env.example\n.dev.vars.example\nfrontend/src/App.tsx\n`,
+        input: `${ignoredPaths.join('\n')}\n.env.example\n.dev.vars.example\nfrontend/src/App.tsx\n.pi/skills/content-authoring/SKILL.md\ntools/content-authoring/agent.md\ntools/content-authoring/scripts/checkpoint.py\n`,
         encoding: 'utf8',
       }).trim().split('\n');
       expect(ignored).toEqual(ignoredPaths);
@@ -106,6 +118,20 @@ describe('publication boundaries', () => {
       expect(output).toContain(`PASS: synthetic PTY ${control} rejected and cleaned (not Wrangler).`);
     }
   }, 210_000);
+
+  it('keeps the explicit authoring entry and reusable tooling outside application inputs', () => {
+    const entry = readFileSync(join(root, '.pi/skills/content-authoring/SKILL.md'), 'utf8');
+    expect(entry).toContain('name: content-authoring');
+    expect(entry).toContain('disable-model-invocation: true');
+    expect(entry).toContain('{project-root}/tools/content-authoring/agent.md');
+    const allow = viteConfig.server?.fs?.allow ?? [];
+    expect(allow.every((path) => !path.includes('/tools/') && !path.includes('/.pi/'))).toBe(true);
+    const checker = readFileSync(join(root, 'scripts/check-build-isolation.mjs'), 'utf8');
+    for (const path of ['.pi/skills/content-authoring/SKILL.md', 'tools/content-authoring/agent.md',
+      'content/private/authoring/checkpoints/synthetic.json', 'content/private/authoring/sessions/synthetic.jsonl']) {
+      expect(checker).toContain(path);
+    }
+  });
 
   it('keeps canaries out of both builds independently of Git ignores', () => {
     const output = execFileSync(process.execPath, ['scripts/check-build-isolation.mjs'], {

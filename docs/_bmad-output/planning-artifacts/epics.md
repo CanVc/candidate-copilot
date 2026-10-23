@@ -26,6 +26,7 @@ readinessNotes:
   - Owner decisions and evidence checkpoints remain prerequisites where explicitly identified.
   - No runtime, browser, real-model, deployment, purge or billing verification was performed in this planning workflow.
   - On 2026-10-21 BC authorized adding Story 2.0's five editorial deliverables and synchronizing affected documents; its generated detailed criteria and the amended 2.1 handoff are not separately approved or executed.
+  - Later on 2026-10-21 BC approved refining 2.0's intent with adaptive investigative interviews, per-type editorial contracts and factual/outside-reader comprehension checks demonstrated by real pilots. This authorizes the planning amendment, not separate confirmation of its generated wording or execution; Builder is an intended authoring aid, not an installed or runtime dependency.
 storyDesignCompletedEpics:
   - 1
   - 2
@@ -63,7 +64,7 @@ inputDocuments:
 
 ## Overview
 
-This document contains the confirmed requirements inventory and current five-epic, 55-story plan for candidate-copilot, decomposing the PRD, approved UX sketch and binding architecture/runtime contracts into implementable stories. BC individually approved Stories 1.1–1.5 and the original 2.1, requested completion of all remaining epics without intermediate approval, then approved the original 54-story outline. On 2026-10-21 BC authorized adding Story 2.0 to define and pilot content creation before 2.1, with corresponding document synchronization and no renumbering. That scope authorization is not separate confirmation of the generated detailed criteria or execution of the new story. Detailed acceptance criteria for the other remaining stories were not separately confirmed. Planning completion and outline approval do not imply implementation, resolution of owner decisions or launch readiness.
+This document contains the confirmed requirements inventory and current five-epic, 55-story plan for candidate-copilot, decomposing the PRD, approved UX sketch and binding architecture/runtime contracts into implementable stories. BC individually approved Stories 1.1–1.5 and the original 2.1, requested completion of all remaining epics without intermediate approval, then approved the original 54-story outline. On 2026-10-21 BC authorized adding Story 2.0 to define and pilot content creation before 2.1, with corresponding document synchronization and no renumbering. BC subsequently approved refining 2.0 with adaptive investigative interviews, per-type editorial contracts and factual/outside-reader comprehension checks, proven through real pilots. These scope and refinement authorizations are not separate confirmation of the generated detailed wording or execution of the new story. Detailed acceptance criteria for the other remaining stories were not separately confirmed. Planning completion and outline approval do not imply implementation, resolution of owner decisions or launch readiness.
 
 The seven input documents were confirmed by BC. PRD FR-1 through FR-22 retain their original identifiers. NFR, AR and UX-DR identifiers below are extraction-local traceability labels, not new product policies. The final PRD governs product requirements; the architecture spine and runtime companion govern technical contracts. DESIGN and EXPERIENCE are sketch-approved drafts: preserve their disposition/style and settled behavior without treating placeholder copy, mock measurements or sketch approval as production, privacy or accessibility evidence. Historical reviews and superseded impact analyses are not active requirements. Referenced source sections retain their full authority; this inventory does not replace their schemas or edge-case contracts.
 
@@ -703,37 +704,44 @@ Recruiters can enter anonymously, ask professional questions and follow-ups agai
 ### Story 2.0: Define and Pilot the Content-Authoring Workflow
 
 As BC documenting my professional work,
-I want an interview agent and reusable document formats that help me turn unstructured recollections into faithful reviewed documents,
+I want an investigative interview agent and reusable document formats that help me turn unstructured recollections into faithful, self-contained reviewed documents,
 So that I can build the Public Knowledge Base without inventing achievements or exposing private preparation material.
 
 **Dependencies and boundary:** After Epic 1 and before Story 2.1. Deliver the authoring workflow and real pilots, not the full V1 corpus, index, deployed assistant, recruiter UI, admin product or project Resource catalog. BC participates in the interviews and owns factual correction, type approval and publication eligibility. The final taxonomy and agent packaging are defined with BC during this story, not assumed by implementers.
+
+**Authoring approach:** BMad Workflow Builder is the intended aid for constructing the reusable workflow, not a product acceptance requirement or runtime dependency. This planning amendment does not install it; installation and final packaging are confirmed with BC during execution. One interview agent can perform both investigation and outside-reader comprehension checks; no multi-agent system is required.
 
 **Acceptance Criteria:**
 
 **Given** BC's unstructured notes or free narration,
 **When** the authoring workflow is followed,
-**Then** documented stages cover topic/type choice, free narration, small batches of targeted follow-up questions, a synthesis for BC correction, Markdown drafting and explicit review,
+**Then** documented stages cover topic/type choice, free narration, adaptive small batches of targeted follow-up questions, a synthesis for BC correction, Markdown drafting and explicit factual/comprehension review,
+**And** follow-ups investigate relevant blind spots in the actual account: implicit context, ambiguous terms, contradictions, constraints, decisions and alternatives, personal contribution, supporting evidence, observed outcomes, limitations and learning. The agent prioritizes useful gaps rather than mechanically exhausting a questionnaire,
+**And** BC may pause or stop at any point; questioning advances to synthesis/review when applicable completeness criteria are satisfied, or records a blocked private checkpoint when required information is unavailable. Optional gaps do not demand exhaustive questioning, and BC is not repeatedly pressured to recall or disclose information,
 **And** a private checkpoint preserves BC corrections, confirmed facts, uncertainties, decisions and next questions; a demonstrated resume in a fresh authoring session uses that checkpoint without relying on hidden prior-session context.
 
 **Given** the agreed workflow,
 **When** the editorial agent is delivered,
-**Then** a versioned invocable definition and usage instructions implement one interview agent with type-specific prompts/templates,
+**Then** a versioned invocable definition and usage instructions implement one interview agent with type-specific investigation guides and output templates, capable of listening, probing, reformulating and checking understanding rather than only filling headings,
 **And** BC can start and resume an interview using documented steps without the future Conversation UI, index or deployed model integration.
 
 **Given** representative professional questions recruiters may ask,
 **When** BC and the agent define the V1 document inventory,
-**Then** BC approves a finite list of distinct document types, each with its purpose, intended questions, boundaries and relationships to other documents,
+**Then** BC approves a finite list of distinct document types, each with its purpose, intended recruiter questions, boundaries, relationships to other documents and explicit completeness criteria describing what an outside reader must understand,
+**And** distinct types serve distinct documentary needs rather than duplicating the same facts in interchangeable templates; completeness means sufficient supported information for those needs, not every heading populated,
 **And** editorial types neither create new selectable Resource types nor duplicate Story 3.1's project descriptor/mapping responsibility (FR-9, OPEN-1).
 
 **Given** each approved document type,
 **When** its Markdown output format is defined,
-**Then** a reusable template specifies required/optional sections, shared publication metadata, factual attribution, available supporting evidence and explicit handling of missing information,
-**And** public-ready output preserves document_id, visibility: public, created_at, reviewed_by and reviewed_at; a draft must not fabricate review approval or satisfy a missing required fact with invented content. Revising a reviewed document retains its stable document_id, identifies changed facts and requires renewed factual/publication review before the revised text becomes publication-eligible (AR7).
+**Then** a reusable versioned template includes the type's completeness criteria and specifies required, optional and conditional sections, their applicability, shared publication metadata, factual attribution, available supporting evidence and explicit handling of missing information; an accompanying investigation guide explains which angles to explore for that type,
+**And** public-ready output preserves document_id, visibility: public, created_at, reviewed_by and reviewed_at; existing optional public title/topics/aliases remain optional. Additional editorial type, template-version or preparation-state metadata and its location are decisions for this story, not new mandatory public fields or runtime contracts. Interview notes and checkpoints need not imitate public-document metadata,
+**And** a draft must not fabricate review approval or satisfy a missing required fact with invented content. Revising a reviewed document retains its stable document_id, identifies changed facts and requires renewed factual, comprehension/completeness and publication review before the revised text becomes publication-eligible, including for factually unchanged rewrites (AR7).
 
 **Given** uncertain recollections, team achievements, absent metrics or conflicting accounts,
 **When** the agent interviews BC and drafts a document,
 **Then** it distinguishes BC's personal contribution from team/context, asks for clarification and lets BC correct its synthesis before finalization,
-**And** unsupported claims, dates, outcomes and metrics are not invented; unresolved material uncertainties remain visible for correction or omission from public-ready text.
+**And** forgotten details invite targeted recall, unknown information stays explicitly uncertain in preparation, confidential information is not solicited for disclosure and is excluded from public-ready output, and inapplicable angles may be omitted with their rationale kept privately. Unsupported claims, dates, outcomes and metrics are never invented; unresolved material uncertainty is corrected or omitted, while unavailable required information blocks readiness,
+**And** before explicit validation the agent separately checks factual fidelity with BC and reads the draft from an outside-reader perspective: relevant context, terms, personal role, choices and supported outcomes must be understandable. For each applicable type completeness criterion, it identifies supporting draft passages or explicitly flags the gap; hidden interview knowledge cannot supply missing explanations. Ambiguities, contradictions or material comprehension gaps loop back to clarification/correction; this check does not require disclosing private material to a third-party reviewer.
 
 **Given** private source material and the chosen authoring tool/provider,
 **When** the workflow reads, saves or transmits interview material,
@@ -743,12 +751,14 @@ So that I can build the Public Knowledge Base without inventing achievements or 
 
 **Given** the BC-approved type list and real professional information supplied by BC,
 **When** the complete workflow is exercised,
-**Then** at least one real pilot document per approved type is interviewed, synthesized, corrected, formatted and validated by BC for factual accuracy and publication eligibility,
-**And** fictional achievements, empty templates and synthetic test fixtures do not count; unavailable real material blocks that type's pilot acceptance rather than being fabricated (OPEN-1).
+**Then** at least one real pilot document per approved type is interviewed, synthesized, corrected, formatted and validated by BC for factual accuracy, standalone comprehensibility against that type's completeness criteria and publication eligibility,
+**And** private pilot evidence demonstrates account-specific investigative follow-ups, the useful context or clarification they elicited, and distinct factual and outside-reader comprehension checks with BC correction/confirmation. Valid Markdown or populated template sections alone do not prove the method,
+**And** acceptance evidence demonstrates blocked readiness for unavailable required information, justified omission and correction after a comprehension gap. If genuine pilots do not naturally exercise these cases, supplemental controlled probes may demonstrate them; probes stay separate from real pilots and achievements and never replace a real BC-validated pilot per type,
+**And** fictional achievements, empty templates and synthetic test fixtures do not count as real pilots; unavailable real material blocks that type's pilot acceptance rather than being fabricated (OPEN-1).
 
 **Given** the completed pilots,
 **When** BC accepts the authoring method,
-**Then** templates and prompts incorporate lessons from the pilots; affected steps are rerun and affected pilots reconfirmed against the final delivered agent/template versions before method acceptance,
+**Then** templates, investigation guides and prompts incorporate lessons from the pilots; affected steps are rerun and affected pilots reconfirmed against the final delivered agent/template versions, including their investigation guides and completeness/applicability criteria, before method acceptance. Changes to those criteria require the same revalidation,
 **And** a private evidence record binds every approved type to its agent/template versions, an opaque pilot identifier/revision and dated BC approval; actual pilot content and sensitive identifiers/mappings stay private. Only a nonsensitive acceptance summary is versioned, using safe type/version references, opaque pilot identifiers/revisions and dated approval outcomes without private facts, paths or content hashes,
 **And** pilots remain private until Story 2.1's explicit public-corpus review, validation and copying; no interview completion or agent action automatically promotes files.
 

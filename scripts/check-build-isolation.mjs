@@ -31,6 +31,17 @@ try {
     'docs/preparation.md',
     '_bmad/preparation.md',
     '.agents/preparation.md',
+    '.pi/skills/content-authoring/SKILL.md',
+    '.pi/skills/content-authoring/.memlog.md',
+    'tools/content-authoring/agent.md',
+    'tools/content-authoring/templates/realization.md',
+    'tools/content-authoring/scripts/checkpoint.py',
+    'content/private/authoring/sources/synthetic.md',
+    'content/private/authoring/pilots/synthetic.md',
+    'content/private/authoring/checkpoints/synthetic.json',
+    'content/private/authoring/evidence/synthetic.json',
+    'content/private/authoring/probes/synthetic.json',
+    'content/private/authoring/sessions/synthetic.jsonl',
     '.env', '.env.local', '.env.production', '.dev.vars', '.dev.vars.production',
     'frontend/.env', 'frontend/.env.local', 'frontend/.env.production',
     'frontend/public/preparation.txt', 'public/preparation.txt',
@@ -61,8 +72,18 @@ try {
     ISOLATION_SERVER_SECRET: serverMarker,
     WRANGLER_SEND_METRICS: 'false',
     XDG_CONFIG_HOME: join(temporary, '.config'),
+    XDG_CACHE_HOME: join(temporary, '.cache'),
+    XDG_DATA_HOME: join(temporary, '.data'),
+    WRANGLER_CACHE_DIR: join(temporary, '.wrangler-cache'),
+    npm_config_userconfig: '/dev/null',
+    npm_config_globalconfig: join(temporary, '.empty-npmrc'),
+    npm_config_cache: join(temporary, '.npm-cache'),
+    npm_config_update_notifier: 'false',
+    TMPDIR: join(temporary, '.tmp'),
     CI: 'true',
   };
+  writeFileSync(join(temporary, '.empty-npmrc'), '');
+  mkdirSync(join(temporary, '.tmp'));
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   execFileSync(npm, ['run', 'build'], { cwd: temporary, env, stdio: 'pipe', timeout: 100_000 });
 

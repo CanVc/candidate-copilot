@@ -39,24 +39,26 @@
 # - After Epic 1: 2.0 defines/pilots workflow, interview agent, document types,
 #   per-type Markdown formats and one real BC-validated pilot per type.
 # - 2.1 then completes/validates/promotes the corpus; 3.1 keeps project maps.
-# - Story 2.0 is planned, not implemented; it and Epic 2 remain in backlog.
+# - BC approved the corrected design and construction on 2026-10-22.
+# - Story 2.0/Epic 2 are in-progress; construction 1.0.1 is ready for handling preflight.
+# - Actual handling/consent, real pilots and method acceptance remain pending.
 generated: 10-19-2026 21:56
-last_updated: 10-21-2026 09:43
+last_updated: 10-22-2026 16:44
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
 story_location: docs/_bmad-output/implementation-artifacts
 development_status:
-  epic-1: in-progress
-  1-1-install-and-verify-the-workstation-toolchain: review
+  epic-1: done
+  1-1-install-and-verify-the-workstation-toolchain: done
   1-2-initialize-a-reproducible-and-safely-configured-application: done
   1-3-start-the-frontend-and-worker-with-a-simulated-llm: done
   1-4-initialize-and-verify-local-d1-reproducibly: done
   1-5-verify-the-fresh-clone-workflow-and-document-troubleshooting: done
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-0-define-and-pilot-the-content-authoring-workflow: backlog
+  epic-2: in-progress
+  2-0-define-and-pilot-the-content-authoring-workflow: in-progress
   2-1-prepare-an-explicitly-public-knowledge-base: backlog
   2-2-build-reproducible-public-catalog-and-search-artifacts: backlog
   2-3-activate-a-coherent-local-public-publication: backlog
