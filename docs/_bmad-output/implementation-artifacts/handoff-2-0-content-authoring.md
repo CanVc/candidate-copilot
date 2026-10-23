@@ -1,5 +1,15 @@
 # Story 2.0 — Point de reprise après pause
 
+## Mise à jour du 23 octobre 2026 — reprise actuelle
+
+Les ressources sont désormais en **1.0.2**. BC a réalisé deux documents B, valide l’investigation et la reprise fraîche, et confirme que traitement/consentement lui conviennent. Les limites techniques divulguées restent des limites, pas des vérifications acquises. Ne pas redemander les formalités déjà acceptées sur le périmètre inchangé.
+
+Le frontmatter et les checkpoints courants sont corrigés, sans réécrire les récits ou les archives. Les champs de revue restent vides ; les attestations antérieures sont conservées en privé, pas reportées sur de nouveaux octets. Les omissions justifiées et une correction de compréhension sont déjà documentées. Il reste le pilote **A**, la preuve de blocage pour fait requis indisponible, la branche B non-production si absente, puis les revues affectées et l’acceptation finale. Une heure de création inconnue reste explicitement manquante, sans invention, jusqu’à preuve suffisante avant éligibilité publique.
+
+Références actuelles : `tools/content-authoring/acceptance.md`, `content/AGENTS.md` et `spec-2-0-document-frontmatter-and-pilot-evidence.md` dans ce dossier. Story 2.0 reste `in-progress` ; aucune publication. Les paragraphes ci-dessous décrivent exclusivement la pause et la construction du **22 octobre**, pas les prochaines formalités à répéter.
+
+## Historique de la pause du 22 octobre
+
 **Pause demandée par BC le 22 octobre 2026. Aucun travail autonome à poursuivre pendant la pause.**
 
 ## État réel

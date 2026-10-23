@@ -734,7 +734,7 @@ So that I can build the Public Knowledge Base without inventing achievements or 
 **Given** each approved document type,
 **When** its Markdown output format is defined,
 **Then** a reusable versioned template includes the type's completeness criteria and specifies required, optional and conditional sections, their applicability, shared publication metadata, factual attribution, available supporting evidence and explicit handling of missing information; an accompanying investigation guide explains which angles to explore for that type,
-**And** public-ready output preserves document_id, visibility: public, created_at, reviewed_by and reviewed_at; existing optional public title/topics/aliases remain optional. Additional editorial type, template-version or preparation-state metadata and its location are decisions for this story, not new mandatory public fields or runtime contracts. Interview notes and checkpoints need not imitate public-document metadata,
+**And** authored A/B documents carry stable document_id, created_at, modified_at and factual title from the private draft onward, with reviewed_by and reviewed_at as empty placeholders until actual review. Known document dates are quoted UTC timestamps with time and seconds (YYYY-MM-DDTHH:mm:ssZ); preserve the creation instant and update modified_at only on document edits, including metadata changes. Never invent a missing historical hour: retain an existing date-only creation value as a privately recorded legacy gap, blocking public eligibility but not private continuation, and preserve historical snapshots. Public-ready output additionally requires visibility: public and real nonempty reviewed_by/reviewed_at; all public dates must be known and conformant. Public topics/aliases remain optional. content/AGENTS.md reminds authors of this contract outside the public knowledge corpus. Additional editorial type, template-version or preparation-state metadata and its location are decisions for this story, not new mandatory public fields or runtime contracts. Interview notes and checkpoints need not imitate public-document metadata,
 **And** a draft must not fabricate review approval or satisfy a missing required fact with invented content. Revising a reviewed document retains its stable document_id, identifies changed facts and requires renewed factual, comprehension/completeness and publication review before the revised text becomes publication-eligible, including for factually unchanged rewrites (AR7).
 
 **Given** uncertain recollections, team achievements, absent metrics or conflicting accounts,
@@ -784,7 +784,7 @@ So that I control which information recruiters can access.
 
 **Given** a public document,
 **When** validation runs,
-**Then** it requires a unique stable document_id, visibility: public, created_at, reviewed_by and reviewed_at with valid values,
+**Then** it requires a unique stable document_id, visibility: public, created_at, modified_at, title, real nonempty reviewed_by and reviewed_at with valid values; document dates must be quoted UTC timestamps with time and seconds (YYYY-MM-DDTHH:mm:ssZ), with neither missing historical hours nor empty draft review placeholders accepted,
 **And** missing or malformed metadata and duplicate identities fail explicitly; identities remain stable across renames and are never recycled (AR7, AR8).
 
 **Given** documentary build inputs,

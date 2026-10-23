@@ -1,8 +1,17 @@
 # Format B — Réalisation ou projet
 
-Template **1.0.1**, critères **1.0.0**. Ressource générique, pas réalisation ou pilote BC. Un projet professionnel **ou personnel**, même PoC/prototype/en cours/arrêté, est recevable à son état réel. Aucun employeur, document A, achèvement, production ou impact métier exigé.
+Template **1.0.2**, critères **1.0.0**. Ressource générique, pas réalisation ou pilote BC. Un projet professionnel **ou personnel**, même PoC/prototype/en cours/arrêté, est recevable à son état réel. Aucun employeur, document A, achèvement, production ou impact métier exigé.
 
 ```markdown
+---
+document_id: "<UUID stable>"
+created_at: ""
+modified_at: ""
+title: "<Titre factuel de la réalisation ou du projet>"
+reviewed_by: ""
+reviewed_at: ""
+---
+
 # <Titre factuel de la réalisation ou du projet>
 
 ## Objectif et contexte
@@ -36,6 +45,6 @@ Optionnel : mesures étayées, diagrammes, artefacts autorisés, étapes futures
 
 Pour R1–R5 et R6 applicable, consigner des passages exacts ou une lacune dans le sidecar. Un lien, une rubrique remplie ou une connaissance cachée ne vaut pas explication. Omettre les rubriques inapplicables et garder leur motif privé.
 
-Le brouillon ne préremplit aucun accord ni `visibility: public`. À toute réécriture ou retrait de revues, retirer `visibility: public`, `reviewed_by` et `reviewed_at` du frontmatter ; conserver `document_id`, `created_at` et l’historique privé des accords retirés/remplacés. Sidecar privé : identité, révision, type, état, versions, preuves et accords.
+Le brouillon conserve `reviewed_by: ""` et `reviewed_at: ""` comme placeholders, jamais comme accords, et ne préremplit pas `visibility: public`. À toute réécriture ou retrait de revues, retirer `visibility: public` et remettre les deux champs de revue à vide ; conserver `document_id`, `created_at` et l’historique privé des accords retirés/remplacés. Les champs documentaires requis sont `document_id`, `created_at`, `modified_at`, `title` et les dates connues sont des chaînes UTC `YYYY-MM-DDTHH:mm:ssZ`. Renseigner les dates réelles, actualiser `modified_at` seulement lors d’une modification du document et ne pas inventer d’heure historique ; une ancienne date de création sans heure reste une exception privée signalée jusqu’à clarification. Voir `content/AGENTS.md` depuis la racine du projet. Sidecar privé : identité, révision, type, état, versions, preuves et accords.
 
-Suivre les deux passes de `workflow/review.md` : après les trois premiers accords réels, ajouter seulement les métadonnées nouvellement recueillies du contrat public existant (`document_id` stable, `created_at` réel, `visibility: public`, `reviewed_by` et `reviewed_at` réels). Archiver ces premiers accords ; l’ajout crée une nouvelle révision privée/provisoire avec accords nuls, puis recueillir les trois accords sur les octets finaux exacts, métadonnées incluses. Un refus/retrait retire à nouveau les trois champs d’approbation. `title`, `topics`, `aliases` sont optionnels et sûrs ; aucun champ public éditorial supplémentaire. Le fichier reste privé jusqu’à 2.1, même après réapprobation ; aucune réécriture/publication automatique.
+Suivre les deux passes de `workflow/review.md` : après les trois premiers accords réels, ajouter seulement les métadonnées nouvellement recueillies du contrat public existant (`document_id` stable, `created_at` réel, `modified_at` réel, `title` factuel, `visibility: public`, `reviewed_by` et `reviewed_at` réels). Archiver ces premiers accords ; l’ajout crée une nouvelle révision privée/provisoire avec accords nuls, puis recueillir les trois accords sur les octets finaux exacts, métadonnées incluses. Un refus/retrait retire à nouveau `visibility: public` et remet les deux champs de revue à vide. `title` est requis ; `topics` et `aliases` sont optionnels et sûrs ; aucun champ public éditorial supplémentaire. Toutes les dates publiques doivent être connues et conformes ; les placeholders ne passent pas la validation publique. Le fichier reste privé jusqu’à 2.1, même après réapprobation ; aucune réécriture/publication automatique.

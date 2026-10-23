@@ -1,19 +1,22 @@
-# État de livraison et d’acceptation — construction seulement
+# État de livraison et d’acceptation
 
-**22 octobre 2026 — version construite 1.0.1. Story 2.0 reste in-progress jusqu’aux vrais pilotes et à l’acceptation de méthode.**
+**23 octobre 2026 — ressources 1.0.2 ; Story 2.0 reste in-progress.**
 
-Les ressources génériques sont construites. La livraison de méthode n’est **pas acceptée** : route réelle/consentement, vrais pilotes et revues humaines restent en attente. Le gate Builder de chemins produit toujours exactement deux high, acceptés par le parent comme exceptions de compatibilité Builder/Pi ; son résultat brut reste **fail**, pas un succès fabriqué. L’historique exécuté ci-dessous est conservé ; la vérification finale 1.0.1 précise les dispositions désormais acquises.
+Les ressources génériques sont construites. BC confirme avoir exercé les entretiens et la reprise fraîche, et accepte le traitement/consentement avec les limites divulguées. Des documents réels B existent ; les versions corrigées doivent être revalidées et le pilote A manque encore. La méthode n’est **pas encore acceptée**. L’historique de construction ci-dessous reste daté : ses mentions « aucun pilote réel » décrivent cette phase passée, pas l’état actuel. Le gate Builder de chemins produit toujours exactement deux high, acceptés par le parent comme exceptions de compatibilité Builder/Pi ; son résultat brut reste **fail**, pas un succès fabriqué. L’historique exécuté ci-dessous est conservé ; la vérification finale 1.0.1 précise les dispositions désormais acquises.
 
 ## Références de versions sûres
 
 | Type | Agent | Template | Guide | Critères/applicabilité | Pilote réel / révision | Accords BC datés |
 |---|---|---|---|---|---|---|
-| A — contexte professionnel | 1.0.1 | 1.0.1 | 1.0.0 | 1.0.0 | En attente / — | Faits, compréhension, éligibilité : en attente |
-| B — réalisation/projet | 1.0.1 | 1.0.1 | 1.0.0 | 1.0.0 | En attente / — | Faits, compréhension, éligibilité : en attente |
+| A — contexte professionnel | 1.0.2 | 1.0.2 | 1.0.0 | 1.0.0 | En attente / — | Faits, compréhension, éligibilité : en attente |
+| B — réalisation/projet | 1.0.2 | 1.0.2 | 1.0.0 | 1.0.0 | B-01 / 8 | Revalidation de la rendition corrigée en attente ; accords antérieurs archivés en privé |
+| B — réalisation/projet | 1.0.2 | 1.0.2 | 1.0.0 | 1.0.0 | B-02 / 3 | Revues en attente ; heure de création inconnue, sans invention |
 
-Le schéma checkpoint est 1 ; la version agent couvre les procédures d’authoring/revue/handling livrées. Aucun ID de pilote ou accord n’a été inventé. Les futures références de pilote seront opaques ; seules versions sûres, révisions et issues datées seront ajoutées ici. Aucun fait, correspondance, chemin ou hash de matériau privé ne doit entrer dans ce résumé.
+Le schéma checkpoint est 1 ; la version agent couvre les procédures d’authoring/revue/handling livrées. B-01/B-02 sont des références opaques attribuées au suivi du 23 octobre, pas des approbations inventées ; leur correspondance reste privée. Seules versions sûres, révisions et issues datées sont consignées ici. Aucun fait, correspondance, chemin ou hash de matériau privé ne doit entrer dans ce résumé.
 
-## Neuf scénarios de la Story 2.0
+## Historique de construction 1.0.1 — neuf scénarios de la Story 2.0
+
+Ce tableau décrit les preuves manquantes au 22 octobre, pas une liste actuelle d’actions à refaire. Pour l’état courant, utiliser le suivi du 23 octobre en fin de fichier et les références de versions ci-dessus.
 
 | Scénario source, dans l’ordre | Construction disponible | Ce qui manque encore comme preuve réelle |
 |---|---|---|
@@ -98,7 +101,9 @@ Résultats **exit 0** :
 
 Le skill Wrangler disponible a été lu avant les checks qui utilisent les commandes de build existantes. Les builds sont exclusivement des copies jetables, avec Worker `deploy --dry-run`, CI/metrics/env-file protégés et HOME/XDG/cache npm/Wrangler temporaires. Aucun upload/déploiement, login ou accès à un compte n’a été demandé.
 
-## Gates qui restent ouverts
+## Historique du 22 octobre — gates alors ouverts
+
+Cette liste historique ne révoque ni la confirmation BC des entretiens/reprise ni son acceptation ultérieure du traitement/consentement. Les points encore ouverts sont distingués dans le suivi du 23 octobre.
 
 - Route fournisseur/modèle/compte et traitement effectifs, contexte automatique, copies, rétention et suppression vérifiés ; sélection et consentement BC avant toute entrée non publique. La procédure locale spécifique n’a pas été exercée sur une session réelle.
 - Un vrai pilote BC corrigé par type, relances adaptées au récit, reprise en session fraîche, preuve de fidélité/compréhension et trois accords datés sur révisions finales. Probes exceptionnels/branche non-production à démontrer séparément s’ils ne surviennent pas naturellement.
@@ -136,4 +141,16 @@ Le probe de finalisation simule explicitement l’édition de frontmatter en fix
 
 Après lecture des correctifs et des ressources livrées, le parent a réexécuté indépendamment les **31 tests Python**, le probe de chargement Pi, le fichier safety complet (**15/15**), l’isolation standalone (**33 canaris exclus des deux builds**) et les quatre configurations TypeScript : succès, avec Node **24.22.0** / npm **11.19.1** dans un sous-processus. `quick_validate` avec l’exception Pi passe ; le scanner de scripts retourne zéro finding, sans prétendre remplacer Ruff absent. Le comptage reste **716 tokens estimés**, méthode fallback.
 
-Le parent a également vérifié que le résultat brut du scanner de chemins contient **exactement** les deux exceptions acceptées, sans finding supplémentaire. Ce résultat reste `fail` dans l’historique officiel. **524 fichiers préexistants protégés** sont inchangés depuis le début de la construction ; versions/squelettes cohérents, whitespace propre, HEAD inchangé et aucun fichier staged. Aucun matériau privé réel ni pilote n’a été traité. Ces contrôles valident la construction et sa plomberie, pas la fidélité ou le comportement d’un modèle. La prochaine étape est le préflight réel de traitement/consentement, puis les pilotes séparément autorisés.
+Le parent a également vérifié que le résultat brut du scanner de chemins contient **exactement** les deux exceptions acceptées, sans finding supplémentaire. Ce résultat reste `fail` dans l’historique officiel. **524 fichiers préexistants protégés** sont inchangés depuis le début de la construction ; versions/squelettes cohérents, whitespace propre, HEAD inchangé et aucun fichier staged. Aucun matériau privé réel ni pilote n’a été traité. Ces contrôles valident la construction et sa plomberie, pas la fidélité ou le comportement d’un modèle. La prochaine étape était alors le préflight réel de traitement/consentement, puis les pilotes séparément autorisés.
+
+## Suivi propriétaire et frontmatter — 23 octobre 2026, version 1.0.2
+
+BC confirme les entretiens investigatifs et la reprise fraîche et accepte le traitement/consentement. Les limites techniques de rétention/suppression/copies antérieurement divulguées ne deviennent pas vérifiées par cet accord ; les exceptions consenties restent bornées aux matériaux sélectionnés. Aucun nouvel audit fournisseur ou effacement n’est revendiqué.
+
+L’examen des traces privées soutient déjà les cas **omission justifiée** et **correction après lacune de compréhension**. Aucun checkpoint inspecté ne démontre le blocage explicite de préparation pour une information requise indisponible ; cette preuve reste à établir. Les documents B ne démontrent pas non plus la branche personnelle/non-production : probe distinct possible, pas de troisième pilote réel imposé. Le pilote A reste absent.
+
+Les templates 1.0.2 portent dès le brouillon `document_id`, `created_at`, `modified_at`, `title`, `reviewed_by: ""` et `reviewed_at: ""`. Les dates connues sont en UTC avec heure, secondes et `Z`. Aucune heure historique inconnue n’est inventée ; une ancienne date seule reste explicitement lacunaire et privée jusqu’à preuve suffisante. `content/AGENTS.md` rappelle la règle hors corpus public. Les deux documents courants conservent leur récit ; les archives sont préservées. Le changement de métadonnées/versions invalide les revues des nouveaux octets, sans effacer les anciennes attestations.
+
+Vérification locale 1.0.2 : `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/content-authoring/scripts/tests -v` : **34/34 PASS** (31 tests existants et trois tests de contrat générique). Les tests couvrent notamment les placeholders, l’unicité des clés de template, les versions agent/procédures/templates et les squelettes de dates documentaires. Les deux sauvegardes et validations de checkpoints courants avec précédents privés passent ; contrôle direct des corps inchangés, identité/instant de création, lacune horaire conservée, historique et références/digests : PASS. Des cas UTC franchissant la limite de jour sont vérifiés localement. Les archives/fichiers antérieurs non concernés sont inchangés au contrôle d’intégrité, sans interprétation des sources. `git diff --check`, whitespace des fichiers neufs, exclusion Git du sous-arbre privé et recherche de marqueurs privés sélectionnés dans les changements génériques : PASS ; pas de certification exhaustive de confidentialité.
+
+Ces validations ne sont ni un nouvel entretien, ni un audit fournisseur, ni une preuve d’ingestion/build applicatif, ni une publication ou clôture de story. L’éligibilité publique, les revues finales et l’acceptation de méthode restent ouvertes. Avant promotion 2.1, clarifier avec BC l’événement exact représenté par le `reviewed_at` public dans la procédure de revue en deux passes ; les champs des brouillons restent vides jusque-là, sans date de revue inventée.
