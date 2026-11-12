@@ -1,6 +1,6 @@
 # Deux contrats éditoriaux finis
 
-Critères et applicabilité **1.0.0** pour A et B. Accord de conception BC du 22 octobre 2026 ; aucune validation des faits ou d’un pilote n’en découle. Ces types éditoriaux ne créent pas de Resource. Le périmètre peut être borné ; pas d’inventaire de carrière ou de variante factuelle par employeur cible.
+Critères et applicabilité **1.0.3** pour A et B. Accord de conception BC du 22 octobre 2026 ; aucune validation des faits ou d’un pilote n’en découle. Ces types éditoriaux ne créent pas de Resource. Le périmètre peut être borné ; pas d’inventaire de carrière ou de variante factuelle par employeur cible.
 
 ## A — Contexte professionnel et responsabilités
 
@@ -33,8 +33,8 @@ Enregistrer et expliquer **trois dimensions indépendantes** : cadre professionn
 
 Sections requises : objectif/contexte ; contribution/périmètre réalisé ; solution/choix ; état/usages réels ; résultats/limites. Section conditionnelle : contraintes/retour d’expérience. Ajouts optionnels : chiffres étayés, diagrammes, artefacts autorisés, prochaines étapes explicitement prospectives. Aucune métrique, échelle, économie ou preuve publique obligatoire. Une démo locale expliquée avec limites peut suffire ; son existence ne doit jamais être inventée.
 
-## Seuil commun
+## Repères communs, sans veto éditorial
 
-Complétude = explications suffisantes et étayées pour **chaque critère applicable**, pas titres remplis. Dans le checkpoint privé, chaque critère porte son applicabilité, un motif d’omission si nécessaire et les citations exactes/sections de la révision, ou une lacune. Les faits cachés de l’entretien et les liens ne comptent pas comme passages. Information requise indisponible : document bloqué, sans divulgation forcée ; information optionnelle manquante : omission possible. Les omissions privées ne sont pas publiées.
+Les critères décrivent les explications utiles au lecteur, pas des titres à remplir ni des conditions automatiques d’approbation. BC décide seul de la complétude éditoriale, de la validation du document et de sa publication. Requis/optionnel/conditionnel guident l’entretien et le retour de lecture ; la convention structurelle `required` reste conservée dans le checkpoint, sans imposer de réponse. Chaque critère porte son applicabilité, un motif d’omission si nécessaire et les citations exactes/sections de la révision, ou une lacune. Les faits cachés de l’entretien et les liens ne comptent pas comme passages. Information indisponible, même requise : conserver l’inconnu, proposer une question sans pression ; BC peut choisir synthèse, revue et approbation avec ces lacunes. Ne rien inventer ni masquer ; les motifs privés d’omission ne sont pas publiés.
 
 Les métadonnées éditoriales et versions restent en sidecar ; la rendition éligible utilise seulement le contrat public existant : `document_id`, `created_at`, `modified_at`, `title`, `visibility: public`, `reviewed_by`, `reviewed_at`, et éventuellement `topics`, `aliases` utiles et sûrs. Dès le brouillon, les quatre champs documentaires sont présents et les champs de revue restent à `""`. Les dates documentaires connues suivent UTC `YYYY-MM-DDTHH:mm:ssZ` ; une date de création héritée sans heure est signalée en privé, jamais complétée par invention, et bloque l’éligibilité publique. Voir `content/AGENTS.md` depuis la racine. Ne jamais préremplir une approbation. Toute réécriture garde l’identité et renouvelle faits, compréhension et éligibilité.

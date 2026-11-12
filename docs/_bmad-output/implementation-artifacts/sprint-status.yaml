@@ -40,10 +40,14 @@
 #   per-type Markdown formats and one real BC-validated pilot per type.
 # - 2.1 then completes/validates/promotes the corpus; 3.1 keeps project maps.
 # - BC approved the corrected design and construction on 2026-10-22.
-# - Story 2.0/Epic 2 are in-progress; construction 1.0.1 is ready for handling preflight.
-# - Actual handling/consent, real pilots and method acceptance remain pending.
+# - BC accepted three real pilots and the clarified interview method on 2026-11-12.
+# - Editorial completeness is BC's decision; both compulsory demonstration gates
+#   (required-fact blockage and personal/non-production probe) are withdrawn, not passed.
+# - Story 2.0 is done; Epic 2 stays in-progress, Story 2.1 remains backlog.
+# - Pilots remain private; no new publication eligibility or launch approval.
+# - Processing consent is accepted within disclosed limits, not a retention/deletion audit.
 generated: 10-19-2026 21:56
-last_updated: 10-22-2026 16:44
+last_updated: 11-12-2026 17:05
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -58,7 +62,7 @@ development_status:
   epic-1-retrospective: optional
 
   epic-2: in-progress
-  2-0-define-and-pilot-the-content-authoring-workflow: in-progress
+  2-0-define-and-pilot-the-content-authoring-workflow: done
   2-1-prepare-an-explicitly-public-knowledge-base: backlog
   2-2-build-reproducible-public-catalog-and-search-artifacts: backlog
   2-3-activate-a-coherent-local-public-publication: backlog

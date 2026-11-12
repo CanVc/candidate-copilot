@@ -1,6 +1,6 @@
 # Format B — Réalisation ou projet
 
-Template **1.0.2**, critères **1.0.0**. Ressource générique, pas réalisation ou pilote BC. Un projet professionnel **ou personnel**, même PoC/prototype/en cours/arrêté, est recevable à son état réel. Aucun employeur, document A, achèvement, production ou impact métier exigé.
+Template **1.0.3**, critères **1.0.3**. Ressource générique, pas réalisation ou pilote BC. Un projet professionnel **ou personnel**, même PoC/prototype/en cours/arrêté, est recevable à son état réel. Aucun employeur, document A, achèvement, production ou impact métier exigé.
 
 ```markdown
 ---
@@ -41,7 +41,7 @@ déploiement, exploitation/incidents uniquement si applicables. R6 conditionnel.
 
 Cadre, maturité et usage sont indépendants, décrits dans la narration et l’applicabilité privée, pas de nouveaux enums/champs publics. Une démo publique ne prouve pas un usage opérationnel ; des tests ne prouvent ni impact économique ni fiabilité de production. Un projet personnel peut avoir de vrais utilisateurs, sans les inférer. Ne pas transformer un plan en acquis ni un état passé en usage actuel.
 
-Optionnel : mesures étayées, diagrammes, artefacts autorisés, étapes futures clairement prospectives. Un récit BC-confirmé peut suffire sans code public, captures ou client nommé. Une démo locale attestée avec limites peut satisfaire R4/R5 ; ne pas inventer démo/utilisateurs/résultat. Si un fait requis manque, bloquer ; ne pas traiter l’absence honnête de production comme un manque.
+Optionnel : mesures étayées, diagrammes, artefacts autorisés, étapes futures clairement prospectives. Un récit BC-confirmé peut suffire sans code public, captures ou client nommé. Une démo locale attestée avec limites peut satisfaire R4/R5 ; ne pas inventer démo/utilisateurs/résultat. Si un fait requis manque, signaler et conserver l’inconnu sans bloquer un accord explicite. BC décide seul de la complétude éditoriale, de la validation du document et de sa publication. Ne pas traiter l’absence honnête de production comme un manque ; aucun probe ni pilote personnel/non-production supplémentaire n’est obligatoire.
 
 Pour R1–R5 et R6 applicable, consigner des passages exacts ou une lacune dans le sidecar. Un lien, une rubrique remplie ou une connaissance cachée ne vaut pas explication. Omettre les rubriques inapplicables et garder leur motif privé.
 

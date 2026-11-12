@@ -91,8 +91,8 @@ class CheckpointTests(unittest.TestCase):
         self.state.update(type="B", scope=template["scope"], criteria=template["criteria"], stage="paused")
         self.check()
         self.state["approvals"]["facts"] = self.approval()
-        with self.assertRaisesRegex(helper.Invalid, "unknown_scope"):
-            self.check()
+        self.check()  # Unknown scope is not an editorial approval veto.
+        self.assertEqual(self.state["scope"], {"setting": None, "maturity": "", "usage": ""})
 
     def test_setting_maturity_and_usage_are_independent(self):
         template = json.loads((TOOLS / "workflow/checkpoint-realization-template.json").read_text())
@@ -105,13 +105,100 @@ class CheckpointTests(unittest.TestCase):
                         self.check()
         self.assertIsNone(self.state["approvals"]["eligibility"])
 
-    def test_required_gap_blocks_approval_but_not_provisional_checkpoint(self):
+    def test_required_gap_and_legacy_blocked_stage_allow_explicit_approval(self):
         self.state["gaps"]["required"] = ["synthetic missing attribution"]
-        self.state["stage"] = "blocked"
+        self.state["stage"] = "blocked"  # Historical/technical stage remains accepted.
         self.check()
         self.state["approvals"]["facts"] = self.approval()
-        with self.assertRaisesRegex(helper.Invalid, "required_gaps"):
-            self.check()
+        self.check()
+        self.assertEqual(self.state["gaps"]["required"], ["synthetic missing attribution"])
+
+    def test_A_and_B_validate_and_cli_save_all_reviews_with_editorial_unknowns(self):
+        for kind, filename in (("A", "checkpoint-template.json"),
+                               ("B", "checkpoint-realization-template.json")):
+            with self.subTest(kind=kind):
+                skeleton = json.loads((TOOLS / "workflow" / filename).read_text())
+                self.state.update(type=kind, scope=skeleton["scope"], criteria=skeleton["criteria"],
+                                  revision=1, checkpoint_seq=1, stage="draft",
+                                  versions=helper.expected_versions(self.manifest, kind),
+                                  approvals={"facts": None, "comprehension": None, "eligibility": None})
+                self.state["gaps"] = {"required": ["synthetic missing attribution"],
+                                      "optional": ["synthetic missing number"]}
+                self.state["facts"] = [{"status": "unknown", "text": "synthetic unresolved fact"}]
+                unknowns = copy.deepcopy({key: self.state[key] for key in
+                                         ("scope", "criteria", "gaps", "facts", "uncertainties")})
+                output = self.root / f"{kind}-checkpoint.json"
+                self.check()
+                result = self.save_candidate(output)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                for approval_type in ("facts", "comprehension", "eligibility"):
+                    previous = copy.deepcopy(self.state)
+                    self.state["checkpoint_seq"] += 1
+                    self.state["stage"] = approval_type
+                    self.state["approvals"][approval_type] = self.approval()
+                    self.check(previous)
+                    result = self.save_candidate(output)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    restored = helper.load(output)
+                    self.assertEqual(restored, self.state)
+                    self.assertEqual({key: restored[key] for key in unknowns}, unknowns)
+                    result = self.cli("validate", output, "--root", self.root,
+                                      "--versions", TOOLS / "versions.json")
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertTrue(all(self.state["approvals"].values()))
+                self.assertEqual(self.state["review_history"], [])
+                self.assertEqual(list(self.root.glob(".checkpoint-*")), [])
+
+    def test_historical_manifest_is_explicit_without_migration_or_approval_copy(self):
+        historical_path = TOOLS / "versions/1.0.2.json"
+        historical = helper.load(historical_path)
+        self.assertEqual(historical, {
+            "release": "1.0.2", "checkpoint_schema": 1, "agent": "1.0.2",
+            "types": {kind: {"template": "1.0.2", "guide": "1.0.0", "criteria": "1.0.0"}
+                      for kind in ("A", "B")},
+        })
+        initial = copy.deepcopy(self.state)
+        for kind, filename in (("A", "checkpoint-template.json"),
+                               ("B", "checkpoint-realization-template.json")):
+            with self.subTest(kind=kind):
+                self.state = copy.deepcopy(initial)
+                skeleton = json.loads((TOOLS / "workflow" / filename).read_text())
+                self.state.update(type=kind, scope=skeleton["scope"], criteria=skeleton["criteria"],
+                                  versions=helper.expected_versions(historical, kind))
+                self.state["approvals"] = {key: self.approval() for key in self.state["approvals"]}
+                recorded_approvals = copy.deepcopy(self.state["approvals"])
+                recorded_versions = self.state["versions"].copy()
+                output = self.root / f"historical-{kind}.json"
+                helper.validate(self.state, self.root, historical)
+                with self.assertRaisesRegex(helper.Invalid, "state.versions"):
+                    self.check()
+                for continuing in (False, True):
+                    if continuing:
+                        self.state["checkpoint_seq"] += 1
+                        self.state["decisions"].append("synthetic historical continuation")
+                    result = self.save_candidate(output, historical_path)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(helper.load(output), self.state)
+                    self.assertEqual(helper.load(output)["approvals"], recorded_approvals)
+                    self.assertEqual(helper.load(output)["versions"], recorded_versions)
+                    self.assertEqual(helper.load(output)["review_history"], [])
+                    before = output.read_bytes()
+                    result = self.cli("validate", output, "--root", self.root,
+                                      "--versions", historical_path)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(output.read_bytes(), before)
+                previous = copy.deepcopy(self.state)
+                self.state["checkpoint_seq"] += 1
+                self.state["versions"] = helper.expected_versions(self.manifest, kind)
+                with self.assertRaisesRegex(helper.Invalid, "approval.binding"):
+                    self.check(previous)
+                self.state["approvals"] = dict.fromkeys(self.state["approvals"])
+                with self.assertRaisesRegex(helper.Invalid, "new_revision_required"):
+                    self.check(previous)
+                self.state["revision"] += 1
+                self.state["review_history"].append({"revision": previous["revision"],
+                                                     "approvals": previous["approvals"]})
+                self.check(previous)
 
     def test_optional_gap_does_not_block_recorded_review(self):
         self.state["gaps"]["optional"] = ["synthetic optional number"]
@@ -134,6 +221,40 @@ class CheckpointTests(unittest.TestCase):
         self.draft.write_text(self.draft.read_text() + "Absent synthetic text\n")
         self.bind()
         self.check()  # Presence only; no comprehension claim.
+
+    def test_explicit_approvals_do_not_bypass_supplied_quote_integrity(self):
+        self.state["approvals"] = {key: self.approval() for key in self.state["approvals"]}
+        self.state["gaps"]["required"] = ["synthetic unknown"]
+        saved = self.root / "saved-checkpoint.json"
+        result = self.save_candidate(saved)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        before = saved.read_bytes()
+        approvals = copy.deepcopy(self.state["approvals"])
+        self.state["checkpoint_seq"] += 1
+        self.state["criteria"]["C1"]["passages"][0]["quote"] = "Invented synthetic quote"
+        with self.assertRaisesRegex(helper.Invalid, "draft.passage_missing"):
+            self.check()
+        output = self.root / "checkpoint.json"
+        result = self.save_candidate(output)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["errors"], ["draft.passage_missing"])
+        self.assertFalse(output.exists())
+        result = self.save_candidate(saved)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)["errors"], ["draft.passage_missing"])
+        self.assertEqual(saved.read_bytes(), before)
+        self.assertEqual(helper.load(saved)["approvals"], approvals)
+        self.assertEqual(list(self.root.glob(".checkpoint-*")), [])
+
+    def test_editorial_leniency_does_not_remove_scope_or_gap_field_shapes(self):
+        self.state.update(type="B", scope={"setting": "invented-enum", "maturity": "", "usage": ""},
+                          criteria=json.loads((TOOLS / "workflow/checkpoint-realization-template.json").read_text())["criteria"])
+        with self.assertRaisesRegex(helper.Invalid, "state.scope"):
+            self.check()
+        self.state["scope"]["setting"] = None
+        self.state["gaps"]["required"] = "not a list"
+        with self.assertRaisesRegex(helper.Invalid, "state.gaps"):
+            self.check()
 
     def test_identity_created_date_and_type_remain_stable(self):
         previous = copy.deepcopy(self.state)
@@ -424,10 +545,11 @@ class CheckpointTests(unittest.TestCase):
     def cli(self, *args):
         return subprocess.run([sys.executable, str(SCRIPT), *map(str, args)], capture_output=True, text=True, timeout=5)
 
-    def save_candidate(self, output):
+    def save_candidate(self, output, versions=None):
         candidate = self.root / "candidate.json"
         candidate.write_text(json.dumps(self.state))
-        return self.cli("save", candidate, "--root", self.root, "--versions", TOOLS / "versions.json", "--out", output)
+        return self.cli("save", candidate, "--root", self.root, "--versions",
+                        versions if versions is not None else TOOLS / "versions.json", "--out", output)
 
     def test_nonfinite_json_intake_is_rejected_with_safe_diagnostics_and_no_replacement(self):
         output = self.root / "checkpoint.json"

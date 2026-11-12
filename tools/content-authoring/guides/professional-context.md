@@ -1,6 +1,6 @@
 # Investigation A — Contexte professionnel
 
-Guide **1.0.0**, critères **1.0.0**. Destination : un lecteur comprend le rôle réel de BC et ses frontières ; pas un titre flatteur ou catalogue de projets. Le préflight précède toute source privée. Réutiliser la documentation/transcription française sélectionnée ; faire corriger la compréhension au lieu d’exiger une nouvelle narration.
+Guide **1.0.3**, critères **1.0.3**. Destination : un lecteur comprend le rôle réel de BC et ses frontières ; pas un titre flatteur ou catalogue de projets. Le préflight précède toute source privée. Réutiliser la documentation/transcription française sélectionnée ; faire corriger la compréhension au lieu d’exiger une nouvelle narration.
 
 Choisir 1–3 relances adaptées aux lacunes de l’échange, pas toutes les questions ci-dessous :
 
@@ -14,6 +14,6 @@ Choisir 1–3 relances adaptées aux lacunes de l’échange, pas toutes les que
 
 Explorer les responsabilités dans le cycle de vie et les changements de périmètre uniquement s’ils éclairent le rôle. Ne pas inférer une maîtrise de toutes les technologies ou du système entier à partir de l’ancienneté. Ne pas imposer noms d’employeur/client, dates précises ou preuves publiques ; privilégier une abstraction sûre confirmée par BC.
 
-Si deux sources divergent, soumettre la contradiction à BC et conserver le statut jusqu’à clarification. Oubli : un rappel ciblé possible ; inconnu : incertitude privée ; confidentiel : pas de détail sollicité ; inapplicable : motif privé. C1–C4 indisponibles bloquent la préparation, sans forcer la divulgation. C5 non pertinent et ajouts optionnels peuvent être omis sans prolonger l’entretien.
+Si deux sources divergent, soumettre la contradiction à BC et conserver le statut jusqu’à clarification. Oubli : un rappel ciblé possible ; inconnu : incertitude privée ; confidentiel : pas de détail sollicité ; inapplicable : motif privé. C1–C4 indisponibles restent des lacunes signalées, pas un blocage de préparation ou d’approbation. BC décide seul de la complétude éditoriale, de la validation du document et de sa publication ; il peut choisir synthèse ou revue avec ces inconnues. C5 non pertinent et ajouts optionnels peuvent être omis sans prolonger l’entretien.
 
-Synthétiser pour correction avant de figer la prose. En revue, associer chaque C applicable à une section et citation exactes du brouillon ; expliquer localement les termes, le rôle et les limites. Si un lecteur ne comprend qu’en suivant un lien B ou grâce à l’entretien, corriger le passage puis redemander confirmation BC. Les accords factuel, compréhension et diffusion sont distincts et propres à la révision.
+Synthétiser pour correction avant de figer la prose. En revue, associer chaque C applicable à une section et citation exactes du brouillon ou à une lacune explicitement consignée ; expliquer localement les termes, le rôle et les limites. Si un lecteur ne comprend qu’en suivant un lien B ou grâce à l’entretien, signaler la lacune et proposer une clarification ou une correction ; BC choisit la suite sans veto de l’agent. Les accords factuel, compréhension et diffusion sont distincts et propres à la révision.

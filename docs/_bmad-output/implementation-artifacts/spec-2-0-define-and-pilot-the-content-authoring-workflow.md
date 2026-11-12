@@ -2,7 +2,7 @@
 title: 'Story 2.0: Define and Pilot the Content-Authoring Workflow'
 type: 'feature'
 created: '2026-10-21'
-status: 'in-progress'
+status: 'done'
 baseline_commit: 'ffc581e614baffed7e3a0f852be4f66e8688584a'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -31,7 +31,7 @@ context:
 
 | State | Expected behavior |
 |---|---|
-| Forgotten/unknown/confidential/inapplicable | Targeted recall/uncertainty/exclusion without solicitation/privately justified omission; required gaps block, optional gaps do not prolong questions |
+| Forgotten/unknown/confidential/inapplicable | Targeted recall/uncertainty/exclusion without solicitation/privately justified omission; required gaps remain recorded without approval veto, BC chooses synthesis/review/validation, optional gaps do not prolong questions |
 | Pause/revision | BC may stop; resume from checkpoint without hidden context; retain document identity and renew factual/comprehension/publication reviews even for unchanged facts |
 
 </frozen-after-approval>
@@ -48,25 +48,27 @@ context:
 ### A. Approve design and handling
 
 - [x] `tools/content-authoring/README.md`, `types.md` — materialize BC's approved detailed design: method, two finite types, per-type purposes/boundaries/criteria and session map. Approval includes the corrected personal/non-production branch, not any document's facts or publication.
-- [ ] `tools/content-authoring/handling.md` — document actual Pi/provider processing, session/log copies, retention/deletion and limits. Before nonpublic intake, BC screens selected inputs and automatic context and explicitly consents. Keep consent/provenance private; unknown handling blocks intake.
+- [x] `tools/content-authoring/handling.md` — document processing/session-copy/retention/deletion limits and preserve source/consent controls. BC accepted the disclosed arrangement for the selected authoring work; this is not a provider-retention/deletion audit. Unknown handling or a changed material scope still blocks unauthorized intake.
 
 ### B. Authorized construction
 
 - [x] `.pi/skills/content-authoring/SKILL.md`, `tools/content-authoring/agent.md`, `workflow/`, `README.md` — use the installed official Workflow Builder to construct one explicitly invocable Pi skill and start/resume instructions. Package setup is complete; do not rerun it. Keep the delivered authoring tool independent of BMad at runtime.
 - [x] `tools/content-authoring/templates/`, `guides/` — implement versioned French formats and adaptive investigation for professional context and realization/project. Type B supports professional or personal work at its actual maturity; production criteria are conditional, not entry requirements. Include required/optional/conditional sections, applicability and passage-grounded completeness. Keep editorial state/version metadata in private sidecars, not new mandatory public fields.
 
-### C. Real acceptance pending — only disposable construction checks authorized now
+### C. Real acceptance — closed by BC, 2026-11-12
 
-- [ ] `content/private/authoring/pilots/`, `checkpoints/`, `evidence/` — interview, synthesize, correct and validate one real pilot per type. Demonstrate account-specific follow-ups and fresh-session checkpoint restoration of corrections, facts, uncertainties, decisions and next questions.
-- [ ] `content/private/authoring/probes/` — cover blocked readiness, justified omission, comprehension-gap correction and Type B non-production applicability where real pilots do not. A separate synthetic probe may verify adaptation but never substitute for a genuine pilot or achievement; no third type or extra compulsory real pilot is introduced.
-- [ ] `tools/content-authoring/acceptance.md`, `content/private/authoring/evidence/` — refine/revalidate affected pilots against final agent/template/guide/criteria versions. Privately bind types, versions, pilot revisions and dated BC factual/comprehension/eligibility approvals. Version only safe references, opaque pilot IDs/revisions and dated outcomes, never private facts/paths/hashes/mappings. Explain the 2.1 handoff.
+BC confirms three reviewed, validated pilots and explicitly requests method/story closure, commit and push after verification. One A and two B pilots cover both approved types. Checkmarks record this human acceptance and the checks below, not independent semantic certification, migrated approvals or public promotion. Earlier implementation/evidence narratives remain dated history.
+
+- [x] `content/private/authoring/pilots/`, `checkpoints/`, `evidence/` — three genuine pilots confirmed by BC; account-specific interviewing and fresh-session restoration accepted through the retained evidence/owner attestations. Parent verified all three current checkpoint/draft bindings against their recorded manifest; no pilot/checkpoint rewrite or repeated interview.
+- [x] `tools/content-authoring/acceptance.md` — justified omission and comprehension-gap correction evidence retained. BC withdrew both the unavailable-required-fact blockage demonstration and compulsory Type B personal/non-production demonstration; withdrawn is not passed. Type B support remains without an extra mandatory probe/pilot.
+- [x] `tools/content-authoring/acceptance.md`, `content/private/authoring/evidence/` — dated method-acceptance and per-pilot confirmation record binds types, exact recorded versions, revisions and unchanged bytes privately; safe opaque references and outcomes only are versioned. The method release 1.0.3 is accepted without copying historical pilot approvals to it. Historical 1.0.2 checkpoints remain checkable with `tools/content-authoring/versions/1.0.2.json`; a chosen migration still needs a new revision and genuine reviews. New publication eligibility/metadata/copying remain Story 2.1, not inferred from the owner's document-validation or closure statements.
 - [x] `scripts/check-build-isolation.mjs`, `tests/bootstrap/safety.test.ts` — use disposable Pi-entry-point/tooling/private canaries to prove Git/build exclusion without touching real private files.
 
 **Acceptance Criteria:**
 - Given authorized inputs, when authoring starts, then selected French material is reused without mandatory re-narration; inference is not treated as BC-confirmed fact.
 - Given an approved type, when drafting, then each applicable criterion cites actual draft passages or a gap; hidden interview knowledge and links cannot fill missing explanations.
 - Given a genuine personal/non-production project, when applying Type B, then distinguish its setting, maturity, observed results and future plans; absent production use alone never blocks readiness, and tests/demos do not imply business impact or production experience.
-- Given unavailable required facts, when assessing readiness, then block without invention or disclosure pressure; optional gaps do not prolong questioning indefinitely.
+- Given unavailable required facts, when assessing readiness, then retain and flag unknowns without invention or disclosure pressure, offer questions/feedback and let BC alone decide editorial completeness, document validation and publication. BC may choose synthesis/review or explicitly approve despite gaps; optional gaps do not prolong questioning indefinitely.
 - Given a revised document, when seeking renewed eligibility, then preserve `document_id` and renew factual/comprehension/publication checks even for factually unchanged rewrites. Never fabricate `reviewed_by`/`reviewed_at`.
 - Given final delivered versions, when accepting the method, then all nine source scenarios have evidence and both types have genuine BC-validated pilots; no automatic public copying or other gate closure follows.
 
@@ -154,6 +156,16 @@ Construction 1.0.1 is available for preflight, not accepted as a proven editoria
 ### User-requested pause — 2026-10-22
 
 BC paused the work. Construction 1.0.1 is saved, not method-accepted; no work should continue unattended. Resume from [the handoff](handoff-2-0-content-authoring.md), not a fresh discovery/build: next ask the intended provider/model/access type without credentials or professional sources, then complete handling/consent before real pilots. Preserve all uncommitted installation/planning/tooling work. Story remains in-progress; no real private interview checkpoint exists from this construction phase.
+
+### Current-policy supersession — 2026-11-12
+
+BC explicitly renegotiated the required-fact blockage intent and withdrew the compulsory personal/non-production demonstration. Active clauses above now defer editorial completeness, document validation and publication to BC; the agent interviews and offers questions/feedback while preserving unknowns without invention. Both former probe gates are withdrawn, not passed. BC confirms three validated pilots; earlier absent-A, no-pilot and pending-probe statements are historical, not current work orders. This amendment neither redoes validated pilots nor copies historical approvals to changed versions, touches private evidence or marks Story 2.0 done. Historical implementation/review narratives remain unchanged.
+
+### Owner-authorized closure — 12 November 2026
+
+BC confirms the three current pilots reviewed and validated, removes both compulsory demonstration gates, reserves editorial completeness/validation/publication decisions to himself, and explicitly requests Story 2.0 closure followed by commit/push. This supersedes earlier pause, construction-only, pending-A and no-commit/no-push instructions for the current scoped delivery. The method 1.0.3 is accepted on that human decision; unchanged pilots retain their actual recorded 1.0.2 versions and approval history. A separate private dated closure record binds current revisions/bytes without fabricating new checkpoint approvals or publication dates. Parent read-only structural validation: **3/3 PASS**, not a semantic approval audit.
+
+Story 2.0 is **done**; Epic 2 remains in-progress and Story 2.1 backlog. No new publication eligibility is inferred; missing public metadata, the meaning of public `reviewed_at`, corpus coverage and explicit public copying belong to 2.1. Technical provider-copy/retention/deletion limits remain disclosed, not newly verified. The final checks/review for this amendment are recorded in `spec-2-0-remove-editorial-completeness-veto.md`.
 
 ## Spec Change Log
 

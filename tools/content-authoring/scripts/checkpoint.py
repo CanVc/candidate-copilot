@@ -178,16 +178,10 @@ def validate(state, root, manifest, previous=None):
                 and approval.get("draft_sha256") == draft["sha256"]
                 and approval.get("versions") == state["versions"], "approval.binding")
         require(consent is not None, "approval.missing_consent_record")
-        if kind == "B":
-            require(scope["setting"] is not None and text(scope["maturity"]) and text(scope["usage"]),
-                    "approval.unknown_scope")
-        require(not gaps["required"], "approval.required_gaps")
+        # Editorial gaps and unknown scope remain recorded, not approval vetoes.
+        # BC alone decides completeness; supplied quotes still require integrity.
         if key in ("comprehension", "eligibility"):
             require(approvals["facts"] is not None, "approval.facts_first")
-            require(all(item["applicability"] == "inapplicable" or item["passages"]
-                        for item in criteria.values()), "approval.missing_passages")
-            require(all(item["applicability"] != "unresolved" and not item["gap"]
-                        for item in criteria.values()), "approval.unresolved_criteria")
         if key == "eligibility":
             require(approvals["comprehension"] is not None, "approval.comprehension_first")
     if previous is None:
@@ -236,7 +230,8 @@ def main():
     parser.add_argument("command", choices=("validate", "save"))
     parser.add_argument("target", type=Path, help="selected candidate JSON within --root")
     parser.add_argument("--root", required=True, type=Path, help="explicit private or synthetic root")
-    parser.add_argument("--versions", required=True, type=Path, help="generic current versions.json")
+    parser.add_argument("--versions", required=True, type=Path,
+                        help="explicit generic manifest (current or recorded historical versions)")
     parser.add_argument("--previous", type=Path, help="selected previous checkpoint (validate only)")
     parser.add_argument("--out", type=Path, help="checkpoint destination (save only)")
     parser.add_argument("--verbose", action="store_true", help="emit structural-only scope reminder to stderr")

@@ -2,6 +2,8 @@
 
 **State:** Detailed design approved by BC on 2026-10-22, including the personal/non-production correction; construction authorized. This document is a design contract, not delivery or pilot evidence. Private intake/processing consent and real document approvals remain separate.
 
+**Current policy — 2026-11-12:** BC alone decides editorial completeness, document validation and publication. Criteria guide interviews and reader feedback, not approval vetoes; unknowns remain recorded without invention. BC confirms three validated pilots. Both the unavailable-required-fact blockage and compulsory personal/non-production demonstrations are withdrawn, not passed; Type B support remains, without an additional mandatory probe/pilot or repetition of validated pilots. BC subsequently authorized Story 2.0 closure as done and accepted the method, including generic release 1.0.3, without migrating the pilots from their exact recorded versions or granting new publication approvals. Construction/session descriptions below retain their original phase context.
+
 **Authority:** [Story 2.0](../planning-artifacts/epics.md#story-20-define-and-pilot-the-content-authoring-workflow), [PRD §4.3.1](../planning-artifacts/prds/prd-candidate-copilot-2026-09-11/prd.md#431-bc-assisted-content-authoring) and the [implementation spec](spec-2-0-define-and-pilot-the-content-authoring-workflow.md). This design adds no runtime API, schema, Resource type or publication mechanism.
 
 ## 1. Scope and session map
@@ -12,7 +14,7 @@ Confirmed framing (BC, 2026-10-22): Epic 1, including Story 1.1, is done; Story 
 |---|---|---|
 | Design — approved | Method, two type contracts, handling gate and handoff agreed; no professional-material interview. | BC approval recorded 2026-10-22. |
 | Construction — current session | Use the installed BMad Workflow Builder to construct one Pi interview agent, guides, templates and start/resume instructions. | Invocation, pause/resume and isolation checks work; handling requirements are documented, with actual provider/account approval still a pre-intake gate. |
-| Pilots — dedicated fresh Pi sessions | Exercise the method on real authorized material. Correct the tool and reconfirm affected documents. | A real BC-validated pilot for each type against final versions, plus required exceptional-case evidence. |
+| Pilots — dedicated fresh Pi sessions | Exercise the method on real authorized material and incorporate corrections. BC now confirms three validated pilots; do not repeat them for this amendment. | A real BC-validated pilot for each type with exact recorded versions and relevant evidence; no compulsory blocked-readiness or personal/non-production probe. |
 
 Do not open a new session now. Later, Pi's `/new` separates interview history; `/resume` can reopen a saved session. Neither replaces a demonstrated fresh-session checkpoint restoration. Do not fork this planning history into a pilot or require a pilot to know it. Session separation is not a filesystem sandbox or a local-processing guarantee.
 
@@ -42,14 +44,14 @@ Pi normally persists sessions under `~/.pi/agent/sessions/`. Propose a dedicated
 | Choose | Confirm type, bounded topic and relevant context. For Type B, distinguish professional/personal setting, actual project maturity and observed usage before choosing applicable questions. Explain the completeness criteria. | No job-fit scoring or exhaustive career inventory; do not impose production questions on a non-production project. |
 | Understand existing material | Extract source assertions, uncertainties and contradictions from selected French documentation/transcripts. Keep private provenance and distinguish BC-confirmed facts from inference. | Do not make BC repeat what is already clear. Source text alone is not approval. |
 | Listen | Invite a free account or ask BC to supplement/correct the source-based understanding. | Existing material can provide the starting account; narration is not a compulsory re-telling. |
-| Investigate | Ask small adaptive batches, normally 1–3 useful questions, driven by the account and type-specific gaps. | Advance when applicable criteria are satisfied; do not exhaust a fixed questionnaire. |
+| Investigate | Ask small adaptive batches, normally 1–3 useful questions, driven by the account and type-specific gaps. | Offer synthesis/review when useful or BC chooses, even with gaps; do not exhaust a fixed questionnaire. |
 | Synthesize | Reformulate the facts, BC's contribution, choices, observations and remaining uncertainty for BC correction. | Record corrections explicitly; do not silently resolve conflicting accounts. |
-| Draft | Produce French Markdown using supported facts and the type's structure. Explain jargon locally. | A provisional draft may remain blocked; populated headings are not completeness. |
+| Draft | Produce French Markdown using supported facts and the type's structure. Explain jargon locally. | Retain gaps and unknowns without inventing; populated headings are not completeness, and BC chooses readiness. |
 | Check facts | BC checks attribution, statements, dates/precision, outcomes and omissions. | Record explicit factual approval for the actual revision, not inferred approval. |
-| Check comprehension | For every applicable criterion, identify supporting passages in the draft or flag a gap. Read without relying on hidden interview knowledge or following a link to supply essential context. | Material ambiguity or incompleteness loops back to clarification/correction and BC confirmation. |
+| Check comprehension | For every applicable criterion, identify supporting passages in the draft or flag a gap. Read without relying on hidden interview knowledge or following a link to supply essential context. | Flag material ambiguity or incompleteness and offer clarification/correction; BC decides the next step and may approve with gaps. |
 | Check eligibility | BC separately approves what may become public, after factual/comprehension checks. | Record dated revision/version-bound approval; do not copy anything to `content/public`. |
 
-Investigation follows context, terms, contradictions, constraints, options actually considered, personal versus team contributions, evidence, outcomes, limitations and learning where relevant. Forgotten details invite targeted recall, not pressure; unknown facts remain uncertain privately; confidential details are not solicited; inapplicable criteria have private rationales. A safe BC-approved abstraction may explain context without disclosure. If required information remains unavailable, record blocked readiness and the reason. Optional gaps do not prolong the interview indefinitely.
+Investigation follows context, terms, contradictions, constraints, options actually considered, personal versus team contributions, evidence, outcomes, limitations and learning where relevant. Forgotten details invite targeted recall, not pressure; unknown facts remain uncertain privately; confidential details are not solicited; inapplicable criteria have private rationales. A safe BC-approved abstraction may explain context without disclosure. If required information remains unavailable, record the unknown and reason without blocking synthesis, review or BC's explicit approval. Optional gaps do not prolong the interview indefinitely.
 
 BC may pause or stop at any point. Do not force completion, disclosure or invented metrics to progress.
 
@@ -117,7 +119,7 @@ Distinguish three independent dimensions in the narrative and private applicabil
 ## Contraintes et retour d’expérience
 ```
 
-The final section is conditional and may be split when useful. Deployment/operations detail is conditional on actual deployment/use. Optional additions: supported figures, diagrams, authorized artifacts and clearly prospective next steps. Numerical impact, performance, scale and savings are never compulsory. For a personal prototype, an accurate account of what works, how it was checked and what is unfinished may be complete without production use. Unknown required facts still block readiness; do not invent demonstrations, users or outcomes to fill a gap.
+The final section is conditional and may be split when useful. Deployment/operations detail is conditional on actual deployment/use. Optional additions: supported figures, diagrams, authorized artifacts and clearly prospective next steps. Numerical impact, performance, scale and savings are never compulsory. For a personal prototype, an accurate account of what works, how it was checked and what is unfinished may be complete without production use. Unknown required facts remain explicit without blocking BC's approval; do not invent demonstrations, users or outcomes to fill a gap.
 
 **Guide emphasis:** Adapt to the actual setting and maturity. Investigate business rules or personal objectives, trade-offs, attribution, evidence and learning; investigate operational constraints and failures/recovery when applicable. Neither a learning objective nor a planned feature proves mastery; a prototype is not production experience. A valuable technical solution is not automatically an AI system, a novel architecture or proof of competence in another industry.
 
@@ -141,7 +143,7 @@ A private checkpoint preserves document identity/type/revision, professional/per
 
 On fresh-session resume, load the generic tool and the selected authorized checkpoint after the handling gate; verify versions and the current draft, summarize the saved state for BC and continue at the recorded stage. Do not search session history or other private files as a hidden fallback. Missing or inconsistent state requires clarification, not reconstruction by invention.
 
-Revisions retain identity, identify changed facts and invalidate approval of the changed text. Renew factual, comprehension and eligibility checks even for factually unchanged rewrites. A guide/template/criteria change triggers affected-pilot revalidation before method acceptance.
+Revisions retain identity, identify changed facts and invalidate approval of the changed text. Renew factual, comprehension and eligibility checks even for factually unchanged rewrites. Approvals remain bound to the exact recorded versions. Historical 1.0.2 checkpoints can be checked explicitly against `tools/content-authoring/versions/1.0.2.json`, without silent migration or renewed interviews. If BC chooses a version change, preserve the old state, create a new revision with approvals null, and obtain fresh explicit reviews; never copy historical approvals to changed versions.
 
 ## 9. Acceptance and handoff
 
@@ -149,9 +151,9 @@ Construction alone is not story completion. Required evidence:
 
 - One genuine corrected BC-validated pilot for each of the two approved types; no synthetic achievement or filled empty template counts.
 - Account-specific follow-ups, useful corrections, passage-grounded comprehension checks and fresh-session checkpoint restoration.
-- Coverage of the Type B non-production path: a genuine authorized personal-project account if BC chooses one, or a separate explicitly synthetic applicability probe. Verify that absent deployment/business impact is not treated as missing required production evidence, and that future plans are not reported as achievements. A probe demonstrates adaptation only, never a real achievement or replacement for the mandatory genuine pilot. This adds no third document type or extra mandatory real pilot; interview order can still begin with production work.
-- Blocked readiness, justified omission and correction of a comprehension gap. Supplemental controlled probes may cover cases absent from the real pilots; keep them separate and never replace a real pilot.
-- Private evidence binding each type and pilot revision to final agent/template/guide/criteria versions and dated BC approvals. Reconfirm affected pilots after refinements.
+- Type B retains support for personal/non-production work, separating actual observations from plans and never implying production experience. No compulsory demonstration, additional probe or pilot is required for this branch.
+- Justified omission and correction of a comprehension gap remain evidence requirements. The unavailable-required-fact blockage demonstration is withdrawn, not passed; no replacement probe is imposed.
+- Private evidence binding each type and pilot revision to its exact recorded agent/template/guide/criteria versions and dated BC approvals. The three pilots BC confirms validated need not be repeated because of this amendment; old approvals do not automatically approve changed generic resources.
 - Disposable Git/build-isolation checks for the Pi entry point, generic tooling and private canaries, without reading real private material.
 - A versioned nonsensitive acceptance summary with safe type/version references, opaque pilot IDs/revisions and dated outcomes only: no private facts, mappings, paths or private content hashes.
 

@@ -1,6 +1,6 @@
 # Format A — Contexte professionnel et responsabilités
 
-Template **1.0.2**, critères **1.0.0**. Ce fichier est une ressource générique, pas un document BC ni un pilote. Copier seulement le squelette utile dans un brouillon privé ; retirer instructions, placeholders et sections inapplicables avant revue.
+Template **1.0.3**, critères **1.0.3**. Ce fichier est une ressource générique, pas un document BC ni un pilote. Copier seulement le squelette utile dans un brouillon privé ; retirer instructions, placeholders et sections inapplicables avant revue.
 
 ```markdown
 ---
@@ -32,7 +32,7 @@ reviewed_at: ""
 
 Optionnel : titre de poste, noms/dates précis autorisés, évolution du rôle, technologies pertinentes, liens sûrs vers réalisations approuvées. Ne pas confondre intitulé ou durée et compétence démontrée. Une absence de précision ne doit pas suggérer une actualité ou une certitude fausse.
 
-Avant éligibilité, vérifier C1–C4 et C5 si applicable par **passages du brouillon**, jamais par notes cachées. Chaque manque requis bloque ; une omission inapplicable a un motif privé, pas un paragraphe de justification public. Aucune date, équipe, responsabilité ou preuve inventée. Les liens/artefacts sont facultatifs et ne remplacent pas l’explication.
+En revue, examiner C1–C4 et C5 si applicable par **passages du brouillon**, jamais par notes cachées, et signaler les lacunes. Même un manque requis ne bloque pas un accord explicite : BC décide seul de la complétude éditoriale, de la validation du document et de sa publication. Une omission inapplicable a un motif privé, pas un paragraphe de justification public. Aucune date, équipe, responsabilité ou preuve inventée. Les liens/artefacts sont facultatifs et ne remplacent pas l’explication.
 
 Le brouillon conserve `reviewed_by: ""` et `reviewed_at: ""` comme placeholders, jamais comme accords, et ne préremplit pas `visibility: public`. À toute réécriture ou retrait de revues, retirer `visibility: public` et remettre les deux champs de revue à vide ; conserver `document_id`, `created_at` et l’historique privé des accords retirés/remplacés. Les champs documentaires requis sont `document_id`, `created_at`, `modified_at`, `title` et les dates connues sont des chaînes UTC `YYYY-MM-DDTHH:mm:ssZ`. Renseigner les dates réelles, actualiser `modified_at` seulement lors d’une modification du document et ne pas inventer d’heure historique ; une ancienne date de création sans heure reste une exception privée signalée jusqu’à clarification. Voir `content/AGENTS.md` depuis la racine du projet. Son sidecar conserve identité/type/révision/versions/provenance/accords.
 

@@ -1,5 +1,23 @@
 # État de livraison et d’acceptation
 
+## Clôture et politique actuelle — 12 novembre 2026 (supersède les attentes historiques ci-dessous)
+
+BC confirme **trois pilotes validés**. Les mentions anciennes de pilote A absent, revalidations en attente et probes à réaliser sont historiques, non des obligations actuelles. BC a retiré la démonstration de blocage pour fait requis indisponible **et** la démonstration personnelle/non-production obligatoire : gates **retirés, pas réussis**, sans probe/pilote supplémentaire ni répétition des pilotes validés. Type B conserve ce support, sans inventer expérience de production, test ou résultat.
+
+BC décide seul de la complétude éditoriale, de la validation du document et de sa publication. L’agent interviewe, offre questions et retours de lecture ; il conserve les inconnues sans invention ni pression. Lacunes requises, dimensions B inconnues, critères non résolus et passages absents ne sont plus des veto d’approbation. Les formes structurelles (dont `required`), citations fournies, consentement, ordre des accords, liaison exacte octets/révision/versions, historiques append-only, JSON strict, confinement et sauvegardes atomiques restent contrôlés ; `blocked` reste accepté pour l’historique ou les arrêts techniques/handling.
+
+Ressources courantes **1.0.3**, schéma 1. Le manifeste exact antérieur est conservé dans `versions/1.0.2.json` : le sélectionner explicitement pour vérifier un checkpoint historique 1.0.2 sans modifier ses versions/accords. Les accords historiques ne sont pas copiés sur les ressources changées ; aucune migration ni nouvel entretien n’est imposé. Une évolution choisie conserve identité/historique et exige nouvelle révision, accords nuls puis trois accords réels sur les nouveaux octets/versions. Le parent a vérifié en lecture seule les trois checkpoints sélectionnés et leur liaison aux documents avec le manifeste historique : **3/3 PASS**. Un relevé privé de clôture lie les identités, révisions, empreintes et versions enregistrées à la confirmation BC datée de cette session, sans modifier documents/checkpoints ni fabriquer de nouveaux accords de publication.
+
+**Story 2.0 : done, sur acceptation explicite de BC le 12 novembre 2026**, après confirmation des trois pilotes et demande de clôture/commit/push. Cette acceptation porte sur la méthode 1.0.3 et les pilotes inchangés à leurs versions enregistrées, pas sur une migration ou une réexécution d’entretiens. Omission justifiée, correction de compréhension, investigation, reprise fraîche et consentement restent soutenus par les preuves/attestations déjà conservées, avec leurs limites. La clôture ne confère aucun nouvel accord de publication : 2.1 conserve couverture, métadonnées conformes, revue/validation publique et copie explicite du corpus. Les tableaux et récits datés ci-dessous restent historiques et n’imposent pas de refaire les étapes déjà validées.
+
+| Type | Pilote / révision | Versions enregistrées agent / template / guide / critères | Confirmation BC consignée |
+|---|---|---|---|
+| A | A-01 / 6 | 1.0.2 / 1.0.2 / 1.0.0 / 1.0.0 | 2026-11-12 : document revu et validé |
+| B | B-01 / 8 | 1.0.2 / 1.0.2 / 1.0.0 / 1.0.0 | 2026-11-12 : document revu et validé |
+| B | B-02 / 3 | 1.0.2 / 1.0.2 / 1.0.0 / 1.0.0 | 2026-11-12 : document revu et validé |
+
+La date ci-dessus est celle de la confirmation propriétaire consignée, pas une heure historique de revue inventée ni un `reviewed_at` public. Les correspondances et liaisons d’intégrité restent privées. Les limites fournisseur, exceptions scanner acceptées et absence de Ruff ne sont pas requalifiées en vérifications réussies. Les vérifications finales de cet amendement figurent dans sa spec ; les tests synthétiques ne prouvent pas le comportement d’un modèle.
+
 **23 octobre 2026 — ressources 1.0.2 ; Story 2.0 reste in-progress.**
 
 Les ressources génériques sont construites. BC confirme avoir exercé les entretiens et la reprise fraîche, et accepte le traitement/consentement avec les limites divulguées. Des documents réels B existent ; les versions corrigées doivent être revalidées et le pilote A manque encore. La méthode n’est **pas encore acceptée**. L’historique de construction ci-dessous reste daté : ses mentions « aucun pilote réel » décrivent cette phase passée, pas l’état actuel. Le gate Builder de chemins produit toujours exactement deux high, acceptés par le parent comme exceptions de compatibilité Builder/Pi ; son résultat brut reste **fail**, pas un succès fabriqué. L’historique exécuté ci-dessous est conservé ; la vérification finale 1.0.1 précise les dispositions désormais acquises.

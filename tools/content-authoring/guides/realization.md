@@ -1,6 +1,6 @@
 # Investigation B — Réalisation ou projet
 
-Guide **1.0.0**, critères **1.0.0**. Destination : comprendre un objectif réel, la contribution BC, son raisonnement attesté et ce qui a été démontré — à la maturité réelle. Préflight avant sources privées ; la documentation/transcription française sélectionnée peut fournir le récit initial.
+Guide **1.0.3**, critères **1.0.3**. Destination : comprendre un objectif réel, la contribution BC, son raisonnement attesté et ce qui a été démontré — à la maturité réelle. Préflight avant sources privées ; la documentation/transcription française sélectionnée peut fournir le récit initial.
 
 Clarifier séparément **cadre professionnel/personnel**, **maturité** et **usage observé**. Une réalisation bornée ou un projet personnel sans contexte A est recevable. Préférence de commencer les entretiens par de la production ≠ obligation. Adapter 1–3 questions à ce qui manque, sans dérouler une grille :
 
@@ -13,10 +13,10 @@ Clarifier séparément **cadre professionnel/personnel**, **maturité** et **usa
 | Résultat vague ou futur | Qu’a-t-on réellement observé, comment, avec quelles limites ; qu’est-ce qui n’a pas été testé/terminé ? | R5 |
 | Contrainte/incident/apprentissage pertinent | Quel effet réel ? Exploitation, maintenance, panne/reprise seulement si expérience revendiquée ; apprentissage possible pour un prototype. | R6 |
 
-Branche non-production : demander ce qui fonctionne, comment BC le sait, ce qui reste incertain ou à faire. **Ne pas exiger disponibilité, client, déploiement, métrique économique ou incident de production.** Une observation confirmée mais bornée peut suffire. Ne pas inventer des tests pour justifier le prototype ; l’absence honnête de production satisfait R4, l’absence de toute observation requise peut encore bloquer R5.
+Branche non-production : demander ce qui fonctionne, comment BC le sait, ce qui reste incertain ou à faire. **Ne pas exiger disponibilité, client, déploiement, métrique économique ou incident de production.** Une observation confirmée mais bornée peut suffire. Ne pas inventer des tests pour justifier le prototype ; l’absence honnête de production satisfait R4, l’absence d’observation reste une lacune R5 à signaler sans veto d’approbation. Aucun probe ni pilote personnel/non-production supplémentaire n’est obligatoire.
 
 Branche usage opérationnel revendiqué : clarifier usage réel vs simple accessibilité, état passé/actuel, contraintes et exploitation réellement connues ; ne pas déduire échelle, fiabilité ou économies. Un projet personnel peut avoir des utilisateurs réels ; il ne faut ni les nier par principe ni les inventer.
 
 Oubli : rappel ciblé sans pression ; inconnu : statut explicite ; confidentiel : ne pas solliciter, chercher seulement une abstraction sûre approuvée ; inapplicable : motif privé. Ne pas étiqueter toute technique comme IA, architecture nouvelle ou compétence d’un domaine non pratiqué. Plans et bénéfices attendus restent prospectifs.
 
-Faire corriger la synthèse, puis relire sans entretien : chaque R applicable cite un passage réel, ou signale une lacune. Une contradiction ou un jargon qui empêche de comprendre conduit à clarification et révision, pas à une case cochée. Les accords BC sur faits, compréhension et diffusion restent séparés et liés à la révision finale.
+Faire corriger la synthèse, puis relire sans entretien : chaque R applicable cite un passage réel, ou signale une lacune. Une contradiction ou un jargon qui empêche de comprendre appelle un retour de lecture et une proposition de clarification/révision, pas une case cochée ni un veto. BC décide seul de la complétude éditoriale, de la validation du document et de sa publication ; il peut choisir synthèse, revue ou accord avec les lacunes conservées. Les accords BC sur faits, compréhension et diffusion restent séparés et liés à la révision finale.

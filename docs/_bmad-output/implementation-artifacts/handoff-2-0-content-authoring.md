@@ -1,4 +1,16 @@
-# Story 2.0 — Point de reprise après pause
+# Story 2.0 — Clôture et historique de reprise
+
+## Clôture et politique actuelle — 12 novembre 2026 (supersède les attentes historiques ci-dessous)
+
+BC confirme **trois pilotes validés**. Les anciennes mentions de pilote A absent, revues en attente et probes à réaliser décrivent leur date, pas des demandes actuelles de recommencer. BC a retiré les deux gates : démonstration de blocage pour fait requis indisponible et démonstration personnelle/non-production obligatoire. Ils sont **retirés, pas réussis** ; aucun probe ni pilote supplémentaire obligatoire. Le support B personnel/non-production reste disponible sans expérience de production inventée.
+
+BC décide seul de la complétude éditoriale, de la validation du document et de sa publication. L’agent interviewe, propose des questions et un retour de lecture ; les lacunes requises, dimensions B inconnues, critères non résolus et passages absents restent signalés sans veto ni invention. BC peut choisir synthèse/revue et approuver avec ces limites.
+
+Ressources génériques courantes **1.0.3**. Pour un checkpoint historique 1.0.2 sélectionné, utiliser explicitement `tools/content-authoring/versions/1.0.2.json`, sans modifier ses octets/versions/accords. Les accords historiques n’approuvent pas automatiquement les ressources changées. Aucune migration, répétition des pilotes validés ni reprise d’entretien n’est imposée ; une évolution choisie nécessite une nouvelle révision, accords nuls puis trois accords réels liés aux nouveaux octets/versions. Consentement, intégrité, confinement et historique append-only restent requis.
+
+**Story 2.0 : done sur acceptation explicite de BC le 12 novembre 2026**, avec demande de commit/push après vérification. Les preuves d’omission justifiée et de correction de compréhension, les attestations d’investigation/reprise fraîche et l’acceptation du traitement sont conservées avec leurs limites. Le parent a vérifié les trois checkpoints et leurs documents inchangés contre le manifeste historique (**3/3 PASS**) et consigné la confirmation BC dans un relevé de clôture privé ; aucun ancien accord n’est copié sur 1.0.3. La méthode 1.0.3 est acceptée par BC, sans nouvelle interview imposée.
+
+Prochaine étape : **Story 2.1**, encore en backlog, pour choisir la couverture du corpus, résoudre les métadonnées publiques manquantes, clarifier l’événement `reviewed_at`, obtenir les autorisations publiques précises et copier uniquement les documents autorisés. La validation des pilotes et cette clôture ne valent pas nouveaux accords de publication. Les trois pilotes, checkpoints courants, sources et preuves utiles restent privés ; les intermédiaires sont archivés, pas supprimés. Epic 2 reste in-progress. Les sections datées suivantes sont exclusivement historiques, non des consignes de reprise à exécuter.
 
 ## Mise à jour du 23 octobre 2026 — reprise actuelle
 
