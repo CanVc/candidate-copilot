@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "patterns": [
+    {"code": "private-sentinel", "pattern": "(?:PRIVATE_CANARY|SYNTHETIC_PRIVATE_SENTINEL|SYNTHETIC_AUTHORING_ONLY|DO_NOT_PUBLISH)"},
+    {"code": "private-reference", "pattern": "content[/\\\\]private[/\\\\]"},
+    {"code": "secret-key", "pattern": "-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----|\\b(?:AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9_-]{20,})\\b"},
+    {"code": "secret-assignment", "pattern": "\\b(?:api[_-]?key|client[_-]?secret|password|access[_-]?token)\\s*[:=]\\s*[^\\s]{4,}"},
+    {"code": "email-contact", "pattern": "[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9-]+(?:\\.[A-Z0-9-]+)+"},
+    {"code": "phone-contact", "pattern": "(?:\\+\\d{1,3}[ .()-]*)?(?:\\b0[1-9])(?:[ .-]\\d{2}){4}\\b|\\+\\d{1,3}[ .-]\\d{2,4}[ .-]\\d{3,4}[ .-]\\d{3,4}\\b"}
+  ]
+}

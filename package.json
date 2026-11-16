@@ -19,7 +19,9 @@
     "test": "bash tests/toolchain/check-workstation.test.sh && vitest run",
     "build": "npm run build:frontend && npm run build:worker",
     "build:frontend": "vite build",
-    "build:worker": "node -e \"require('node:fs').rmSync('dist/worker', { recursive: true, force: true })\" && CI=true WRANGLER_SEND_METRICS=false wrangler deploy --dry-run --env-file /dev/null --outdir dist/worker"
+    "build:worker": "node -e \"require('node:fs').rmSync('dist/worker', { recursive: true, force: true })\" && CI=true WRANGLER_SEND_METRICS=false wrangler deploy --dry-run --env-file /dev/null --outdir dist/worker",
+    "content:check": "node scripts/public-content.mjs check",
+    "content:verify": "node scripts/public-content.mjs verify"
   },
   "dependencies": {
     "hono": "4.13.13",
@@ -33,9 +35,12 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
+    "markdown-it": "14.3.3",
+    "parse5": "8.1.1",
     "typescript": "5.9.3",
     "vite": "8.3.4",
     "vitest": "5.0.5",
-    "wrangler": "4.151.2"
+    "wrangler": "4.151.2",
+    "yaml": "2.9.1"
   }
 }

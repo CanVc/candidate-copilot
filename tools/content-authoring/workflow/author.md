@@ -1,6 +1,6 @@
 # Obtenir un récit fidèle et autonome
 
-Boucle d’authoring **1.0.3**. Ne commencer qu’après préflight de traitement et consentement sur les entrées sélectionnées. BC peut arrêter à tout moment. Intention « vérifier » : lecture/revue du seul brouillon autorisé, pas réécriture sans demande ; « corriger » : appliquer la règle de révision avant de redemander les accords.
+Boucle d’authoring **1.0.4**. Ne commencer qu’après préflight de traitement et consentement sur les entrées sélectionnées. BC peut arrêter à tout moment. Intention « vérifier » : lecture/revue du seul brouillon autorisé, pas réécriture sans demande ; « corriger » : appliquer la règle de révision avant de redemander les accords.
 
 Confirmer type et sujet borné, puis rendre visibles les critères pertinents. Pour B, clarifier cadre professionnel/personnel, maturité réelle et usage/preuves observés indépendamment. Ne pas demander un employeur, une livraison achevée, des métriques ou une expérience d’exploitation à un projet qui n’en a pas.
 

@@ -1,5 +1,6 @@
 """Modest generic policy/manifest checks, not model-behavior evidence."""
 
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -48,8 +49,8 @@ class EditorialPolicyTests(unittest.TestCase):
 
     def test_changed_guides_criteria_and_author_procedure_match_manifest(self):
         manifest = json.loads((TOOLS / "versions.json").read_text())
-        self.assertEqual(manifest["release"], "1.0.3")
-        self.assertEqual(manifest["agent"], "1.0.3")
+        self.assertEqual(manifest["release"], "1.0.4")
+        self.assertEqual(manifest["agent"], "1.0.4")
         self.assertEqual(manifest["checkpoint_schema"], 1)
         for kind, filename in (("A", "professional-context.md"), ("B", "realization.md")):
             with self.subTest(kind=kind):
@@ -63,6 +64,24 @@ class EditorialPolicyTests(unittest.TestCase):
                       (TOOLS / "types.md").read_text())
         self.assertIn(f'Boucle d’authoring **{manifest["agent"]}**',
                       (TOOLS / "workflow/author.md").read_text())
+
+    def test_publication_release_preserves_historical_manifest_and_type_versions(self):
+        historical = (TOOLS / "versions/1.0.3.json").read_bytes()
+        self.assertEqual(hashlib.sha256(historical).hexdigest(),
+                         "d27e31ca6f2900631b9701fa6b267c51230c22f2d482014d616a27573fede16a")
+        current = json.loads((TOOLS / "versions.json").read_text())
+        old = json.loads(historical)
+        self.assertEqual(current["types"], old["types"])
+        self.assertEqual(current["checkpoint_schema"], old["checkpoint_schema"])
+        for name in ("checkpoint-template.json", "checkpoint-realization-template.json"):
+            skeleton = json.loads((TOOLS / "workflow" / name).read_text())
+            self.assertEqual(skeleton["versions"]["agent"], current["agent"])
+            kind = skeleton["type"]
+            for key in ("template", "guide", "criteria"):
+                self.assertEqual(skeleton["versions"][key], current["types"][kind][key])
+        for name in ("README.md", "agent.md", "workflow/review.md", "workflow/checkpoint.md"):
+            self.assertIn("1.0.4", (TOOLS / name).read_text())
+            self.assertIn("reviewed_at", (TOOLS / name).read_text())
 
     def test_current_notices_withdraw_both_gates_without_claiming_they_passed(self):
         for path in (TOOLS / "acceptance.md",
@@ -88,7 +107,7 @@ class EditorialPolicyTests(unittest.TestCase):
         self.assertIsNotNone(development)
         for key, status in (("2-0-define-and-pilot-the-content-authoring-workflow", "done"),
                             ("epic-2", "in-progress"),
-                            ("2-1-prepare-an-explicitly-public-knowledge-base", "backlog")):
+                            ("2-1-prepare-an-explicitly-public-knowledge-base", "in-progress")):
             self.assertEqual(re.findall(rf"^  {re.escape(key)}:[ \t]*([^#\n]*?)[ \t]*(?:#.*)?$",
                                         development.group(1), re.MULTILINE), [status])
         acceptance = (TOOLS / "acceptance.md").read_text().split("\n**23 octobre 2026", 1)[0]

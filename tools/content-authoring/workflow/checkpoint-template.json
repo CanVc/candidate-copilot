@@ -7,7 +7,7 @@
   "created_at": "",
   "document_timestamps": {"created_at": null, "modified_at": null},
   "stage": "choose",
-  "versions": {"agent": "1.0.3", "template": "1.0.3", "guide": "1.0.3", "criteria": "1.0.3"},
+  "versions": {"agent": "1.0.4", "template": "1.0.3", "guide": "1.0.3", "criteria": "1.0.3"},
   "scope": null,
   "draft": null,
   "handling": {"route": "UNKNOWN — intake blocked", "automatic_context": "UNKNOWN — intake blocked", "material_scope": [], "consent": null},

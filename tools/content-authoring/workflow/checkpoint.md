@@ -1,6 +1,6 @@
 # Checkpoint privé, reprise fraîche et révision
 
-Procédure **1.0.3**, schéma **1**. Le checkpoint est l’état durable, avec les raisons des décisions ; la conversation n’est pas une sauvegarde. Ne lire ni créer d’état réel avant le préflight de traitement/consentement. Le journal de construction de la skill est nonsensible et ne reçoit jamais les faits d’entretien. Aucun appel BMad à l’exécution.
+Procédure **1.0.4**, schéma **1**. Le checkpoint est l’état durable, avec les raisons des décisions ; la conversation n’est pas une sauvegarde. Ne lire ni créer d’état réel avant le préflight de traitement/consentement. Le journal de construction de la skill est nonsensible et ne reçoit jamais les faits d’entretien. Aucun appel BMad à l’exécution.
 
 ## Contenu et sauvegarde
 
@@ -47,3 +47,5 @@ Un ancien checkpoint accepté avec `draft` absent peut servir de précédent, ce
 Pour un checkpoint historique enregistré en 1.0.2, sélectionner explicitement `MANIFEST=tools/content-authoring/versions/1.0.2.json` avant les appels avec `--versions "$MANIFEST"`, copie exacte de l’ancien manifeste. Cela vérifie les versions enregistrées, pas les anciens veto éditoriaux ni une approbation des ressources 1.0.3. Ne pas remplacer ses versions/accords pour le faire passer avec le manifeste courant. Aucune migration ni nouvel entretien n’est imposé par cet amendement ; les trois pilotes que BC confirme validés ne sont pas à refaire. Une évolution choisie vers 1.0.3 préserve l’état antérieur et l’identité, crée une nouvelle révision avec accords nuls et historique append-only, puis recueille les trois accords réels sur les nouveaux octets/versions. Les anciens accords ne se recopient pas. Le contrôle de versions reste exact, pas une interprétation sémantique de compatibilité.
 
 Si le helper ou Python est indisponible, on peut conserver le candidat et faire une revue manuelle explicitement non vérifiée, mais ne pas annoncer une sauvegarde atomique/validation déterministe réussie ou une éligibilité acquise. Résoudre la divergence avant un transfert ; ne jamais contourner une erreur de contrôle en effaçant le précédent.
+
+Publication 1.0.4 : `reviewed_at` date la décision finale réelle de publication de BC, pas la revue initiale ni la confirmation ultérieure des octets. Insérer ce timestamp en privé puis renouveler les trois revues sur les octets finaux ; toute édition renouvelle les revues. La copie exige un accord explicite distinct. Voir `docs/content/publication.md` depuis la racine. Le manifeste exact 1.0.3 est préservé dans `tools/content-authoring/versions/1.0.3.json` ; les pilotes et versions types 1.0.3 restent inchangés.
