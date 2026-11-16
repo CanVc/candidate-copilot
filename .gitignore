@@ -5,6 +5,7 @@ node_modules/
 /playwright-report/
 /test-results/
 *.tsbuildinfo
+__pycache__/
 
 # Local runtime/tooling state and environments
 .wrangler/
