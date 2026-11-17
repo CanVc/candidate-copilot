@@ -127,42 +127,30 @@ code --remote wsl+Ubuntu-24.04 /home/cabail/dev/candidate-copilot
 
 Microsoft's `ms-vscode-remote.remote-wsl` extension is installed on Windows. Verify the window indicator reads **WSL: Ubuntu-24.04**, and that its terminal and Source Control use the Linux clone, not `C:\Dev\Projects\candidate-copilot` or `/mnt/c/...`.
 
-In **each** VS Code WSL terminal, first run the following command alone and wait for the prompt:
+For daily startup, use the repository-local launcher added after the dated workstation rehearsal. In **one VS Code WSL terminal**:
 
 ```bash
-bash --noprofile --norc
+cd "$HOME/dev/candidate-copilot"
+bash scripts/dev.sh
 ```
 
-Then initialize this terminal using the current guide's supported selection block:
+It selects the installed pinned Node with fnm, runs the workstation checks and starts **both** services. No pasted initialization block or `WORKSTATION_READY` variable is needed. **Ctrl+C stops both**; if either exits, the launcher stops its sibling and returns nonzero. Read the first error in the shared output. It does not install tools/packages, change shell profiles/defaults, initialize/reset D1 or deploy. It uses ignored local runtime state, so this is not a read-only operation. Wait for startup before checking HTTP; the launcher itself does not wait for health readiness.
 
-```bash
-WORKSTATION_READY=false
-export PROJECT_ROOT="$HOME/dev/candidate-copilot" &&
-cd "$PROJECT_ROOT" &&
-export PATH="$HOME/.local/share/fnm:$PATH" &&
-FNM_ENV=$(fnm env --shell bash) &&
-eval "$FNM_ENV" &&
-fnm use "$(cat .node-version)" &&
-hash -r &&
-node --version &&
-npm --version &&
-bash scripts/check-workstation.sh &&
-WORKSTATION_READY=true
-```
-
-After successful initialization, launch one command per terminal:
+For separate logs and the independent Worker stop/recovery exercise, use **two terminals instead of combined mode**:
 
 ```bash
 # Terminal 1
-[[ ${WORKSTATION_READY:-false} == true ]] && npm run dev:worker
+bash "$HOME/dev/candidate-copilot/scripts/dev.sh" worker
 ```
 
 ```bash
-# Terminal 2, initialized separately
-[[ ${WORKSTATION_READY:-false} == true ]] && npm run dev:frontend
+# Terminal 2
+bash "$HOME/dev/candidate-copilot/scripts/dev.sh" frontend
 ```
 
-Open the proven IPv4 URL **http://127.0.0.1:5173/** in the Windows browser. `http://localhost:5173/` is an alternative hostname, but hostname/address-family behavior was not separately verified. Expect the technical bootstrap page and `Worker disponible.`, not a completed recruiter-facing product. Stop Worker with Ctrl+C, reload and verify the unavailable message; restart Worker and reload to verify recovery. Stop both servers with Ctrl+C when finished, then check from WSL:
+Each invocation initializes its own toolchain. Do not run combined and separate modes together: they use the same fixed ports. The [application guide](application.md#daily-development-launcher) describes shutdown limits and retains the explicit manual initialization commands for diagnosis/fresh-clone setup.
+
+Open the proven IPv4 URL **http://127.0.0.1:5173/** in the Windows browser. `http://localhost:5173/` is an alternative hostname, but hostname/address-family behavior was not separately verified. Expect the technical bootstrap page and `Worker disponible.`, not a completed recruiter-facing product. **In separate mode**, stop Worker with Ctrl+C, reload and verify the unavailable message; restart Worker and reload to verify recovery. Stop both separate launchers when finished. **In combined mode**, one Ctrl+C stops both. Then check from WSL:
 
 ```bash
 ss -ltnp '( sport = :5173 or sport = :8787 )'

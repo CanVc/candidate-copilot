@@ -131,6 +131,36 @@ findmnt /dev/pts
 
 Require readable same-user `/proc` (including `self/stat` and `self/environ`) and working PTYs. `npm test` runs the real in-terminal probe, two protected builds and eight synthetic controls. Cleanup is trusted-tool regression coverage, not a sandbox: hostile marker removal, SIGKILL, host failure or restricted `/proc` are not covered. Container/headless success does not prove graphical-workstation usability or browser sandbox/security guarantees.
 
+## Daily development launcher
+
+After completing the one-time setup above, run from the Linux clone in a terminal (no manual fnm block or `WORKSTATION_READY` variable needed):
+
+```bash
+bash scripts/dev.sh
+```
+
+This starts **both** Worker and frontend. Open **http://127.0.0.1:5173/**. One **Ctrl+C** stops both owned services. If either service exits, the launcher stops the sibling and returns nonzero; read the first error in the shared logs. It does not wait for HTTP readiness, so a brief unavailable state during Worker startup is normal.
+
+For separate logs or the Worker stop/recovery exercise, use two terminals instead:
+
+```bash
+# Terminal 1
+bash scripts/dev.sh worker
+```
+
+```bash
+# Terminal 2
+bash scripts/dev.sh frontend
+```
+
+Do not run combined and separate modes at the same time: they use the same fixed ports. `bash scripts/dev.sh all` is equivalent to the default; `--help` lists supported modes. No additional arguments are forwarded. From outside the clone, use its absolute script path, for example `bash "$HOME/dev/candidate-copilot/scripts/dev.sh"`.
+
+The launcher resolves its own clone, initializes the installed fnm only in its child shell, selects `.node-version`, runs the existing workstation gate and checks for the required local tools. Missing tools/packages fail with guidance; nothing is installed, no D1 migration/reset or full audit runs, and profiles/defaults remain unchanged. Existing protected npm commands are reused without changing their ports or local-only settings. Startup uses ignored runtime state and can persist local Worker/D1 writes; it is not a read-only check.
+
+Shutdown targets only process groups created by this invocation, with up to five seconds for termination before forced cleanup. It never kills a process by name or occupied port. SIGINT/Ctrl+C returns 130 and SIGTERM returns 143. Cleanup assumes trusted npm tools keep descendants in their inherited groups; detached/daemonized descendants, SIGKILL of the launcher and host failure are not cleanup guarantees.
+
+The explicit blocks below remain the manual diagnostic/fresh-clone alternative, not a prerequisite for running the daily launcher.
+
 ## Current two-terminal startup and shutdown
 
 In **each** terminal, first run this shell-entry block **alone** (including when starting in Zsh):
@@ -191,7 +221,7 @@ Stop **only the owned Worker with Ctrl+C in terminal 1**; leave frontend running
 ss -ltnp '( sport = :5173 or sport = :8787 )'  # no application listeners
 ```
 
-No combined supervisor, blanket `pkill`, unknown-process killing, login or deployment is part of this journey.
+This manual two-terminal procedure allows independent Worker stop/recovery checks; the daily launcher above is an alternative. Neither procedure uses blanket `pkill`, unknown-process killing, login or deployment.
 
 ## Current troubleshooting
 
