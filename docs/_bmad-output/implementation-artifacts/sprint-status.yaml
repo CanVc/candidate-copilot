@@ -46,8 +46,14 @@
 # - Story 2.0 is done; Epic 2 stays in-progress, Story 2.1 remains backlog.
 # - Pilots remain private; no new publication eligibility or launch approval.
 # - Processing consent is accepted within disclosed limits, not a retention/deletion audit.
+# STORY 2.1 TECHNICAL CONTINUATION (BC approval, 2026-11-17):
+# - BC confirms 2.1 had started previously and authorizes the public-source validator.
+# - Synthetic draft fixtures support technical tests only; real corpus coverage,
+#   review metadata and explicit publication remain outstanding. No promotion.
+# - Technical validator is implemented/reviewed; 'review' is not whole-story
+#   acceptance. Real documents, coverage and publication still require BC.
 generated: 10-19-2026 21:56
-last_updated: 11-12-2026 17:05
+last_updated: 11-17-2026 17:41
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -63,7 +69,7 @@ development_status:
 
   epic-2: in-progress
   2-0-define-and-pilot-the-content-authoring-workflow: done
-  2-1-prepare-an-explicitly-public-knowledge-base: backlog
+  2-1-prepare-an-explicitly-public-knowledge-base: review
   2-2-build-reproducible-public-catalog-and-search-artifacts: backlog
   2-3-activate-a-coherent-local-public-publication: backlog
   2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: backlog

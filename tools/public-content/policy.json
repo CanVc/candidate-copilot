@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "id": "private_path",
+      "pattern": "(?:^|[^A-Z0-9_])private[/\\\\]",
+      "flags": "i"
+    },
+    {
+      "id": "synthetic_private",
+      "pattern": "SYNTHETIC_PRIVATE(?:_[A-Z0-9]+)*",
+      "flags": "i"
+    },
+    {
+      "id": "private_key",
+      "pattern": "-----BEGIN (?:(?:[A-Z0-9]+ )*PRIVATE KEY|PGP PRIVATE KEY BLOCK)-----",
+      "flags": "i"
+    },
+    {
+      "id": "email",
+      "pattern": "[A-Z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Z0-9](?:[A-Z0-9.-]{0,251}[A-Z0-9])?\\.[A-Z]{2,63}",
+      "flags": "i"
+    },
+    {
+      "id": "contact_uri",
+      "pattern": "(?:mailto|tel)\\s*:",
+      "flags": "i"
+    }
+  ]
+}
