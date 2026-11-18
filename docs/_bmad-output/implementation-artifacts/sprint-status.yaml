@@ -121,8 +121,15 @@
 # - Sprint review awaits BC inspection. No operator migration/push/deploy.
 #   Counters, admission/results/UI, physical purge and hosted sign-off remain
 #   their respective later-story work, not delivered capabilities here.
+# STORY 2.5 OWNER ACCEPTANCE (BC approval, 2026-11-18):
+# - BC accepts the delivered controlled-local identity/read scope and authorizes
+#   closure/local commit against 17ed3edf27da49da180695d77da6a686298156f3.
+# - Prior final verification/review evidence stands; no additional operator
+#   test output was supplied or inferred. Story 2.5 is done; Epic 2 stays active.
+# - Closure is documentation/tracking only, without code/operator mutation,
+#   push, deployment or implied later-story integration/recruiter approval.
 generated: 10-19-2026 21:56
-last_updated: 11-18-2026 20:44
+last_updated: 11-18-2026 20:53
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -142,7 +149,7 @@ development_status:
   2-2-build-reproducible-public-catalog-and-search-artifacts: done
   2-3-activate-a-coherent-local-public-publication: done
   2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: done
-  2-5-start-and-read-an-isolated-anonymous-conversation: review
+  2-5-start-and-read-an-isolated-anonymous-conversation: done
   2-6-enforce-fair-and-private-conversation-creation-limits: backlog
   2-7-admit-one-immutable-global-question-at-a-time: backlog
   2-8-commit-complete-results-atomically-and-replay-them-faithfull: backlog

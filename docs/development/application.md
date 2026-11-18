@@ -101,8 +101,15 @@ TypeScript settings, and passed all four typechecks, 45 workstation fixtures,
 (no skips). This includes actual configured Chromium creation/read, foreign-origin
 rejection without a write, real D1 isolation and all publication/retrieval controls.
 All retained findings from the three independent review layers are fixed and
-verified; no unresolved finding or deferred work remains. BC inspection is still
-required; no operator migration, deployment or hosted acceptance was performed.
+verified; no unresolved finding or deferred work remains. No operator migration,
+deployment or hosted acceptance was performed.
+
+**Owner acceptance (2026-11-18):** BC explicitly accepted the delivered local
+Story 2.5 scope and authorized closure/local commit against implementation
+`17ed3edf27da49da180695d77da6a686298156f3`. Sprint status is done; Epic 2 remains
+in-progress. No additional operator test output was supplied or inferred; prior
+agent verification/review stands. This documentation-only closure does not
+approve hosted/recruiter release or claim later counter/UI/retention integration.
 
 ## Owner verification of Story 2.5
 
@@ -147,9 +154,11 @@ Stop your launcher with Ctrl+C before rerunning smoke.
 IP counter or physical purge is delivered here. A09's loss/exhaustion/suggested
 intent fixture is an executable contract example, not actual entry/counter
 integration (2.15/2.6); hosted origin/HTTPS and retention operations remain their
-later acceptance obligations. No current-story defect is outstanding. Report the
-two conversation-test results and any divergent API status/body, without tokens;
-BC acceptance is required before sprint closure or proceeding to Story 2.6.
+later acceptance obligations. No current-story defect is outstanding; BC has
+accepted and closed this development story. For later regression checks, report
+the two conversation-test results and any divergent API status/body without
+tokens. Story 2.6 may now be taken up separately; it is not implemented by this
+closure.
 
 # Scoped lexical evidence retrieval — Story 2.4
 

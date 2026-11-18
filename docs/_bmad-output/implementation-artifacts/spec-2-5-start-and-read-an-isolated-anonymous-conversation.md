@@ -78,6 +78,14 @@ context: []
 - Matrix audit after patches retains every original passing row and adds declared/streaming 1,024-byte limits, deferred/unsuccessful writes, identical Bearer challenges, valid HTTP variants, absent/same-origin Fetch Metadata, HEAD no-access and executable controlled A09 transitions. No unresolved review finding or deferred work. Automated/agent completion does not imply BC acceptance.
 - Workflow complete for implementation and agent review; spec done, sprint review pending BC inspection. Local conventional commit only, no push/deployment/operator migration. Practical verification handoff: ../../development/application.md#owner-verification-of-story-25.
 
+### Owner acceptance and closure — 2026-11-18
+
+- BC explicitly accepted Story 2.5 and authorized closure and a local commit. Acceptance was recorded at `2026-11-18T20:53:17Z` against implementation `17ed3edf27da49da180695d77da6a686298156f3`.
+- This closes the delivered controlled-local identity/read scope, including the previously approved A07/A09 policies. Existing final parent verification and independent review evidence above remain applicable. No additional operator test output was supplied or inferred.
+- Closure changes documentation/tracking only: the spec remains done, sprint Story 2.5 moves from review to done, and Epic 2 remains in-progress. No code, corpus, dependency, migration, operator-state mutation, push or deployment is included.
+- Actual shared creation counters, turn admission/results, entry UI, physical purge and hosted origin/security/recruiter acceptance remain their later-story obligations; controlled A09 fixtures are not proof of those integrations. No new scope or launch approval follows from this closure.
+- Closure checks passed: all 38 focused Conversation unit tests, documentation-only scope/frozen-intent/acceptance-identity/tracking assertions and diff whitespace validation. Full smoke was not rerun for this documentation-only closure.
+
 ## Spec Change Log
 
 ## Review Triage Log
