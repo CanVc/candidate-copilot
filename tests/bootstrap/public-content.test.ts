@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parse } from 'yaml';
-import { validatePublicContent } from '../../tools/public-content/validate';
+import { readCommittedPublicContent, validatePublicContent } from '../../tools/public-content/validate';
 
 vi.mock('node:child_process', async (original) => ({ ...await original<typeof import('node:child_process')>() }));
 vi.mock('node:fs', async (original) => ({ ...await original<typeof import('node:fs')>() }));
@@ -944,5 +944,29 @@ describe('tools/public-content/validate.ts point-in-time freshness', () => {
       ok: true, count: 1, sourceRevision: mode === 'revision' ? revision : null, diagnostics: [],
     });
     expect(mutated).toBe(true);
+  });
+});
+
+
+describe('tools/public-content/validate.ts committed-byte handoff', () => {
+  it('returns only validated committed bytes, independent of subsequent mutable paths', () => {
+    const path = repository(); const revision = commit(path);
+    const result = readCommittedPublicContent(path, revision);
+    expect(result.ok).toBe(true); expect(result.sourceRevision).toBe(revision);
+    expect(result.sources).toEqual([{ path: 'content/public/one.md', bytes: Buffer.from(valid()) }]);
+    write(path, 'content/public/one.md', 'SYNTHETIC_PRIVATE_REPLACEMENT');
+    expect(result.sources![0]!.bytes.toString('utf8')).toBe(valid());
+    const failed = readCommittedPublicContent(path, revision);
+    expect(failed.ok).toBe(false); expect(failed.sourceRevision).toBeNull(); expect(failed).not.toHaveProperty('sources');
+    expect(JSON.stringify(failed)).not.toContain('REPLACEMENT');
+  });
+  it('never exposes sources or revision for invalid metadata or invalid revisions', () => {
+    const path = repository();
+    write(path, 'content/public/one.md', valid().replace('visibility: public', 'visibility: private'));
+    const revision = commit(path);
+    for (const pinned of [revision, 'HEAD', '']) {
+      const result = readCommittedPublicContent(path, pinned);
+      expect(result.ok).toBe(false); expect(result.sourceRevision).toBeNull(); expect(result).not.toHaveProperty('sources');
+    }
   });
 });

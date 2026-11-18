@@ -32,3 +32,87 @@ The original fixture drafts still lack visibility and have empty reviews: they m
 Story 2.1 closes only for this amended development scope after verification. BC accepts documentary gaps; an advance question-to-document coverage map and exhaustive completeness are not prerequisites. Optional examples remain useful for later grounding, scope and insufficient-evidence evaluations, which are still required. Never invent unsupported answers or widen scope to compensate.
 
 Before recruiter use, replace fiction with explicitly selected real-portfolio documents, genuine factual/comprehension/publication approvals bound to final bytes, actual metadata and unchanged safety/provenance checks. Bind hosted source inputs to the full committed snapshot; no commit, indexing, model invocation or deployment is authorized by development acceptance. Dependency remediation, real-model evaluation, privacy and recruiter-release approval remain separate.
+
+## Reproducible catalog and search artifacts (Story 2.2)
+
+```bash
+SOURCE_REVISION=4323afe312f43b6b87a014abee062e03e12f6022
+npm run content:build -- --revision "$SOURCE_REVISION"
+npm run content:build -- --help
+npx --no-install vitest run tests/bootstrap/public-content.test.ts tests/bootstrap/public-artifacts.test.ts
+```
+
+Build requires an explicit full commit SHA; it never defaults to application HEAD.
+Paths resolve relative to the CLI's repository, not the caller's working directory.
+The complete existing validation/freshness gate runs before artifact creation.
+`readCommittedPublicContent` returns committed blobs only on complete success;
+the builder consumes those bytes without reopening mutable source paths. Failures
+expose neither blobs nor source revision. Unrelated application commits do not
+change the explicitly pinned provenance.
+
+Outputs are ignored local files under `dist/public-content/<catalogHash>/`:
+
+- `assets/resources-catalog.<catalogHash>.json`: envelope `{catalogHash,payload}`.
+  Payload is exactly `{version:1,catalogRevision,resources,documents}`. Resources
+  contain `resourceId,name,description,documentIds`; documents contain
+  `documentId,sourcePath`. Entities sort by stable ID; repeated map members are
+  deduplicated and sorted by unsigned UTF-16 units. Duplicate entities fail.
+- `search-artifacts.<searchHash>.json`: canonical `{version:1,chunkingVersion:1,
+  catalogRevision,catalogHash,documents,chunks}`. Registry records carry
+  `documentId,sourcePath,sourceRevision,sourceTitle,metadata`; chunks link to the
+  same records and carry trusted text/location/title/section/revision/metadata.
+
+Only complete reviewed Resource descriptors under `content/public/resources/`
+(`resource_id`, `resource_name`, `resource_description`, `document_ids`) are accepted.
+Descriptor fields elsewhere, or missing descriptor fields in that directory, fail.
+Maps must be nonempty and
+refer to eligible public document IDs. Shared documents and repeated map members
+are allowed. A descriptor does not implicitly map itself. No descriptors means
+an empty Resource array, not invented projects. Real Resource authoring remains
+Story 3.1 work; metadata shape is not proof of actual approval.
+
+Portable contracts/preimages live in `src/shared/public-catalog.ts` and
+`public-evidence.ts`. RFC 8785 JCS recursively orders object keys using unsigned
+UTF-16, preserves Unicode without normalization, rejects lone surrogates/non-JSON
+values, and emits no BOM, formatting or trailing newline. Lowercase SHA-256 of
+UTF-8 **payload bytes only** determines catalog identity. Search hash covers all
+canonical search bytes. Chunk IDs hash `{version:1,documentId,ordinal}` (zero-based
+ordinal); content hashes cover exactly `{version:1,documentId,sourcePath,
+sourceTitle,sectionTitle,location,text,metadata}`. Runtime timestamps, credentials,
+private inputs and deployment URLs are never added. Public source timestamps
+remain in search metadata, outside catalog payload.
+
+Markdown chunking excludes frontmatter but retains exact LF/CRLF/Unicode and
+absolute one-based inclusive lines. Whole source lines, top-level fenced blocks
+and complete conservative quote/list containers are indivisible, including lazy
+continuations and descendant fences. Only top-level ATX headings change the
+nearest section; unheaded passages use null. Nonoverlapping passage ranges pack
+toward 2,000 UTF-16 units of passage only; oversized blocks remain whole.
+Repeated context is uncapped and does not reduce the passage packing target.
+Complete opening blockquotes are repeated verbatim in later chunks so
+fiction/non-BC/development-only warnings survive standalone consumption.
+`passage` and `context` retain separate original ranges. `text` is concatenated
+context then passage, and `location` is `lines:<start>-<end>` followed by zero or
+more `;context:<start>-<end>` segments. Concatenating passages alone reconstructs
+the original body. This conservative grammar is not a full Markdown renderer.
+
+Reruns verify exact existing contents and return the same hashes/bytes; conflicts
+are rejected without repair or overwrite. `publishBundle` consumes internally
+assembled bundles, not arbitrary imported search payloads. Publication uses
+Linux/procfs pinned ancestors, staging and generated entries with no-follow opens. Before rename it
+verifies full contents and ownership; after rename it opens the destination
+without following links, matches original staging device/inode, then verifies
+contents and ancestors again. An uncertain destination is a failure, not success,
+and is never deleted. Failed staging (including replaced or initially unpinnable
+residue) is retained for manual inspection: failure handling only closes
+descriptors, with no automatic file or directory deletion or repair. Filesystem
+validation is point-in-time, not a transaction against arbitrary subsequent mutation. The existing 64 MiB Git-command output limit and
+10-second Git deadlines apply; large indivisible blocks can exceed chunk target.
+
+Build JSON success reports source revision, both hashes and a repository-relative
+output path; failures are redacted fixed diagnostics with null revision and
+nonzero exit. No dependencies, corpus/review changes, model calls, D1/FTS
+activation, hosted assets, application behavior or deployment are involved.
+These artifacts do not authorize recruiter publication. Stories 2.3/2.4 own
+activation/retrieval; existing development-only and real-portfolio prerequisites
+above remain unchanged.

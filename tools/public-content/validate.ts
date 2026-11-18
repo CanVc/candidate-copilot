@@ -50,17 +50,17 @@ function loadPolicy(input: unknown): Rule[] {
 // Linux procfs paths refer to our already-open parent, not a mutable ancestor
 // pathname. Every component is opened without following links and identity is
 // checked before/after opening and after use. No private target is dereferenced.
-function descriptorPath(fd: number, name?: string): string {
+export function descriptorPath(fd: number, name?: string): string {
   return `/proc/self/fd/${fd}${name === undefined ? '' : `/${name}`}`;
 }
-function sameEntry(a: Stats, b: Stats): boolean {
+export function sameEntry(a: Stats, b: Stats): boolean {
   return a.dev === b.dev && a.ino === b.ino && a.mode === b.mode && (a.isDirectory() || a.nlink === b.nlink);
 }
 function sameObservation(a: Stats, b: Stats): boolean {
   return sameEntry(a, b) && a.size === b.size && a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
 }
 interface PinnedEntry { fd: number; check: () => void }
-function openEntry(parent: number, name: string, directory: boolean): PinnedEntry {
+export function openEntry(parent: number, name: string, directory: boolean): PinnedEntry {
   const path = descriptorPath(parent, name);
   const before = lstatSync(path);
   if (directory ? !before.isDirectory() : !before.isFile() || before.nlink !== 1) throw new Error();
@@ -74,7 +74,7 @@ function openEntry(parent: number, name: string, directory: boolean): PinnedEntr
   try { check(); return { fd, check }; }
   catch (error) { closeSync(fd); throw error; }
 }
-function pinDirectory(path: string): { fd: number; check: () => void; close: () => void } {
+export function pinDirectory(path: string): { fd: number; check: () => void; close: () => void } {
   if (process.platform !== 'linux' || !constants.O_NOFOLLOW || !constants.O_DIRECTORY) throw new Error();
   const entries: PinnedEntry[] = [];
   try {
@@ -122,15 +122,30 @@ function validTimestamp(value: string): boolean {
 
 // This adapter accepts a repository root for disposable rehearsals. It never
 // accepts source paths: collection is always confined to content/public.
+export interface CommittedSource { path: string; bytes: Buffer }
+export interface CommittedValidation extends ValidationResult { sources?: CommittedSource[] }
+
 export function validatePublicContent(repositoryRoot: string, options: { revision?: string; policy?: unknown } = {}): ValidationResult {
+  return validate(repositoryRoot, options, false);
+}
+
+// Bytes are returned only after the entire corpus, Git snapshot and freshness
+// checks pass. Builders never reopen mutable source paths after this handoff.
+export function readCommittedPublicContent(repositoryRoot: string, revision: string): CommittedValidation {
+  return validate(repositoryRoot, { revision }, true);
+}
+
+function validate(repositoryRoot: string, options: { revision?: string; policy?: unknown }, includeSources: boolean): CommittedValidation {
   const diagnostics: Diagnostic[] = [];
   const sources: Source[] = [];
+  const committed: CommittedSource[] = [];
   const add = (code: Code, document: number | null = null, field?: Field) => {
     diagnostics.push({ code, document, ...(field ? { field } : {}) });
   };
-  const finish = (revision: string | null = null): ValidationResult => ({
+  const finish = (revision: string | null = null): CommittedValidation => ({
     ok: diagnostics.length === 0, count: sources.length,
     sourceRevision: diagnostics.length === 0 ? revision : null, diagnostics,
+    ...(includeSources && !diagnostics.length && revision ? { sources: committed } : {}),
   });
   let rules: Rule[];
   try {
@@ -199,7 +214,7 @@ export function validatePublicContent(repositoryRoot: string, options: { revisio
     } catch { add('SOURCE_BOUNDARY'); }
     // This is a point-in-time recheck, not a filesystem transaction. Keep all
     // original directory descriptors pinned through Git and freshness checks.
-    const finishFresh = (revision: string | null = null): ValidationResult => {
+    const finishFresh = (revision: string | null = null): CommittedValidation => {
       if (!diagnostics.length && publicDirectory) {
         try {
           collect(publicDirectory.fd, 'content/public', 'bytes');
@@ -306,7 +321,10 @@ export function validatePublicContent(repositoryRoot: string, options: { revisio
         if (snapshot.size !== sources.length) mismatch = true;
         for (const source of sources) {
           const oid = snapshot.get(source.path);
-          if (!oid || !git(['cat-file', 'blob', oid]).equals(source.bytes)) mismatch = true;
+          if (!oid) { mismatch = true; continue; }
+          const bytes = git(['cat-file', 'blob', oid]);
+          if (!bytes.equals(source.bytes)) mismatch = true;
+          committed.push({ path: source.path, bytes });
         }
         if (mismatch) add('SNAPSHOT_MISMATCH');
       } catch { add('REVISION_INVALID'); }
