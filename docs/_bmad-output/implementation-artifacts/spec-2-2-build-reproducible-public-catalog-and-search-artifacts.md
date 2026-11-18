@@ -79,6 +79,13 @@ context: []
 
 - Workflow completion: spec is `done` for implementation and independent agent review; sprint Story 2.2 is `review` for the pending human/operator handoff, not recruiter acceptance. Finalization creates only a local implementation commit, with no push. The source snapshot remains the explicit baseline above, not the new application commit. Future activation/search evaluation are Stories 2.3/2.4, not unfinished 2.2 requirements.
 
+### Owner acceptance and closure — 2026-11-18
+
+- BC explicitly accepted Story 2.2 and authorized closure after running the CLI commands and discussing chunk purposes, the three readable samples, all 23 generated chunks and the future question/answer/source-verification journey. Acceptance was recorded at `2026-11-18T11:47:31Z`. This records acceptance of the current artifact-building scope, not a claim that BC exhaustively inspected every chunk or that actual-model behavior has already passed.
+- Parent checked the unchanged implementation at `b0cd6b0ab9084811f775e377e503f42152c9d6da`, the full existing triage record and the clean worktree. No retained blocking finding remains for 2.2. Closure reruns passed pinned source validation, exact existing-bundle verification with unchanged catalog/search hashes and all 217 focused tests. The prior 292-test full-suite/typecheck/build evidence remains applicable; this closure changes tracking/documentation only.
+- Set sprint Story 2.2 from `review` to `done`; keep Epic 2 `in-progress`. The spec was already `done` for implementation/agent review and now also has explicit owner acceptance. Recorded limitations and rejected rare-low findings remain visible in the triage log; none is silently represented as fixed.
+- Preserve downstream obligations: Story 2.3 activation, 2.4 scoped retrieval evaluation, 2.14 actual-model/human evaluation and 2.16 cited-excerpt UI. A complete operator view of all model-input chunks/full documents is not implicitly authorized or promised. Fiction remains unrelated to BC and development-only; no real-portfolio/recruiter approval, model call, D1 activation, deployment or push is implied. Temporary reading aids under ignored `dist/` are not new public source documents.
+
 ## Spec Change Log
 
 ### Re-derivation 1 — ownership and Markdown blocks

@@ -67,8 +67,16 @@
 #   evaluation and launch remain open.
 # - Worktree success has null revision; old HEAD rejects these bytes. No actual
 #   repository commit, indexing, model invocation, D1 change or deployment.
+# STORY 2.2 OWNER ACCEPTANCE (BC approval, 2026-11-18):
+# - BC accepts reproducible public catalog/search artifacts and authorizes closure.
+# - Closure reruns: pinned source/bundle checks and 217 focused tests pass;
+#   prior full verification passed 292 Vitest tests, 45 workstation cases,
+#   six fixture checks, typecheck and builds. No retained 2.2 blocker remains.
+# - Existing technical limits/rare-low review rejections remain recorded.
+# - Actual retrieval/model/human evaluation and cited-excerpt UI remain required
+#   in Stories 2.4/2.14/2.16; no D1 activation, deployment or recruiter approval.
 generated: 10-19-2026 21:56
-last_updated: 11-18-2026 11:03
+last_updated: 11-18-2026 11:47
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -85,7 +93,7 @@ development_status:
   epic-2: in-progress
   2-0-define-and-pilot-the-content-authoring-workflow: done
   2-1-prepare-an-explicitly-public-knowledge-base: done
-  2-2-build-reproducible-public-catalog-and-search-artifacts: review
+  2-2-build-reproducible-public-catalog-and-search-artifacts: done
   2-3-activate-a-coherent-local-public-publication: backlog
   2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: backlog
   2-5-start-and-read-an-isolated-anonymous-conversation: backlog
