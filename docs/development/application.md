@@ -1,3 +1,156 @@
+# Anonymous conversation identity — Story 2.5 (controlled local development)
+
+`POST /api/conversations` accepts an empty JSON object (`{}`), returning HTTP
+201 with exactly `{ conversationId, sessionToken }` only after D1 persistence.
+UUIDs are separate from 32 random-byte opaque tokens (64 lowercase hex chars).
+Only SHA-256 token hashes and UTC `created_at`/`modified_at` are stored by
+`0003_conversations.sql`; there is no message/result/lease schema yet.
+Creation bodies are limited to 1,024 bytes (an implementation-owned transport
+limit): declared excess is rejected before reading; streams are byte-counted
+before buffering/JSON parsing even without an accurate Content-Length. Excess
+returns redacted `413 creation_body_too_large` with no-store and no persistence.
+Origin/media-type checks still precede body processing.
+
+`GET /api/conversations/:id` accepts only `Authorization: Bearer <sessionToken>`.
+It authenticates the UUID/hash pair before producing authoritative state:
+`{ conversationId, transcript: [], processing: { status: 'idle' }, admission:
+{ available: false, reason: 'admission_unavailable' } }`. No token, hash or
+execution owner is returned. Missing/malformed/wrong/crossed credentials and
+missing/deleted/expired records all return `401 { error:
+'conversation_unavailable' }` with the identical `WWW-Authenticate: Bearer`
+challenge. Bearer credentials accept one or more separator spaces, not tabs or
+malformed tokens. HEAD is explicitly unsupported (404/empty/no-store, no DB),
+not an implicit GET alias. Access expires at creation plus exactly 90 × 24
+hours (allowed strictly before, denied at/after); activity cannot extend it.
+Reads are independent of publication, read-only, and never invoke providers.
+Creation/read/error responses use `Cache-Control: no-store`.
+
+**A07:** `wrangler.jsonc` explicitly configures `TRUSTED_BROWSER_ORIGIN` as
+`http://127.0.0.1:5173`. Vite's existing `/api` proxy preserves browser Origin;
+the Worker does not infer trust from Host or forwarding headers. Missing,
+`null` and foreign Origin, non-JSON media types, contradictory Fetch Metadata
+(site other than `same-origin`, mode other than `cors`/`same-origin`, destination
+other than `empty`) and nonempty/malformed bodies are rejected before mutation.
+JSON accepts equivalent quoted/unquoted UTF-8 charset parameters (case-insensitive).
+Fetch Metadata may be absent, but Origin and JSON may not. Headerless CLI clients
+are unsupported; forged headers are not authentication. No CORS allowance is
+added. Loopback HTTP is for local testing, not hosted HTTPS/security sign-off.
+
+**A09:** A failed creation may already have committed. The redacted 503
+`creation_uncertain` notice says so and requires explicit fresh creation, which
+may consume another allowance. A transport loss requires that same notice at
+future entry integration. There is no unknown-token recovery, automatic retry,
+implicit fresh creation or suggested-question carry/send. Exhaustion must show
+the authoritative allowance resume time. Controlled exhaustion uses canonical
+`429 rate_limited` and `Retry-After`; the fixture derives resume time from its
+authoritative Date/Retry-After headers, not an invented response payload.
+Story 2.5 exercises these paths with
+controlled entry/allowance fixtures only: **no actual IP counter or entry UI is
+implemented** (Stories 2.6/2.15); admission/messages/results remain 2.7/2.8. There
+are no listing/admin/deletion/message routes, browser credential storage or
+purge scheduler in this change. Expiry prevents reads but physical purge,
+backup assessment and hosted acceptance remain later obligations.
+
+Verification commands (all disposable D1, never operator storage):
+
+```bash
+npm run typecheck
+npm test
+npm run build
+npx playwright test conversations.spec.ts d1.spec.ts fixture-controls.spec.ts
+git diff --check
+npm run test:smoke
+```
+
+The conversation E2E uses two independent actual-workerd readers over shared D1,
+checks hash-only storage, isolation, 90-day boundary, deletion, policy ordering,
+read-only state, migration reruns/preservation, redacted dependency failures and
+lost-response/explicit-fresh/exhaustion/suggested-intent controlled fixtures. It
+also verifies the actual Vite proxy on ephemeral ports, plus Chromium-generated
+same-origin headers through the unmodified checked-in frontend/Worker origin
+configuration over disposable initialized D1. A real browser foreign-origin
+simple POST is rejected before media-type processing and adds no record. These
+are HTTP/configuration checks, not entry-UI acceptance. Node's fetch transport
+overwrites `Sec-Fetch-Mode`, so its contradictory-mode case uses a test-only raw
+header injector and asserts the actual application-handler input. The production
+Worker interprets neither that injector nor the fixture clock header. Fixtures
+are not proof of browser lifecycle/entry UX, IP counting or recruiter readiness.
+
+**Historical pre-review implementation verification (2026-11-18, working tree based on
+`d39c16146c5592c96c7ad41c7105d36a2c7ff188`):** typecheck, 45 Bash fixtures plus
+380 Vitest tests, both builds and whitespace checks passed. The focused
+conversation/D1/fixture-control run passed all 25 cases without skips. Full
+`npm run test:smoke` passed its six simulation tests and all 38 Playwright cases,
+including Chromium/proxy, publication and retrieval. Ports 5173/8787 were free;
+only disposable fixture servers/storage were used. This supersedes the earlier
+Story 2.4 occupied-port verification gap for this working tree, without changing
+its historical record. No deployment, operator migration, counter/UI or hosted
+security acceptance is claimed. These results precede the review corrections;
+they are not a full-verification claim for the corrected working tree. Review
+corrections add bounded bodies, HTTP interoperability/challenge fixes, executable
+controlled entry transitions and checked-in-config browser coverage. Focused correction verification passed: `npx vitest run
+tests/bootstrap/conversations.test.ts` (38 tests), `npx playwright test
+conversations.spec.ts` (two cases, including actual Chromium), and
+`git diff --check`. No wider test/build/typecheck run is claimed for these
+corrections; the final parent verification is recorded next.
+
+**Final post-review verification (2026-11-18):** the parent read every correction,
+fixed the browser test's DOM typing through a real form/button without weakening
+TypeScript settings, and passed all four typechecks, 45 workstation fixtures,
+397 Vitest tests, both builds, six simulation tests and all 39 Playwright cases
+(no skips). This includes actual configured Chromium creation/read, foreign-origin
+rejection without a write, real D1 isolation and all publication/retrieval controls.
+All retained findings from the three independent review layers are fixed and
+verified; no unresolved finding or deferred work remains. BC inspection is still
+required; no operator migration, deployment or hosted acceptance was performed.
+
+## Owner verification of Story 2.5
+
+**Prerequisites:** pinned toolchain and installed packages from the setup below;
+Chromium already installed for browser tests. Ports 5173/8787 must be free; stop
+only your own servers. No real professional corpus or active publication is needed.
+
+**Isolated automated check:** `npx playwright test conversations.spec.ts` should
+pass two cases. It starts disposable D1/servers, exercises real Chromium, and
+cleans up its own state; it does not migrate your operator database. For full
+regression evidence run `npm run test:smoke` (39 Playwright cases plus six
+simulation tests). These tests create temporary data, not read-only observations.
+
+**Optional own-clone API journey (mutates local state):** after reviewing the
+additive migration, run `npm run db:init` to apply pending local migrations
+without reset; this changes `.wrangler/state`. Then `bash scripts/dev.sh` starts
+both services. Open **http://127.0.0.1:5173/**; the shell remains technical, not a
+chat UI. In its developer console, keep the token only in volatile memory and
+never copy it into URLs, logs, screenshots or shared output:
+
+```js
+const c25 = await fetch('/api/conversations', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+}).then(r => r.json());
+// Inspect the UUID, not the secret token.
+c25.conversationId;
+await fetch(`/api/conversations/${c25.conversationId}`, {
+  headers: { Authorization: `Bearer ${c25.sessionToken}` }
+}).then(async r => ({ status: r.status, cache: r.headers.get('Cache-Control'), body: await r.json() }));
+```
+
+Expect a UUID and a 200 read with `no-store`, empty transcript, idle processing
+and explicitly unavailable admission. Repeated authenticated GETs are read-only.
+Remove Authorization: expect neutral 401 with `WWW-Authenticate: Bearer`.
+Create another conversation explicitly and use its token against the first UUID:
+expect the same 401, never the other conversation. Missing/foreign Origin and
+non-JSON creation must reject before writing; the isolated tests cover exact
+expiry, lost responses and streaming/body limits without operator clock edits.
+Stop your launcher with Ctrl+C before rerunning smoke.
+
+**Limits and acceptance:** no turn admission, result generation, entry UI, shared
+IP counter or physical purge is delivered here. A09's loss/exhaustion/suggested
+intent fixture is an executable contract example, not actual entry/counter
+integration (2.15/2.6); hosted origin/HTTPS and retention operations remain their
+later acceptance obligations. No current-story defect is outstanding. Report the
+two conversation-test results and any divergent API status/body, without tokens;
+BC acceptance is required before sprint closure or proceeding to Story 2.6.
+
 # Scoped lexical evidence retrieval — Story 2.4
 
 The portable `Retriever` and core `retrieveEvidence` guard now support trusted

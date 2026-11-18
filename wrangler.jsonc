@@ -4,6 +4,7 @@
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-06-11",
   "send_metrics": false,
+  "vars": { "TRUSTED_BROWSER_ORIGIN": "http://127.0.0.1:5173" },
   "d1_databases": [
     {
       "binding": "DB",

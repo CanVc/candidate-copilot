@@ -20,7 +20,7 @@ describe('credential-free foundation', () => {
     ['GET', '/api/simulation'],
     ['GET', '/api/db'],
     ['GET', '/api/diagnostics'],
-    ['POST', '/api/conversations'],
+    ['GET', '/api/conversations'],
     ['DELETE', '/unmatched'],
   ])('returns default 404 for %s %s without bindings', async (method, path) => {
     const response = await worker.request(`https://example.invalid${path}`, { method });

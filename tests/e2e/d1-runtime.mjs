@@ -11,7 +11,7 @@ if (mode === 'proxy-preserve') {
     persist: { path: join(root, '.wrangler/state/v3') },
   });
   try {
-    assert.deepEqual(Object.keys(proxy.env), ['DB'], 'No env-file canary bindings may load');
+    assert.deepEqual(Object.keys(proxy.env).sort(), ['DB', 'TRUSTED_BROWSER_ORIGIN'], 'No env-file canary bindings may load');
     await verifyLocalD1(proxy.env);
     const row = await proxy.env.DB.prepare('SELECT value FROM fixture_only WHERE id = 1').first();
     assert.deepEqual(row, { value: 'cli-owned' });
