@@ -1,10 +1,11 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { localCatalogAssets } from './tools/public-content/local-assets.ts';
 
 export default defineConfig({
   root: fileURLToPath(new URL('./frontend', import.meta.url)),
-  plugins: [react()],
+  plugins: [react(), localCatalogAssets(fileURLToPath(new URL('./', import.meta.url)))],
   // This technical shell has no client routes; forbidden paths must not get
   // a misleading successful SPA fallback.
   appType: 'mpa',

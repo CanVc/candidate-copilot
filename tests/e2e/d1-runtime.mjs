@@ -58,7 +58,7 @@ if (mode === 'proxy-preserve') {
     await worker.applyD1Migrations('DB');
     assert.equal((await worker.scheduled({})).outcome, 'ok', 'Actual workerd handler must execute the private SQL helper');
     const env = await worker.getEnv();
-    await env.DB.prepare("UPDATE d1_migrations SET name = 'not-the-bootstrap.sql'").run();
+    await env.DB.prepare("UPDATE d1_migrations SET name = 'not-the-bootstrap.sql' WHERE name = '0001_local_bootstrap.sql'").run();
     assert.notEqual((await worker.scheduled({})).outcome, 'ok', 'SELECT 1 alone must not pass');
   } finally {
     await server.close();

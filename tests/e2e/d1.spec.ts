@@ -43,9 +43,10 @@ ${entry}`));
     local.assertNoLeaks(declarations);
     local.env.CI = 'true';
     const tables = await sql(local, "SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name");
-    expect(tables[0]?.results.map((row) => row.name)).toEqual(['_cf_METADATA', 'd1_migrations', 'sqlite_sequence']);
+    expect(tables[0]?.results.map((row) => row.name)).toEqual(['_cf_METADATA', 'active_publication', 'd1_migrations', 'public_chunks', 'public_chunks_fts', 'public_chunks_fts_config', 'public_chunks_fts_content', 'public_chunks_fts_data', 'public_chunks_fts_docsize', 'public_chunks_fts_idx', 'public_documents', 'public_resource_documents', 'public_resources', 'sqlite_sequence']);
+    expect((await sql(local, 'SELECT * FROM active_publication'))[0]?.results).toEqual([]);
     const before = await sql(local, 'SELECT * FROM d1_migrations');
-    expect(before[0]?.results).toHaveLength(1);
+    expect(before[0]?.results).toHaveLength(2);
     expect(before[0]?.results[0]?.name).toBe('0001_local_bootstrap.sql');
     await sql(local, "CREATE TABLE fixture_only (id INTEGER PRIMARY KEY, value TEXT NOT NULL); INSERT INTO fixture_only VALUES (1, 'cli-owned')");
     await run(local, setup('init'));
@@ -67,7 +68,7 @@ ${entry}`));
     for (const action of ['init', 'check', 'types']) await run(local, setup(action));
     delete local.env.CLOUDFLARE_ENV;
     delete local.env.WRANGLER_ENV;
-    expect((await sql(local, 'SELECT name FROM d1_migrations'))[0]?.results).toEqual([{ name: '0001_local_bootstrap.sql' }]);
+    expect((await sql(local, 'SELECT name FROM d1_migrations'))[0]?.results).toEqual([{ name: '0001_local_bootstrap.sql' }, { name: '0002_public_publication.sql' }]);
   });
 
   test('rejects missing, renamed, wrong-identity, remote, preview and additional bindings before storage access', async ({ local }) => {
@@ -192,12 +193,12 @@ ${entry}`));
 
   test('checks the exact ledger marker, not just SQL availability', async ({ local }) => {
     await run(local, setup('init'));
-    await sql(local, "UPDATE d1_migrations SET name = 'wrong-bootstrap.sql'");
+    await sql(local, "UPDATE d1_migrations SET name = 'wrong-bootstrap.sql' WHERE name = '0001_local_bootstrap.sql'");
     expect((await sql(local, 'SELECT 1 AS ok'))[0]?.results).toEqual([{ ok: 1 }]);
     const altered = await fail(local, setup('check'));
     expect(altered).toContain('Expected exactly one 0001_local_bootstrap.sql migration marker');
     expect(altered).toContain('If migration history was altered, stop and review it rather than reinitializing');
-    await sql(local, "UPDATE d1_migrations SET name = '0001_local_bootstrap.sql'");
+    await sql(local, "UPDATE d1_migrations SET name = '0001_local_bootstrap.sql' WHERE name = 'wrong-bootstrap.sql'");
     await run(local, setup('check'));
     await sql(local, 'DROP TABLE d1_migrations');
     expect(await fail(local, setup('check'))).toContain('Local D1 SQL/state verification failed');

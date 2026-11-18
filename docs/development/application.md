@@ -1,3 +1,57 @@
+# Current local publication — Story 2.3
+
+This section supersedes historical availability-only health instructions below.
+Use the pinned Node/npm toolchain and locked installation described here; no
+new dependency, credential, hosted service or recruiter release is required.
+
+```bash
+npm run db:init             # bootstrap + publication migration; preserves data
+# Separate terminals, fixed loopback ports:
+npm run dev:worker
+npm run dev:frontend
+# Once both are running, in another terminal:
+SOURCE_REVISION=4323afe312f43b6b87a014abee062e03e12f6022
+npm run content:activate -- --revision "$SOURCE_REVISION"
+curl -i http://127.0.0.1:5173/api/health
+```
+
+The source revision is explicit and independent of application HEAD. The public
+worktree must exactly match its committed Markdown snapshot. The approved corpus
+is fiction unrelated to BC: warnings remain in evidence, and local activation is
+not permission for recruiter use. See [public-content tooling](../../tools/public-content/README.md#coherent-local-activation-story-23)
+for source validation, exact immutable asset delivery and rollback prerequisites.
+
+Before activation, a live Worker honestly returns HTTP 503
+`{"status":"unavailable"}` and the French shell reports unavailable. A complete
+coherent publication returns HTTP 200 with only `status: "ok"`,
+`catalogRevision`, `catalogHash`, `catalogAssetPath`. Health is `no-store` and
+contains no diagnostics, visitor state or evidence. Invalid/unusable publication
+state also fails closed. `npm run db:check` still privately verifies bootstrap
+storage; it does not assert publication readiness. No processing UI is enabled.
+
+The frontend server must run on `127.0.0.1:5173` before activation. Only exact
+`/assets/resources-catalog.<64-lowercase-hex-hash>.json` generated assets are
+served with verified canonical bytes and immutable caching. Source/private trees,
+search bundles, traversal and symlinks remain denied. This is a development-only
+Vite delivery adapter, not production asset packaging or a deployment promise.
+
+Activation verifies the asset over HTTP before a single D1 transactional batch
+replaces the entire current publication plus singleton authority. A failure
+before/during the batch leaves the previous dataset intact (or none on first
+activation); already-built immutable assets remain. No automatic retry occurs.
+Rollback uses the same command with the deliberate previous full source revision
+after safely restoring its public worktree bytes; unrelated D1/history is never
+restored/reset. CLI and Worker continue sharing `.wrangler/state/v3/d1`. Stop
+only your owned servers with Ctrl+C after use.
+
+Checks: `npm run typecheck`, `npm test`, `npm run build`, `npm run test:d1`,
+`npm run test:publication`, `npm run test:smoke`, `git diff --check`. D1 and
+publication tests need no browser and use disposable state; smoke retains the
+browser/startup/privacy controls below. No hosted D1, deployment, model call,
+retrieval/ranking or publication history is implemented.
+
+---
+
 # Local application — current fresh-clone journey (Story 1.5)
 
 Current instructions for **Ubuntu 24.04 LTS / Bash**, **Node 24.22.0 / npm 11.19.1**. This verifies local frontend/Worker availability, local D1 and deterministic test-only LLM simulation, not a business pipeline or launch readiness. No hosted resource, Cloudflare/model credential, login or Python is required. [Measured fresh-clone evidence and limitations](fresh-clone-verification.md) are separate from the preserved, dated Story 1.4/1.3/1.2 evidence below. **Historical instructions are not the current procedure.**

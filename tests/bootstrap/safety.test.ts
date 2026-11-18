@@ -57,11 +57,21 @@ describe('publication boundaries', () => {
     expect(manifest.scripts['test:d1']).toBe('playwright test d1.spec.ts');
     const script = readFileSync(join(root, 'scripts/local-d1.mjs'), 'utf8');
     for (const protection of [
-      "process.env.CI = 'true'", "process.env.WRANGLER_SEND_METRICS = 'false'",
+      "await assertLocalD1Target(root)",
       "'--config', 'wrangler.jsonc', '--env-file', '/dev/null'", "'--local', '--persist-to', '.wrangler/state'",
       "remoteBindings: false, envFiles: ['/dev/null']", "join(root, '.wrangler/state/v3')",
       "await proxy.dispose()", "'--include-runtime=false'", 'extra.length',
     ]) expect(script).toContain(protection);
+    const target = readFileSync(join(root, 'scripts/local-d1-target.mjs'), 'utf8');
+    for (const protection of ["process.env.CI = 'true'", "process.env.WRANGLER_SEND_METRICS = 'false'",
+      "delete process.env.WRANGLER_ENV", "delete process.env.CLOUDFLARE_ENV",
+      "database.remote !== false", "database.preview_database_id !== undefined",
+      "database.database_name !== 'candidate-copilot-local'", "database.database_id !== '00000000-0000-0000-0000-000000000000'",
+    ]) expect(target).toContain(protection);
+    const activation = readFileSync(join(root, 'scripts/activate-public-content.mjs'), 'utf8');
+    expect(activation).toContain('await assertLocalD1Target(root)');
+    expect(activation).toContain("remoteBindings: false, envFiles: ['/dev/null']");
+    expect(activation.indexOf('await assertLocalD1Target(root)')).toBeLessThan(activation.indexOf("await import('wrangler')"));
     const frontend = JSON.parse(readFileSync(join(root, 'tsconfig.frontend.json'), 'utf8'));
     expect(frontend.compilerOptions.types).toEqual(['vite/client']);
     expect(frontend.include).not.toContain('src/worker/env.d.ts');

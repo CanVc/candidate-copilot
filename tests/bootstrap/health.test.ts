@@ -10,13 +10,14 @@ afterEach(() => {
 });
 
 describe('minimal health exchange', () => {
-  it('returns only availability without invoking any network or model', async () => {
+  it('fails closed without authority without invoking any network or model', async () => {
     const network = vi.fn(() => { throw new Error('Network forbidden'); });
     vi.stubGlobal('fetch', network);
     const response = await worker.request('https://example.invalid/api/health');
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(503);
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('content-type')).toContain('application/json');
-    expect(await response.json()).toEqual({ status: 'ok' });
+    expect(await response.json()).toEqual({ status: 'unavailable' });
     expect(network).not.toHaveBeenCalled();
   });
 
@@ -25,7 +26,7 @@ describe('minimal health exchange', () => {
   });
 
   it('uses the relative proxy path and validates before reporting success', async () => {
-    const fetch = vi.fn(async () => new Response('{"status":"ok"}'));
+    const fetch = vi.fn(async () => new Response('{"status":"ok","catalogRevision":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","catalogHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","catalogAssetPath":"/assets/resources-catalog.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json"}'));
     vi.stubGlobal('fetch', fetch);
     expect(await checkHealth(new AbortController().signal)).toBe(true);
     expect(fetch).toHaveBeenCalledWith('/api/health', expect.objectContaining({ cache: 'no-store', signal: expect.any(AbortSignal) }));
@@ -102,7 +103,7 @@ describe('minimal health exchange', () => {
       .mockImplementationOnce((_path: string, options: RequestInit) => new Promise((_resolve, reject) => {
         options.signal?.addEventListener('abort', () => reject(new Error('aborted')));
       }))
-      .mockResolvedValueOnce(new Response('{"status":"ok"}'));
+      .mockResolvedValueOnce(new Response('{"status":"ok","catalogRevision":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","catalogHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","catalogAssetPath":"/assets/resources-catalog.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json"}'));
     vi.stubGlobal('fetch', fetch);
     const first = new AbortController();
     const cancelled = checkHealth(first.signal);

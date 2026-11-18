@@ -116,3 +116,70 @@ activation, hosted assets, application behavior or deployment are involved.
 These artifacts do not authorize recruiter publication. Stories 2.3/2.4 own
 activation/retrieval; existing development-only and real-portfolio prerequisites
 above remain unchanged.
+
+## Coherent local activation (Story 2.3)
+
+Development only: these artifacts still contain standalone fictional/non-BC
+warnings. Activation is not recruiter approval, hosted delivery or model/retrieval
+readiness. No remote database, environment selector, source override, caller URL,
+automatic retry or deployment is supported.
+
+1. Apply local migrations with `npm run db:init` (idempotent; unrelated data is
+   preserved). Migration 0002 creates an **empty** publication registry and FTS;
+   initialization alone does not announce a ready catalog.
+2. In separate terminals start `npm run dev:worker` and `npm run dev:frontend`.
+   Both fixed loopback ports 8787/5173 must be free. Keep the frontend running
+   during activation: it serves exact generated catalog assets at the required
+   same-origin URL, never the source or search-artifact trees.
+3. Pin the public-source commit explicitly, independently of application HEAD:
+
+   ```bash
+   SOURCE_REVISION=4323afe312f43b6b87a014abee062e03e12f6022
+   npm run content:build -- --revision "$SOURCE_REVISION" # optional prebuild
+   npm run content:activate -- --revision "$SOURCE_REVISION"
+   curl -i http://127.0.0.1:5173/api/health
+   ```
+
+Activation reassembles from validated committed bytes (not unchecked bundles),
+publishes the immutable bundle, then fetches the **exact** catalog bytes at
+`http://127.0.0.1:5173/assets/resources-catalog.<hash>.json` without redirects.
+Only after successful verification does one transactional D1 batch replace all
+Resources/maps/documents/chunks/FTS and the fixed `active_publication.id=1`
+revision/hash pair. The asset path is derived, never separately stored. The
+singleton's `modified_at` is operational time, not source provenance or hash input.
+Local CLI/proxy and Worker persistence remains `.wrangler/state/v3/d1`.
+
+Ready health is HTTP 200 with exactly `status: "ok"`, `catalogRevision`,
+`catalogHash`, and derived `catalogAssetPath`. Missing/corrupt/unusable authority
+or dataset yields HTTP 503 with only `{"status":"unavailable"}`. Active health
+is `no-store`; verified immutable catalog assets use one-year immutable caching.
+The frontend intentionally reports unavailable before initialization/activation.
+Request handlers are readers only. `ResourceCatalog.readSnapshot()` returns one
+validated transactional authority/catalog/evidence snapshot or null; callers must
+not interpret null as global evidence permission or reuse cached pointers.
+
+Failures are redacted and nonzero. Invalid inputs, missing/mismatched assets and
+SQL faults do not partially activate: either the old complete publication remains
+or there is still none. Assets already published are retained, including after
+failure. No filesystem/D1 transaction or continuing server-availability guarantee
+is claimed: keep the frontend running for announced assets. Successful repeated
+activation is supported without touching unrelated tables or historical data.
+Terminal success is printed only after local runtime cleanup completes. A cleanup
+failure is redacted and nonzero, but may occur **after D1 committed**: inspect
+`/api/health` to determine the active identity. Never assume rollback or retry
+automatically after a cleanup failure.
+
+For deliberate rollback, restore the public worktree bytes to the intended
+previous full source revision, keep the local servers running, and run the same
+activation command with that **explicit previous revision**. The existing source
+gate requires the complete public Markdown worktree to match that commit. Review
+and preserve unrelated/dirty source edits first; the activation command never
+checks out sources or resets a database for you. Old assets stay available; there
+is no publication-history table and no automatic rollback/retry.
+
+Verification: `npm run typecheck`, `npm test`, `npm run build`,
+`npm run test:d1`, `npm run test:publication`, `npm run test:smoke`, and
+`git diff --check`. D1/publication suites use owned disposable local state and
+actual workerd/FTS, CLI and HTTP assets without requiring Chromium. The smoke
+suite additionally requires the documented browser installation. No verifier
+resets existing developer state.

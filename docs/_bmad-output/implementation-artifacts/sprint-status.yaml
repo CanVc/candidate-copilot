@@ -75,8 +75,16 @@
 # - Existing technical limits/rare-low review rejections remain recorded.
 # - Actual retrieval/model/human evaluation and cited-excerpt UI remain required
 #   in Stories 2.4/2.14/2.16; no D1 activation, deployment or recruiter approval.
+# STORY 2.3 IMPLEMENTATION HANDOFF (2026-11-18):
+# - Atomic local publication, read-only snapshot port, verified immutable assets
+#   and fail-closed health are implemented and independently agent-reviewed.
+# - Final checks: 325 Vitest tests, 45 workstation checks, 35 real-D1/browser/
+#   integration cases, typecheck, builds and isolation/interactivity controls pass.
+# - All activations used disposable local storage; operator D1 remains untouched.
+# - Story is review pending BC verification/acceptance, not recruiter approval.
+# - Linux/procfs and development-server-only asset delivery remain limitations.
 generated: 10-19-2026 21:56
-last_updated: 11-18-2026 11:47
+last_updated: 11-18-2026 12:43
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -94,7 +102,7 @@ development_status:
   2-0-define-and-pilot-the-content-authoring-workflow: done
   2-1-prepare-an-explicitly-public-knowledge-base: done
   2-2-build-reproducible-public-catalog-and-search-artifacts: done
-  2-3-activate-a-coherent-local-public-publication: backlog
+  2-3-activate-a-coherent-local-public-publication: review
   2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: backlog
   2-5-start-and-read-an-isolated-anonymous-conversation: backlog
   2-6-enforce-fair-and-private-conversation-creation-limits: backlog

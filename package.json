@@ -21,7 +21,9 @@
     "build:frontend": "vite build",
     "build:worker": "node -e \"require('node:fs').rmSync('dist/worker', { recursive: true, force: true })\" && CI=true WRANGLER_SEND_METRICS=false wrangler deploy --dry-run --env-file /dev/null --outdir dist/worker",
     "content:check": "node scripts/validate-public-content.mjs",
-    "content:build": "node scripts/build-public-content.mjs"
+    "content:build": "node scripts/build-public-content.mjs",
+    "content:activate": "node scripts/activate-public-content.mjs",
+    "test:publication": "playwright test publication.spec.ts"
   },
   "dependencies": {
     "hono": "4.13.13",

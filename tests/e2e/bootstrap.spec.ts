@@ -1,19 +1,24 @@
-import { writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { fileURLToPath, URL } from 'node:url';
 import { createServer } from 'node:net';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test, expect } from './local-fixture';
 
-test('real Chromium reaches Worker through the frontend proxy, then reports a stopped Worker', async ({ local, page }) => {
+test('real Chromium honestly reports uninitialized and stopped Worker through the frontend proxy', async ({ local, page }) => {
   const worker = local.start('dev:worker');
   await local.ready(worker, 'http://127.0.0.1:8787/api/health');
   const frontend = local.start('dev:frontend');
   await local.ready(frontend, 'http://127.0.0.1:5173/');
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  const health = page.waitForResponse((response) => response.url() === 'http://127.0.0.1:5173/api/health' && response.status() === 200);
+  const health = page.waitForResponse((response) => response.url() === 'http://127.0.0.1:5173/api/health' && response.status() === 503);
   await page.goto('http://127.0.0.1:5173/');
-  expect(await (await health).json()).toEqual({ status: 'ok' });
-  await expect(page.getByRole('status')).toHaveText('Worker disponible.');
+  expect((await health).status()).toBe(503);
+  // The mounted helper intentionally aborts unread non-OK bodies. Probe the
+  // minimal body independently rather than depending on a cancelled response.
+  expect(await (await page.request.get('http://127.0.0.1:5173/api/health')).json()).toEqual({ status: 'unavailable' });
+  await expect(page.getByRole('status')).toHaveText('Worker indisponible. Rechargez la page pour réessayer.');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Socle technique local');
   await expect(page.getByText('La disponibilité technique ne signifie pas que le produit est prêt.')).toBeVisible();
   await expect(page.locator('form, input, textarea')).toHaveCount(0);
@@ -29,7 +34,36 @@ test('real Chromium reaches Worker through the frontend proxy, then reports a st
   const restarted = local.start('dev:worker');
   await local.ready(restarted, 'http://127.0.0.1:8787/api/health');
   await page.reload();
+  await expect(page.getByRole('status')).toHaveText('Worker indisponible. Rechargez la page pour réessayer.');
+});
+
+test('activated actual Worker reaches the ready shell in Chromium', async ({ local, page }) => {
+  const root = fileURLToPath(new URL('../../', import.meta.url));
+  const revision = '4323afe312f43b6b87a014abee062e03e12f6022';
+  for (const path of ['tools/public-content', 'scripts/activate-public-content.mjs']) {
+    mkdirSync(dirname(join(local.project, path)), { recursive: true });
+    cpSync(join(root, path), join(local.project, path), { recursive: true });
+  }
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: local.project, env: local.env, stdio: 'pipe' });
+  git('init', '--quiet');
+  git('-c', 'protocol.file.allow=always', 'fetch', '--no-tags', root, revision);
+  rmSync(join(local.project, 'content/public'), { recursive: true });
+  git('restore', '--source', revision, '--worktree', 'content/public');
+  await local.completed(local.startCommand(process.execPath, ['scripts/local-d1.mjs', 'init']));
+  const worker = local.start('dev:worker');
+  await local.ready(worker, 'http://127.0.0.1:8787/api/health');
+  const frontend = local.start('dev:frontend');
+  await local.ready(frontend, 'http://127.0.0.1:5173/');
+  await local.completed(local.startCommand(process.execPath, ['scripts/activate-public-content.mjs', '--revision', revision]));
+  const health = page.waitForResponse((response) => response.url() === 'http://127.0.0.1:5173/api/health' && response.status() === 200);
+  await page.goto('http://127.0.0.1:5173/');
+  const response = await health;
+  expect(response.headers()['cache-control']).toBe('no-store');
+  expect(await response.json()).toEqual({ status: 'ok', catalogRevision: revision,
+    catalogHash: '053eec31f9374f443caada2221b093a912c18f0581e132bc2bae5252335034e6',
+    catalogAssetPath: '/assets/resources-catalog.053eec31f9374f443caada2221b093a912c18f0581e132bc2bae5252335034e6.json' });
   await expect(page.getByRole('status')).toHaveText('Worker disponible.');
+  await expect(page.locator('form, input, textarea')).toHaveCount(0);
 });
 
 test('browser bounds stalled/malformed health and cleans up StrictMode requests', async ({ local, page }) => {
@@ -74,7 +108,7 @@ test('StrictMode cancels the obsolete request and ignores its completion after t
       return new Promise<Response>((resolve) => {
         const request = {
           aborted: options?.signal?.aborted ?? false,
-          complete: () => resolve(new Response('{"status":"ok"}')),
+          complete: () => resolve(new Response('{"status":"ok","catalogRevision":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","catalogHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","catalogAssetPath":"/assets/resources-catalog.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json"}')),
         };
         options?.signal?.addEventListener('abort', () => { request.aborted = true; });
         state.healthProbe.requests.push(request);
@@ -152,7 +186,7 @@ test('dev HTTP denies disposable private/env/preparation files and serves no can
     }).then((body) => local.assertNoLeaks(body.toString())));
   });
   await page.goto('http://127.0.0.1:5173/');
-  await expect(page.getByRole('status')).toHaveText('Worker disponible.');
+  await expect(page.getByRole('status')).toHaveText('Worker indisponible. Rechargez la page pour réessayer.');
   for (const { path } of local.canaries.filter(({ path }) => path !== '(shell)')) {
     const paths = [`/@fs${join(local.project, path)}`, `/${path}`];
     if (path.startsWith('frontend/')) paths.push(`/${path.slice('frontend/'.length)}`);
