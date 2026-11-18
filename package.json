@@ -23,7 +23,9 @@
     "content:check": "node scripts/validate-public-content.mjs",
     "content:build": "node scripts/build-public-content.mjs",
     "content:activate": "node scripts/activate-public-content.mjs",
-    "test:publication": "playwright test publication.spec.ts"
+    "test:publication": "playwright test publication.spec.ts",
+    "test:retrieval": "playwright test retrieval.spec.ts",
+    "evaluate:retrieval": "node scripts/evaluate-retrieval.mjs"
   },
   "dependencies": {
     "hono": "4.13.13",

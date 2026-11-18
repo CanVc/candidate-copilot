@@ -1,0 +1,269 @@
+{
+  "version": 1,
+  "sourceRevision": "4323afe312f43b6b87a014abee062e03e12f6022",
+  "cases": [
+    {
+      "id": "fr-mesures",
+      "category": "French",
+      "resolvedQuestion": "Quels résultats et limites pour le temps de recherche des objets ?",
+      "searchTerms": [
+        "médian",
+        "minutes"
+      ],
+      "eligibleDocumentIds": [
+        "a53a192f-51d5-4537-8200-427a09ee1ea3"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "a53a192f-51d5-4537-8200-427a09ee1ea3",
+          "sectionTitle": "Résultats démontrés et limites"
+        }
+      ],
+      "negativePassages": [],
+      "expectEmpty": false,
+      "limitation": "Les médianes du scénario ne prouvent ni gain individuel ni ROI financier."
+    },
+    {
+      "id": "en-results",
+      "category": "English",
+      "resolvedQuestion": "What measurable outcomes and limitations came from locating stored objects?",
+      "searchTerms": [
+        "measurable",
+        "outcomes",
+        "storage",
+        "limitations"
+      ],
+      "eligibleDocumentIds": [
+        "a53a192f-51d5-4537-8200-427a09ee1ea3"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "a53a192f-51d5-4537-8200-427a09ee1ea3",
+          "sectionTitle": "Résultats démontrés et limites"
+        }
+      ],
+      "negativePassages": [],
+      "expectEmpty": false,
+      "limitation": "English literal terms may miss French passages; do not infer absence or model failure."
+    },
+    {
+      "id": "corporate",
+      "category": "corporate",
+      "resolvedQuestion": "How did the fictional contributor align stakeholders and manage governance?",
+      "searchTerms": [
+        "stakeholders",
+        "alignment",
+        "governance"
+      ],
+      "eligibleDocumentIds": [
+        "0eaf8b1d-791d-4c60-9234-168a6a03acbd"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "0eaf8b1d-791d-4c60-9234-168a6a03acbd",
+          "sectionTitle": "Autonomie et collaboration"
+        }
+      ],
+      "negativePassages": [],
+      "expectEmpty": false,
+      "limitation": "Corporate vocabulary is not automatically mapped to conservatrice/agents."
+    },
+    {
+      "id": "paraphrase",
+      "category": "paraphrase",
+      "resolvedQuestion": "Comment évitait-on de chercher à tâtons dans les armoires et rayonnages ?",
+      "searchTerms": [
+        "armoires",
+        "rayonnages",
+        "tâtons"
+      ],
+      "eligibleDocumentIds": [
+        "a53a192f-51d5-4537-8200-427a09ee1ea3"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "a53a192f-51d5-4537-8200-427a09ee1ea3",
+          "sectionTitle": "Solution et choix importants"
+        }
+      ],
+      "negativePassages": [],
+      "expectEmpty": false,
+      "limitation": "Lexical baseline does not expand synonyms to meuble/étagère."
+    },
+    {
+      "id": "named-project",
+      "category": "named-project",
+      "resolvedQuestion": "Quel est le statut du prototype de suivi des prêts ?",
+      "searchTerms": [
+        "prototype",
+        "déployé"
+      ],
+      "eligibleDocumentIds": [
+        "87ddaeda-8ee4-4056-9931-5ebf7b677875"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "87ddaeda-8ee4-4056-9931-5ebf7b677875",
+          "sectionTitle": "État du projet et usages réels"
+        }
+      ],
+      "negativePassages": [
+        {
+          "documentId": "a53a192f-51d5-4537-8200-427a09ee1ea3",
+          "sectionTitle": "Résultats démontrés et limites"
+        }
+      ],
+      "expectEmpty": false,
+      "limitation": "No deployed service or operational use follows from an internal prototype."
+    },
+    {
+      "id": "resolved-follow-up",
+      "category": "resolved-follow-up",
+      "resolvedQuestion": "Dans le projet de repérage des réserves, combien des anomalies sont restées ouvertes ?",
+      "searchTerms": [
+        "117",
+        "33",
+        "anomalies"
+      ],
+      "eligibleDocumentIds": [
+        "a53a192f-51d5-4537-8200-427a09ee1ea3"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "a53a192f-51d5-4537-8200-427a09ee1ea3",
+          "sectionTitle": "État du projet et usages réels"
+        }
+      ],
+      "negativePassages": [
+        {
+          "documentId": "87ddaeda-8ee4-4056-9931-5ebf7b677875",
+          "sectionTitle": "Résultats démontrés et limites"
+        }
+      ],
+      "expectEmpty": false,
+      "limitation": "Question is already resolved; no history resolver or automatic rewriting is evaluated."
+    },
+    {
+      "id": "missing-salary",
+      "category": "missing-information",
+      "resolvedQuestion": "Quel était le salaire de la personne fictive ?",
+      "searchTerms": [
+        "salaire"
+      ],
+      "eligibleDocumentIds": [
+        "0eaf8b1d-791d-4c60-9234-168a6a03acbd"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "0eaf8b1d-791d-4c60-9234-168a6a03acbd",
+          "sectionTitle": "Contraintes structurantes"
+        }
+      ],
+      "negativePassages": [],
+      "expectEmpty": false,
+      "limitation": "The passage explicitly leaves salary undefined; matching is not an answer value."
+    },
+    {
+      "id": "missing-roi",
+      "category": "missing-information",
+      "resolvedQuestion": "Quel retour sur investissement financier est établi pour le repérage ?",
+      "searchTerms": [
+        "financier",
+        "investissement"
+      ],
+      "eligibleDocumentIds": [
+        "a53a192f-51d5-4537-8200-427a09ee1ea3"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "a53a192f-51d5-4537-8200-427a09ee1ea3",
+          "sectionTitle": "Résultats démontrés et limites"
+        }
+      ],
+      "negativePassages": [],
+      "expectEmpty": false,
+      "limitation": "No financial ROI is established; do not compute it from the fictional timing exercise."
+    },
+    {
+      "id": "missing-current-use",
+      "category": "missing-information",
+      "resolvedQuestion": "Le prototype est-il utilisé actuellement ?",
+      "searchTerms": [
+        "actuelle",
+        "ultérieure"
+      ],
+      "eligibleDocumentIds": [
+        "87ddaeda-8ee4-4056-9931-5ebf7b677875"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "87ddaeda-8ee4-4056-9931-5ebf7b677875",
+          "sectionTitle": "État du projet et usages réels"
+        }
+      ],
+      "negativePassages": [],
+      "expectEmpty": false,
+      "limitation": "No current or later use is documented."
+    },
+    {
+      "id": "no-match",
+      "category": "missing-information",
+      "resolvedQuestion": "Quelle technologie quantique était employée ?",
+      "searchTerms": [
+        "supraconducteur",
+        "qubit"
+      ],
+      "eligibleDocumentIds": [
+        "0eaf8b1d-791d-4c60-9234-168a6a03acbd",
+        "87ddaeda-8ee4-4056-9931-5ebf7b677875",
+        "a53a192f-51d5-4537-8200-427a09ee1ea3"
+      ],
+      "requiredPassages": [],
+      "negativePassages": [],
+      "expectEmpty": true,
+      "limitation": "Empty evidence is insufficient retrieved evidence, not universal absence."
+    },
+    {
+      "id": "no-tokens",
+      "category": "empty-lexical",
+      "resolvedQuestion": "Existe-t-il des éléments avec ces termes sans tokens ?",
+      "searchTerms": [
+        "\" * -- 😀"
+      ],
+      "eligibleDocumentIds": [
+        "a53a192f-51d5-4537-8200-427a09ee1ea3"
+      ],
+      "requiredPassages": [],
+      "negativePassages": [],
+      "expectEmpty": true,
+      "limitation": "No lexical tokens is successful empty evidence with valid publication/scope."
+    },
+    {
+      "id": "scoped-exclusion",
+      "category": "scope",
+      "resolvedQuestion": "Quelles sont les limites du prototype, sans les chiffres du repérage ?",
+      "searchTerms": [
+        "minutes",
+        "médian",
+        "prototype"
+      ],
+      "eligibleDocumentIds": [
+        "87ddaeda-8ee4-4056-9931-5ebf7b677875"
+      ],
+      "requiredPassages": [
+        {
+          "documentId": "87ddaeda-8ee4-4056-9931-5ebf7b677875",
+          "sectionTitle": "Résultats démontrés et limites"
+        }
+      ],
+      "negativePassages": [
+        {
+          "documentId": "a53a192f-51d5-4537-8200-427a09ee1ea3",
+          "sectionTitle": "Résultats démontrés et limites"
+        }
+      ],
+      "expectEmpty": false,
+      "limitation": "Repérage timing must never be attributed to the prototype."
+    }
+  ]
+}

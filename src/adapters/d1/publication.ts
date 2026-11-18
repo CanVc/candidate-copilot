@@ -11,18 +11,32 @@ export class D1ResourceCatalog implements ResourceCatalog {
   private readonly db: D1Database;
   constructor(db: D1Database) { this.db = db; }
   async readSnapshot(): Promise<PublicPublication | null> {
+    return (await this.readBatch())?.publication ?? null;
+  }
+  // Search rows and all validation reads belong to the same D1 transaction.
+  // Callers must resolve match IDs only against this returned publication.
+  async readSearchSnapshot(statement: D1PreparedStatement): Promise<{
+    publication: PublicPublication; matches: Record<string, unknown>[];
+  } | null> {
+    return this.readBatch(statement);
+  }
+  private async readBatch(statement?: D1PreparedStatement): Promise<{
+    publication: PublicPublication; matches: Record<string, unknown>[];
+  } | null> {
     try {
       // D1 batch is one transaction. Never read an authority pointer first and
       // then issue unguarded data queries, even across independent Workers.
-      const results = await this.db.batch<Record<string, unknown>>([
+      const reads = [
         'SELECT * FROM active_publication',
         'SELECT * FROM public_resources',
         'SELECT * FROM public_resource_documents',
         'SELECT * FROM public_documents',
         'SELECT * FROM public_chunks ORDER BY document_id, ordinal',
         'SELECT chunk_id, text FROM public_chunks_fts',
-      ].map((sql) => this.db.prepare(sql)));
-      if (results.length !== 6 || results.some((r) => !r.success)) throw new Error();
+      ].map((sql) => this.db.prepare(sql));
+      if (statement) reads.push(statement);
+      const results = await this.db.batch<Record<string, unknown>>(reads);
+      if (results.length !== reads.length || results.some((r) => !r.success)) throw new Error();
       const [authority, resources, maps, registry, chunks, fts] = results.map((r) => r.results)!;
       if (authority!.length !== 1 || authority![0]!.id !== 1 || !registry!.length) throw new Error();
       const row = authority![0]!;
@@ -86,7 +100,8 @@ export class D1ResourceCatalog implements ResourceCatalog {
         }
       }
       if (evidence.length !== registry!.reduce((n, r) => n + Number(r.chunk_count), 0)) throw new Error();
-      return { catalogRevision, catalogHash, catalogAssetPath: assetPath, catalog, documents, chunks: evidence };
+      return { publication: { catalogRevision, catalogHash, catalogAssetPath: assetPath, catalog, documents, chunks: evidence },
+        matches: statement ? results[6]!.results : [] };
     } catch { return null; }
   }
 }

@@ -1,3 +1,69 @@
+# Scoped lexical evidence retrieval — Story 2.4
+
+The portable `Retriever` and core `retrieveEvidence` guard now support trusted
+frozen document membership against one verified local D1 publication. This is
+not exposed over application HTTP or connected to a conversation/model/UI.
+Existing health/publication startup below is unchanged. No operator D1 or
+approved public corpus/approvals were modified to implement or verify retrieval.
+
+```bash
+npm run typecheck
+npm test
+npm run build
+npm run test:retrieval       # isolated real D1, no browser or fixed app ports
+npm run evaluate:retrieval   # writes the actual versioned fictional-corpus report
+```
+
+Evaluation needs only the installed locked toolchain and the pinned source
+commit in the local object store. It creates a disposable project/D1 with
+allowlisted settings, never activates or resets existing developer storage.
+See [retrieval tooling](../../tools/retrieval/README.md) for input/configuration
+limits, bound literal FTS encoding, membership/ranking/budget order, coherent
+transactional reads, provenance validation, and rerun/report identity details.
+
+Defaults are topK 5 and a whole-chunk text budget of 12,000 UTF-16 units,
+including the standalone fictional/non-BC context. No lexical tokens/matches
+with valid publication/scope yields successful empty evidence: **insufficient
+retrieved evidence**, not universal absence. Unusable publication, missing frozen
+members and D1 faults are controlled `retrieval_unavailable`, not empty success.
+Nonempty evidence is also not an answer-adequacy guarantee. There is no automatic
+query rewriting, retry, fallback, semantic provider or relevance threshold.
+
+The [actual report](../evaluations/retrieval-2-4.md) executes all 12 cases on the
+approved fictional source `4323afe312f43b6b87a014abee062e03e12f6022`, independently
+of application HEAD. Required passage recall is 6/10, forbidden passage hits 0.
+English/corporate/paraphrase vocabulary and a scoped prototype-limits query
+expose lexical gaps; named-project/follow-up cases also return extra passages.
+The report retains exact text/hash/location/rank provenance and the implementation
+input fingerprint. BC should inspect the evidence and retain the baseline or
+request an explicit architecture decision before expansion. This is not a model
+judgment, real-career/recruiter acceptance or release approval.
+
+Verification on the Story 2.4 working tree (base HEAD
+`dd1ed890484ca6e9b4a5ebb845715a31a3cfc2f2`): typecheck, all 45 Bash workstation
+fixtures plus 359 Vitest cases, both builds, both focused retrieval E2E cases
+(two independent Workers, dominant excluded distractors, independently asserted
+ranking/ties/budgets, faults/corruption, read-only checks, pinned provenance,
+coordinated publication races and standalone negative-failure exits), and the
+evaluation command pass after review corrections. All 24 existing isolated
+D1/fixture-control cases also passed in the parent run. Two consecutive final
+evaluations produced byte-identical reports. Actual installed Wrangler/workerd
+versions and the copied dependency lock are identified in the report.
+
+**Full-suite environmental gap:** `npm run test:smoke` was attempted: the
+simulation precheck and 26/36 Playwright cases passed, including all 12 existing
+D1 cases and the new retrieval matrix. Ten existing browser/publication cases
+failed because pre-existing operator servers occupied ports 5173 and 8787
+(`EADDRINUSE`), not because of an assertion about retrieval. Failures were seven
+`bootstrap.spec.ts` cases (browser availability, ready shell, stalled/malformed
+health, StrictMode, both occupied-port controls, and dev-HTTP privacy) and all
+three `publication.spec.ts` cases. The failed-Worker-startup bootstrap case
+passed. Neither server nor its operator storage was stopped, reused or mutated
+for tests. Full smoke/publication verification remains to rerun when their owner
+has freed these fixed ports; no pass is claimed for those blocked cases.
+
+---
+
 # Current local publication — Story 2.3
 
 This section supersedes historical availability-only health instructions below.

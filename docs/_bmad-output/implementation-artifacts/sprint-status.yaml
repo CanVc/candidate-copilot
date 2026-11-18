@@ -90,8 +90,19 @@
 # - Prior complete agent verification/review remains applicable; closure is docs
 #   and tracking only. Story 2.3 is done; Epic 2 remains in-progress.
 # - Development-only limits and downstream retrieval/model/launch gates remain.
+# STORY 2.4 IMPLEMENTATION HANDOFF (2026-11-18):
+# - Scoped lexical Retriever, coherent evidence and engine-only evaluation are
+#   implemented and independently agent-reviewed; all retained fixes verified.
+# - Final parent checks: four typechecks, 359 Vitest, 45 workstation fixtures,
+#   both builds, two retrieval E2E cases and deterministic evaluation pass.
+#   Another 24 isolated D1/fixture-control cases passed in the parent run.
+# - Actual fictional-corpus evaluation: 6/10 required passages across 12 cases,
+#   zero forbidden hits. BC baseline assessment/acceptance remains pending.
+# - Full smoke attempt: 26/36 passed; ten existing browser/publication cases
+#   blocked by operator-owned servers on 5173/8787. Servers/storage untouched;
+#   rerun after owner frees ports before acceptance. No recruiter approval.
 generated: 10-19-2026 21:56
-last_updated: 11-18-2026 13:23
+last_updated: 11-18-2026 14:25
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -110,7 +121,7 @@ development_status:
   2-1-prepare-an-explicitly-public-knowledge-base: done
   2-2-build-reproducible-public-catalog-and-search-artifacts: done
   2-3-activate-a-coherent-local-public-publication: done
-  2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: backlog
+  2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: review
   2-5-start-and-read-an-isolated-anonymous-conversation: backlog
   2-6-enforce-fair-and-private-conversation-creation-limits: backlog
   2-7-admit-one-immutable-global-question-at-a-time: backlog
