@@ -1,3 +1,6 @@
+export interface CreationWindow { day: number; expiresAt: number }
+export interface CreationAllowance extends CreationWindow { dailyKey: string; pseudonym: string; limit: number }
+
 export interface CreatedConversation {
   conversationId: string;
   sessionToken: string;
@@ -20,4 +23,10 @@ export class ConversationUnavailable extends Error {
 export class ConversationDependencyUnavailable extends Error {
   readonly code = 'conversation_dependency_unavailable';
   constructor() { super('conversation_dependency_unavailable'); this.name = 'ConversationDependencyUnavailable'; }
+}
+
+export class ConversationRateLimited extends Error {
+  readonly code = 'rate_limited';
+  readonly expiresAt: number;
+  constructor(expiresAt: number) { super('rate_limited'); this.name = 'ConversationRateLimited'; this.expiresAt = expiresAt; }
 }

@@ -1,3 +1,143 @@
+# Conversation creation allowance — Story 2.6 (controlled development)
+
+Creation now uses one shared D1 allowance: initially **10 per canonical trusted
+address per UTC day**, configurable with `CONVERSATION_CREATION_LIMIT` (positive
+safe integer; absent means 10, malformed values fail closed). Corporate NATs
+share the allowance. A07 Origin/JSON/body rejection occurs before key lookup or
+counter consumption. Exhaustion returns no-store `429 { error: 'rate_limited' }`
+with an authoritative **HTTP-date Retry-After at the next UTC midnight**. Reads,
+authentication and token hashing are unchanged and never touch counters. No
+later-story admission, privacy UI, deletion endpoint or results are introduced.
+A09 is unchanged: a lost credential response remains uncertain; only explicit
+fresh creation may consume another allowance, never automatic retry or suggested
+question carry/send. The controlled entry fixture now exercises actual D1 exhaustion.
+
+## Actual temporary processing and retention
+
+`0004_conversation_creation_limits.sql` adds two isolated tables, with no foreign
+key or identifier linking them to Conversations:
+
+- `conversation_creation_key`: a migration-seeded singleton with UTC day, expiry
+  and a CSPRNG 256-bit daily key. Atomic conditional rollover selects one shared
+  winner across Workers. No root secret or cross-day visitor identifier exists.
+  Missing singleton or missing/malformed same-day key fails closed, not reset.
+- `conversation_creation_counters`: domain-separated HMAC-SHA-256 pseudonym of
+  canonical address plus UTC date, next-midnight expiry and creation count.
+  A capped UPSERT immediately gates the Conversation INSERT via SQLite `changes()`
+  in one D1 batch. Insert failure rolls back the counter. The SQL window/key guard
+  is the transaction's admission boundary; SQLite time includes production queue
+  delay. Credentials return only after confirmed insertion.
+
+The address is transient request processing, not stored by the app, logged by
+application code, sent to a model, or placed in a Conversation. Daily pseudonyms
+**remain personal-data processing, not anonymization**; a party holding the
+current daily key and counters could test candidate addresses. Daily key changes
+prevent this mechanism itself from supplying a durable cross-day fingerprint.
+This is not a claim that infrastructure cannot correlate traffic or timestamps.
+
+Expiry is exactly next UTC midnight, with **no retention grace**. The Worker
+Cron entry `* * * * *` atomically deletes expired counter rows and erases expired
+key material even without requests, preserving only a nonvisitor operational day
+watermark. A stale request cannot restore erased same-day keys. Scheduled failure
+rejects with fixed `conversation_creation_cleanup_unavailable`, never raw SQL,
+keys or addresses; the next scheduled pass can recover. Scheduler/D1 outages can
+**delay physical deletion** beyond expiry. They do not authorize retention
+extension, and logical expiry is not proof of deletion. No guarantee is made
+about storage pages, host logs, D1 backups or restoration. Before hosting, verify
+actual scheduling/failure visibility and the host/provider logs/backups policies;
+Conversation-content 90-day physical purge remains a separate later story.
+
+## Address trust and hosted activation prerequisites
+
+Checked-in `CREATION_ADDRESS_MODE=local-fixed` uses **one synthetic 127.0.0.1**
+identity for all local requests, ignoring every client IP header. This is a local
+test/development setting, not a per-visitor hosted limiter. No IP secret or `.dev.vars`
+copy is needed. Unknown/missing modes fail closed with the redacted uncertain
+creation response; hosted failures never fall back to local identity.
+
+Opt-in `cloudflare-direct` requires runtime `request.cf` colo/ASN metadata and one
+strict valid `CF-Connecting-IP`; Worker subrequest and Pseudo IPv4 headers and
+Cloudflare's cross-zone Worker sentinel are rejected. Equivalent IPv6 and
+IPv4-mapped representations normalize together. Malformed, multiple and zoned
+addresses fail closed. `X-Forwarded-For`/`X-Real-IP` never select the counter.
+
+**Do not activate hosted mode from these tests alone.** An operator must verify
+direct Cloudflare ingress, no upstream/same-zone/cross-zone Worker subrequests,
+and no Pseudo IPv4 overwrite, together with trusted origin/HTTPS/environment
+settings. Runtime metadata/header checks cannot prove this topology: same-zone
+Workers can influence headers. Supervisor source checked 2026-11-18:
+[Cloudflare request headers](https://developers.cloudflare.com/fundamentals/reference/http-headers/).
+No deployment/topology verification or production/privacy/human acceptance is
+claimed here. Wrangler observability is explicitly disabled and application code
+adds no request/address logging; unavoidable hosting/proxy/provider logging and
+backups remain unproved launch prerequisites, not zero-retention promises.
+
+## Verification of Story 2.6
+
+Use the commands below in the existing verification section; all D1/browser
+fixtures are disposable. `conversation-creation-limits.test.ts` checks UTC/config,
+canonicalization, trusted-adapter metadata/header gates, pseudonym separation,
+A07 ordering, no-store 429 and redaction. `conversations-runtime.mjs` checks 32
+racing requests across two Workers yield exactly 10 creations, configured/shared
+IPv6 caps, rollover, actual batch rollback, stale/missing/corrupt state, no-traffic
+scheduled physical cleanup and failure/recovery, unchanged reads and A09.
+Chromium verifies checked-in local configuration and persistent cap across a
+Worker restart. Synthetic fixture address/clock overrides exist only in the test
+composition, never in production request parsing. These are not hosted-ingress,
+entry-UI, infrastructure-retention or BC acceptance evidence. Three fresh review
+layers and retained fixes are complete; final supervisor advancement is separate
+from pending BC acceptance.
+
+Implementation-worker verification on 2026-11-18 against baseline
+`8eb77d13766f8a8793b2d6cae6efcb3b755428b1`: all four typechecks, 45 workstation
+fixtures plus 427 Vitest cases, both builds, six simulation cases and all 39
+Playwright cases passed. Full smoke/build preceded two additional test-only
+unit assertions; all typechecks and unit tests passed again afterward. Logs:
+`/tmp/story-2-6-{typecheck,tests,build,smoke}.log`. The spec records corrected
+intermediate test failures. Final independent coordinator rerun after all review
+fixes passed the same full suite without skips; output is
+`/tmp/story-2-6-final-verification.log`. Added real-D1 regressions cover mixed live/
+expired cleanup, already-null idle keys, invalid counter expiry, NULL pseudonym
+rejection, in-flight key/clock rollover and last-allowance response loss. One
+unverified medium concern remains in deferred-work.md: measure substantial expired
+backlogs against D1 limits before deciding whether cleanup needs bounded batches.
+No load-induced cleanup failure has been demonstrated or waived.
+
+## Owner verification of Story 2.6
+
+**Verified by agents:** local deterministic tests, actual disposable D1/workerd
+and Chromium; no hosted deployment, provider calls or operator storage changes.
+Automated success is not BC acceptance. The four story ACs are traced in the spec.
+
+**Developer checklist:** from the installed repository, run
+`npx playwright test conversations.spec.ts` (two tests). It creates isolated
+fixtures, verifies 32 racing requests across two Workers commit exactly 10,
+returns 429 with the next UTC midnight, and preserves authenticated reads. It
+also exercises configured shared IPv6 limits, rollback, no-traffic cleanup,
+current-state preservation, corrupted state, post-key-acquisition rollover and
+lost last-slot credentials. Chromium uses checked-in local configuration,
+creates ten conversations, restarts only its owned Worker and verifies the cap
+persists plus the existing thread remains readable. No entry UI is claimed.
+The fixtures own their test data and clean only disposable state; no `db:init`
+on your normal storage is required. If ports 5173/8787 are occupied, do not kill
+operator servers: report the occupied-port failure and rerun when their owner
+has deliberately freed them. For full regressions run `npm run typecheck`,
+`npm test`, `npm run build`, then `npm run test:smoke`.
+
+**Remaining work:** BC reviews this development handoff; before hosted activation,
+operators must verify Cloudflare direct-ingress topology, scheduling/failure
+visibility and infrastructure logs/backups. These are unproved release
+prerequisites, not local-test conclusions. B4 backlog sizing is explicitly
+unverified follow-up. Entry UI and Conversation-content purge belong to later
+stories and are not delivered here.
+
+**Next action:** inspect the spec and run the isolated checklist; report the
+commands/results and any mismatched cap, reset, read or cleanup behavior before
+human acceptance. The supervisor alone may accept technical advancement; sprint
+status remains review and no BC acceptance is inferred.
+
+---
+
 # Anonymous conversation identity — Story 2.5 (controlled local development)
 
 `POST /api/conversations` accepts an empty JSON object (`{}`), returning HTTP
@@ -43,12 +183,12 @@ future entry integration. There is no unknown-token recovery, automatic retry,
 implicit fresh creation or suggested-question carry/send. Exhaustion must show
 the authoritative allowance resume time. Controlled exhaustion uses canonical
 `429 rate_limited` and `Retry-After`; the fixture derives resume time from its
-authoritative Date/Retry-After headers, not an invented response payload.
-Story 2.5 exercises these paths with
-controlled entry/allowance fixtures only: **no actual IP counter or entry UI is
-implemented** (Stories 2.6/2.15); admission/messages/results remain 2.7/2.8. There
+authoritative Retry-After HTTP date, not an invented response payload.
+Historically Story 2.5 used controlled allowance fixtures only. Story 2.6 now
+implements the actual shared counter above; entry UI remains Story 2.15, and
+admission/messages/results remain 2.7/2.8. There
 are no listing/admin/deletion/message routes, browser credential storage or
-purge scheduler in this change. Expiry prevents reads but physical purge,
+Conversation-content purge scheduler in Story 2.5. Expiry prevents reads but physical purge,
 backup assessment and hosted acceptance remain later obligations.
 
 Verification commands (all disposable D1, never operator storage):
@@ -74,7 +214,8 @@ are HTTP/configuration checks, not entry-UI acceptance. Node's fetch transport
 overwrites `Sec-Fetch-Mode`, so its contradictory-mode case uses a test-only raw
 header injector and asserts the actual application-handler input. The production
 Worker interprets neither that injector nor the fixture clock header. Fixtures
-are not proof of browser lifecycle/entry UX, IP counting or recruiter readiness.
+were not proof of IP counting in Story 2.5; the updated Story 2.6 fixtures cover
+counters, but not browser lifecycle/entry UX or recruiter readiness.
 
 **Historical pre-review implementation verification (2026-11-18, working tree based on
 `d39c16146c5592c96c7ad41c7105d36a2c7ff188`):** typecheck, 45 Bash fixtures plus

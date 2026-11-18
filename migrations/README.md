@@ -13,6 +13,18 @@ Conversation reads enforce the creation-based 90 × 24-hour deadline, without
 extending it on activity. Message/answer/lease schema and physical purge are
 later-story work, not speculative tables in this migration.
 
+`0004_conversation_creation_limits.sql` adds the isolated daily-key singleton
+and pseudonymous creation counters (no address or Conversation linkage). The
+migration seeds only a nonvisitor day watermark; request code never recreates a
+missing singleton. Keys are 256 random bits generated at conditional daily
+initialization/rollover. Counters and keys expire at the next UTC midnight; the
+minute Cron handler physically deletes counters and erases keys atomically,
+retaining the operational watermark. Scheduler/outage delays can leave expired
+physical rows; expiry is not proof of erasure or backup deletion. See the Story
+2.6 processing/topology limitations in application.md. Do not repair corrupted
+operator state by silently reseeding keys/counters. This story applies migrations
+only to disposable fixtures, never operator storage.
+
 Wrangler creates/manages its ledger and SQLite metadata; there is no custom
 migration engine. Conversation and existing unrelated data/ledger preservation
 on reruns are verified against disposable actual D1 in `conversations.spec.ts`

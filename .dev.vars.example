@@ -4,3 +4,7 @@
 # Do not add real credentials here or expose server configuration via VITE_*.
 # Startup/build/D1 commands explicitly use empty env-file input (/dev/null).
 # No hosted database or real model provider is configured.
+# Creation limits use nonsensitive Wrangler vars, not a root IP-hashing secret:
+# CREATION_ADDRESS_MODE=local-fixed and CONVERSATION_CREATION_LIMIT=10.
+# The daily random key is shared in D1 and erased after UTC expiry by scheduling.
+# cloudflare-direct is NOT enabled; verify documented ingress topology first.

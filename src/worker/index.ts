@@ -4,11 +4,14 @@ import { D1ResourceCatalog } from '../adapters/d1/publication.ts';
 import { D1ConversationStore } from '../adapters/d1/conversations.ts';
 import { createConversation, readConversation } from '../application/conversations.ts';
 import type { Clock } from '../ports/Clock.ts';
-import { ConversationUnavailable, CREATION_UNCERTAINTY_NOTICE } from '../shared/conversation.ts';
+import { creationLimit } from '../application/conversation-creation-limits.ts';
+import { trustedCreationAddress } from '../adapters/cloudflare/creation-address.ts';
+import { ConversationRateLimited, ConversationUnavailable, CREATION_UNCERTAINTY_NOTICE } from '../shared/conversation.ts';
 
 const CREATION_BODY_LIMIT_BYTES = 1024;
 
-export function createWorker(clock: Clock = { now: () => new Date() }) {
+export function createWorker(clockOverride?: Clock, addressAdapter = trustedCreationAddress) {
+  const clock = clockOverride ?? { now: () => new Date() };
   const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
   app.use('/api/conversations*', async (context, next) => {
@@ -58,8 +61,14 @@ export function createWorker(clock: Clock = { now: () => new Date() }) {
     } catch { return context.json({ error: 'creation_body_rejected' }, 400); }
     finally { reader?.releaseLock(); }
     try {
-      return context.json(await createConversation(new D1ConversationStore(context.env.DB), clock), 201);
-    } catch {
+      const address = addressAdapter(context.req.raw, context.env?.CREATION_ADDRESS_MODE);
+      const limit = creationLimit(context.env?.CONVERSATION_CREATION_LIMIT);
+      return context.json(await createConversation(new D1ConversationStore(context.env.DB, clockOverride), clock, address, limit), 201);
+    } catch (error) {
+      if (error instanceof ConversationRateLimited) {
+        context.header('Retry-After', new Date(error.expiresAt).toUTCString());
+        return context.json({ error: 'rate_limited' }, 429);
+      }
       // Persistence may have committed. Never promise that a retry is safe or automatic.
       return context.json({ error: 'creation_uncertain', message: CREATION_UNCERTAINTY_NOTICE }, 503);
     }
@@ -89,4 +98,14 @@ export function createWorker(clock: Clock = { now: () => new Date() }) {
   return app;
 }
 
-export default createWorker();
+export async function cleanupCreationLimits(env: Cloudflare.Env, clock?: Clock): Promise<void> {
+  try { await new D1ConversationStore(env.DB, clock).cleanupCreationLimits(); }
+  catch { throw new Error('conversation_creation_cleanup_unavailable'); }
+}
+
+const app = createWorker();
+export default Object.assign(app, {
+  async scheduled(_event: ScheduledController, env: Cloudflare.Env): Promise<void> {
+    await cleanupCreationLimits(env);
+  },
+});

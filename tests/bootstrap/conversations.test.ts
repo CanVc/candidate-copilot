@@ -15,7 +15,9 @@ const view = (conversationId: string) => ({ conversationId, transcript: [], proc
 function fixture() {
   const rows: StoredConversation[] = [];
   const store: ConversationStore = {
-    create: vi.fn(async (row) => { rows.push({ ...row }); }),
+    dailyCreationKey: vi.fn(async () => 'a'.repeat(64)),
+    cleanupCreationLimits: vi.fn(async () => {}),
+    create: vi.fn(async (row) => { rows.push({ ...row }); return 'created' as const; }),
     findAuthenticated: vi.fn(async (id, hash, after) => {
       const row = rows.find((r) => r.conversationId === id && r.sessionTokenHash === hash && r.createdAt > after);
       return row ? { conversationId: row.conversationId } : null;
@@ -25,19 +27,21 @@ function fixture() {
 }
 function dbFixture() {
   const { rows, store } = fixture();
-  const prepare = vi.fn((sql: string) => ({ bind: (...values: string[]) => ({
-    run: async () => {
-      expect(sql).toBe('INSERT INTO conversations (id, session_token_hash, created_at, modified_at) VALUES (?, ?, ?, ?)');
-      await store.create({ conversationId: values[0]!, sessionTokenHash: values[1]!, createdAt: values[2]!, modifiedAt: values[3]! });
-      return { success: true };
-    },
-    first: async () => {
-      expect(sql).toBe('SELECT id FROM conversations WHERE id = ? AND session_token_hash = ? AND created_at > ?');
-      const row = await store.findAuthenticated(values[0]!, values[1]!, values[2]!);
+  const prepare = vi.fn((sql: string) => ({ sql, values: [] as unknown[], bind(...values: unknown[]) {
+    return { sql, values, first: async () => {
+      const row = await store.findAuthenticated(String(values[0]), String(values[1]), String(values[2]));
       return row ? { id: row.conversationId } : null;
-    },
-  }) }));
-  const env = { DB: { prepare } as unknown as D1Database, TRUSTED_BROWSER_ORIGIN: origin };
+    } };
+  } }));
+  const batch = vi.fn(async (statements: { sql: string; values: unknown[] }[]) => {
+    if (statements[0]!.sql.startsWith('UPDATE conversation_creation_key')) {
+      return [{ success: true, results: [] }, { success: true, results: [{ day: now.getTime(), expires_at: now.getTime() + 86400000, daily_key: await store.dailyCreationKey({ day: now.getTime(), expiresAt: now.getTime() + 86400000 }) }] }];
+    }
+    const values = statements[1]!.values as string[];
+    const outcome = await store.create({ conversationId: values[0]!, sessionTokenHash: values[1]!, createdAt: values[2]!, modifiedAt: values[3]! }, { day: now.getTime(), expiresAt: now.getTime() + 86400000, dailyKey: 'a'.repeat(64), pseudonym: 'b'.repeat(64), limit: 10 });
+    return [{ success: true, meta: { changes: outcome === 'created' ? 1 : 0 } }, { success: true, meta: { changes: outcome === 'created' ? 1 : 0 } }, { success: true, results: [{ valid: 1 }] }];
+  });
+  const env = { DB: { prepare, batch } as unknown as D1Database, TRUSTED_BROWSER_ORIGIN: origin, CREATION_ADDRESS_MODE: 'local-fixed', CONVERSATION_CREATION_LIMIT: '10' };
   return { rows, store, prepare, env };
 }
 afterEach(() => vi.unstubAllGlobals());
@@ -45,7 +49,7 @@ afterEach(() => vi.unstubAllGlobals());
 describe('conversation creation and authenticated reads', () => {
   it('persists unpredictable hash-only credentials before returning and binds independent conversations', async () => {
     const { rows, store } = fixture();
-    const a = await createConversation(store, clock), b = await createConversation(store, clock);
+    const a = await createConversation(store, clock, '127.0.0.1', 10), b = await createConversation(store, clock, '127.0.0.1', 10);
     expect(Object.keys(a).sort()).toEqual(['conversationId', 'sessionToken']);
     expect(a.conversationId).toMatch(/^[0-9a-f-]{36}$/);
     expect(a.sessionToken).toMatch(/^[0-9a-f]{64}$/);
@@ -63,7 +67,7 @@ describe('conversation creation and authenticated reads', () => {
 
   it('allows strictly before the creation-based 90-day deadline, denies at/after, never extends with modified_at', async () => {
     const { store, rows } = fixture();
-    const c = await createConversation(store, clock);
+    const c = await createConversation(store, clock, '127.0.0.1', 10);
     rows[0]!.modifiedAt = new Date(now.getTime() + CONVERSATION_RETENTION_MS).toISOString();
     for (const offset of [-1, 0, 1]) {
       const read = readConversation(store, { now: () => new Date(now.getTime() + CONVERSATION_RETENTION_MS + offset) }, c.conversationId, `Bearer ${c.sessionToken}`);
@@ -74,7 +78,7 @@ describe('conversation creation and authenticated reads', () => {
 
   it('returns one neutral no-store HTTP failure for missing, malformed, wrong, crossed, absent, deleted and expired access', async () => {
     const f = dbFixture();
-    const a = await createConversation(f.store, clock), b = await createConversation(f.store, clock);
+    const a = await createConversation(f.store, clock, '127.0.0.1', 10), b = await createConversation(f.store, clock, '127.0.0.1', 10);
     const cases: [string, string | undefined][] = [
       [a.conversationId, undefined], [a.conversationId, ''], [a.conversationId, a.sessionToken],
       [a.conversationId, `Basic ${a.sessionToken}`], [a.conversationId, `Bearer ${a.sessionToken} extra`],
@@ -85,7 +89,7 @@ describe('conversation creation and authenticated reads', () => {
     ];
     f.rows[1]!.createdAt = new Date(now.getTime() - CONVERSATION_RETENTION_MS).toISOString();
     cases.push([b.conversationId, `Bearer ${b.sessionToken}`]);
-    const deleted = await createConversation(f.store, clock);
+    const deleted = await createConversation(f.store, clock, '127.0.0.1', 10);
     f.rows.pop(); cases.push([deleted.conversationId, `Bearer ${deleted.sessionToken}`]);
     for (const [id, authorization] of cases) {
       const response = await app.request(`http://worker/api/conversations/${id}`, { headers: authorization === undefined ? {} : { Authorization: authorization } }, f.env);
@@ -173,7 +177,7 @@ describe('conversation creation and authenticated reads', () => {
 
   it('accepts multiple Bearer separator spaces without accepting malformed tokens', async () => {
     const f = dbFixture();
-    const c = await createConversation(f.store, clock);
+    const c = await createConversation(f.store, clock, '127.0.0.1', 10);
     const response = await app.request(`http://worker/api/conversations/${c.conversationId}`, { headers: { Authorization: `Bearer   ${c.sessionToken}` } }, f.env);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(view(c.conversationId));
@@ -221,7 +225,7 @@ describe('conversation creation and authenticated reads', () => {
     let release!: () => void, started!: () => void;
     const gate = new Promise<void>((resolve) => { release = resolve; });
     const writeStarted = new Promise<void>((resolve) => { started = resolve; });
-    vi.mocked(f.store.create).mockImplementation(async (row) => { started(); await gate; f.rows.push(row); });
+    vi.mocked(f.store.create).mockImplementation(async (row) => { started(); await gate; f.rows.push(row); return 'created'; });
     let responseReturned = false;
     const pending = Promise.resolve(app.request('http://worker/api/conversations', { method: 'POST', headers: jsonHeaders, body: '{}' }, f.env)).then((response) => { responseReturned = true; return response; });
     await writeStarted;
@@ -237,7 +241,7 @@ describe('conversation creation and authenticated reads', () => {
   it.each(['rejected', 'unsuccessful'])('redacts %s writes without returning credentials', async (failure) => {
     const f = dbFixture();
     if (failure === 'rejected') vi.mocked(f.store.create).mockRejectedValue(new Error('private database failure'));
-    else f.prepare.mockImplementation(() => ({ bind: () => ({ run: async () => ({ success: false }), first: async () => null }) }));
+    else vi.spyOn(f.env.DB, 'batch').mockResolvedValue([{ success: false }] as unknown as D1Result[]);
     const response = await app.request('http://worker/api/conversations', { method: 'POST', headers: jsonHeaders, body: '{}' }, f.env);
     expect(response.status).toBe(503);
     expect(response.headers.get('cache-control')).toBe('no-store');
@@ -247,7 +251,7 @@ describe('conversation creation and authenticated reads', () => {
 
   it('keeps HEAD unsupported, empty and no-store without database access for either credential', async () => {
     const f = dbFixture();
-    const c = await createConversation(f.store, clock);
+    const c = await createConversation(f.store, clock, '127.0.0.1', 10);
     for (const token of [c.sessionToken, 'invalid']) {
       const response = await app.request(`http://worker/api/conversations/${c.conversationId}`, { method: 'HEAD', headers: { Authorization: `Bearer ${token}` } }, f.env);
       expect(response.status).toBe(404);
