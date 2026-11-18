@@ -16,11 +16,17 @@ The three French Markdown sheets describe a fictional museum collections role. T
 
 - Keep the source fixtures versioned under `tests/fixtures/`, outside `content/public/`. Local synthetic working copies may be used under `content/private/synthetic-corpus/` as described below. Never mix them with real career evidence or publish them as BC's professional work.
 - Each sheet carries its own fiction warning so that opening or copying a single sheet does not remove its basic provenance. Any later chunking/evaluation integration must also preserve that synthetic context; it must never be silently treated as genuine evidence about BC.
-- The sheets reuse the existing A/B headings and documentary fields. Each has a stable unique UUID, real UTC file timestamps, and empty `reviewed_by` / `reviewed_at`. `visibility: public` is deliberately absent. These are draft test inputs, **not a final valid public corpus**. A future strict public-source validator should reject them as-is.
+- The sheets reuse the existing A/B headings and documentary fields. Each has a stable unique UUID, real UTC file timestamps, and empty `reviewed_by` / `reviewed_at`. `visibility: public` is deliberately absent. These are draft test inputs, **not a final valid public corpus**. The strict public-source validator rejects them as-is.
 - No approval, private checkpoint, per-version owner consent or real publication eligibility is fabricated. Normalization into additional disposable test cases must not mutate these files or represent synthetic approval values as human acceptance.
-- The README is a fixture guide, not a fourth knowledge sheet. A future test harness should select only the three files under `documents/` explicitly; no retrieval/model test harness or application corpus-selection override is implemented here.
-- Do not widen the application's production source boundary from `content/public/` to consume these fixtures. A later local test can use a separate disposable workspace, but this task does not copy fixtures into an application, index them, invoke an application LLM provider, or deploy anything.
-- Story 2.0's historical method/pilot acceptance remains unchanged. These files do not replace its genuine pilot evidence or close Story 2.1's real-corpus selection, public authorization, metadata, validation or coverage acceptance.
+- The README is a fixture guide, not a fourth knowledge sheet. A test harness must select only the three files under `documents/` explicitly; no retrieval/model test harness or application corpus-selection override is implemented here.
+- Do not widen the application's production source boundary from `content/public/` to consume these fixtures. Disposable tests use separate workspaces; the approved prepared development copies stay within the existing public boundary. This acceptance does not index, invoke an application LLM provider or deploy anything.
+- Story 2.0's historical method/pilot acceptance remains unchanged. These files do not replace its genuine pilot evidence or establish real-career acceptance. Story 2.1 is amended to accept separately prepared development copies, not these drafts or a real portfolio.
+
+## Approved public development copies
+
+On 2026-11-18 BC approved three separately prepared copies under `content/public/` for continuing synthetic development. They preserve IDs, creation times, narratives, links and fiction/non-attribution warnings, but add public visibility, genuine final BC development-review metadata and actual preparation times. Development-only authorization replaces obsolete no-approval wording in those copies only. This is not recruiter-publication approval, historical pilot approval or evidence of BC achievements. The original fixture sheets here and selected private drafts remain byte-for-byte unchanged and must still be rejected as-is. See `content/README.md` and the Story 2.1 development handoff.
+
+No advance question map or exhaustive completeness is an acceptance prerequisite. BC accepts gaps; later runtime must say when evidence is insufficient without inventing or widening scope. Grounding, missing-information and scope evaluations remain required.
 
 ## Private working copies
 
@@ -30,7 +36,7 @@ The private directory is ignored by Git and is **not a backup**. The source fixt
 
 ## Example questions and expected documentary coverage
 
-These are **scripted expectations for future tests**, not executed retrieval or model evaluation results. They describe answers within the fictional scenario, never facts about BC. The test setup and output must make that fictional scope explicit.
+These optional examples are **scripted expectations for future tests**, not executed retrieval or model evaluation results. They describe answers within the fictional scenario, never facts about BC. The test setup and output must make that fictional scope explicit.
 
 | French question | Relevant document / section | Expected support or limitation |
 | --- | --- | --- |
@@ -51,11 +57,11 @@ These are **scripted expectations for future tests**, not executed retrieval or 
 
 In a future scoped-retrieval test, selecting only the prototype must not retrieve the inventory's numeric results, even though the prototype links to that other sheet. Local links explain relationships; they do not authorize scope widening or require retrieval of a linked file.
 
-## Expected future public-validation rejections
+## Original-draft public-validation rejections
 
-These are specifications for a future strict public-source validator, **not results from such a validator**. The local self-check below confirms the deliberately unapproved shape, not implementation of the public acceptance gate.
+The table records expectations, **not results from such a validator**; it is not an execution report. The implemented gate’s rejection results are exercised separately in `tests/bootstrap/public-content.test.ts`; the local self-check below confirms only the deliberately unapproved shape.
 
-| Current fixture input | Expected future public-validation result |
+| Current fixture input | Required public-validation result |
 | --- | --- |
 | No `visibility: public` | Reject as not explicitly public |
 | Empty `reviewed_by` | Reject missing real reviewer metadata |

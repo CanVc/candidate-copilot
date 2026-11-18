@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { parse } from 'yaml';
 import { validatePublicContent } from '../../tools/public-content/validate';
 
 vi.mock('node:child_process', async (original) => ({ ...await original<typeof import('node:child_process')>() }));
@@ -14,6 +15,21 @@ vi.mock('node:fs', async (original) => ({ ...await original<typeof import('node:
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const temporary: string[] = [];
+const developmentSheets = [
+  ['mission-regie-collections.md', '0eaf8b1d-791d-4c60-9234-168a6a03acbd', 'eee4d56f027f4e29e83f65e9164a5cccd575c508d3496effcc120b80a705086e', '62dc67fcd7f288d58a6851dba1e07d447b00e0f7381d375b92ff07e7219522ea'],
+  ['projet-reperage-reserves.md', 'a53a192f-51d5-4537-8200-427a09ee1ea3', '3ce2b667373b699e8bcc4ac888bad816b11e635b977c403408e4f95c30396628', '18dd57a7dc4eeeb8c1c86d22122125068f859dfb04d117b7ffac3c2d3ae10121'],
+  ['projet-prototype-prets.md', '87ddaeda-8ee4-4056-9931-5ebf7b677875', '40e6b7ae36aedbc4c6020cc3f1be2b0a256a5512ace79e0f27077d5b4f9b326b', '945a1f3d2d853205085fec7f6246bd1a415b3c09e9b3b65913e4fcba35f01e2a'],
+] as const;
+const developmentWarning = ' Autorisé par BC uniquement comme copie publique de développement synthétique ; aucune diffusion aux recruteurs ni acceptation de faits professionnels réels.';
+function sheetParts(text: string) {
+  const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(text);
+  expect(match).not.toBeNull();
+  return { metadata: parse(match![1]!), body: match![2]! };
+}
+function developmentCopy(name: string) { return readFileSync(join(root, 'content/public', name), 'utf8'); }
+function copyDevelopmentCorpus(path: string) {
+  for (const [name] of developmentSheets) write(path, `content/public/${name}`, developmentCopy(name));
+}
 const env = {
   PATH: process.env.PATH, LANG: 'C.UTF-8', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null',
   GIT_AUTHOR_NAME: 'Synthetic Test', GIT_AUTHOR_EMAIL: 'test@example.invalid',
@@ -83,11 +99,12 @@ describe('tools/public-content/validate.ts metadata', () => {
     expect(readFileSync(join(path, 'content/private/canary.md'), 'utf8')).toBe('SYNTHETIC_PRIVATE_DO_NOT_READ');
   });
 
-  it('rejects an empty corpus and the current README without an exemption', () => {
+  it('rejects an empty corpus and a self-contained placeholder README without an exemption', () => {
     const path = repository(false);
     expect(codes(path)).toContain('EMPTY_CORPUS');
-    write(path, 'content/public/README.md', readFileSync(join(root, 'content/public/README.md')));
+    write(path, 'content/public/README.md', '# Public knowledge sources (deferred)\n\nDrafts stay in `content/private/`.\n');
     expect(codes(path)).toContain('FRONTMATTER_INVALID');
+    expect(codes(path)).toContain('FORBIDDEN_PRIVATE_PATH');
   });
 
   it.each(['document_id', 'visibility', 'title', 'created_at', 'modified_at', 'reviewed_by', 'reviewed_at'])('requires %s as a nonblank string', (field) => {
@@ -182,6 +199,82 @@ describe('tools/public-content/validate.ts metadata', () => {
       .replace('reviewed_at: ""', 'reviewed_at: "2026-11-17T15:00:00Z"')));
     expect(validatePublicContent(path).ok).toBe(true);
     names.forEach((name, i) => expect(readFileSync(join(root, 'tests/fixtures/synthetic-corpus/documents', name), 'utf8')).toBe(originals[i]));
+  });
+});
+
+describe('content/public synthetic development corpus', () => {
+  it('contains exactly three valid sheets with genuine development-only review and preserved fixture provenance', () => {
+    expect(fs.readdirSync(join(root, 'content/public')).sort()).toEqual(developmentSheets.map(([name]) => name).sort());
+    expect(validatePublicContent(root)).toEqual({ ok: true, count: 3, sourceRevision: null, diagnostics: [] });
+    const handoff = readFileSync(join(root, 'docs/_bmad-output/implementation-artifacts/handoff-2-1-development-corpus.md'), 'utf8');
+    expect(handoff).toContain('modified_at: "2026-11-18T08:46:57Z"');
+    for (const [name, id, originalHash, preparedHash] of developmentSheets) {
+      const original = readFileSync(join(root, 'tests/fixtures/synthetic-corpus/documents', name), 'utf8');
+      expect(createHash('sha256').update(original).digest('hex')).toBe(originalHash);
+      const prepared = readFileSync(join(root, 'content/public', name));
+      expect(createHash('sha256').update(prepared).digest('hex')).toBe(preparedHash);
+      expect(handoff).toContain(`| \`${name}\` | \`${id}\` | \`${preparedHash}\` |`);
+      const { metadata: fields, body } = sheetParts(prepared.toString('utf8'));
+      expect(fields).toEqual({
+        document_id: id, created_at: '2026-11-17T14:31:20Z', modified_at: '2026-11-18T08:46:57Z',
+        title: sheetParts(original).metadata.title, visibility: 'public',
+        reviewed_by: 'BC — revue finale pour le développement synthétique uniquement',
+        reviewed_at: '2026-11-18T08:45:47Z',
+      });
+      const expectedBody = sheetParts(original).body
+        .replace("Ce document n'est ni approuvé pour publication ni une fiche du portfolio de BC.", "Ce document n'est pas une fiche du portfolio de BC.")
+        .replace(" Ce document n'est pas approuvé pour publication.", '');
+      expect(body).toBe(expectedBody.replace(/^(> .+)$/m, `$1${developmentWarning}`));
+      expect(body).toContain('sans rapport avec BC');
+      expect(body).toContain('Le « je » désigne une personne fictive.');
+      expect(body).not.toContain("n'est pas approuvé pour publication");
+    }
+  });
+
+  it('accepts documentary gaps without changing the production source boundary or claiming runtime evaluation', () => {
+    const path = repository(false);
+    copyDevelopmentCorpus(path);
+    write(path, 'elsewhere.md', 'SYNTHETIC_PRIVATE_DO_NOT_READ');
+    write(path, 'content/private/canary.md', 'SYNTHETIC_PRIVATE_DO_NOT_READ');
+    const read = fs.readFileSync;
+    const reads: string[] = [];
+    let descriptorRead = false;
+    const observer = vi.spyOn(fs, 'readFileSync').mockImplementation(((input: fs.PathOrFileDescriptor, ...args: unknown[]) => {
+      descriptorRead ||= typeof input === 'number' || String(input).startsWith('/proc/self/fd/');
+      reads.push(fs.realpathSync(typeof input === 'number' ? `/proc/self/fd/${input}` : input));
+      return Reflect.apply(read, fs, [input, ...args]);
+    }) as typeof fs.readFileSync);
+    const result = validatePublicContent(path);
+    observer.mockRestore();
+    expect(result).toEqual({ ok: true, count: 3, sourceRevision: null, diagnostics: [] });
+    expect(descriptorRead).toBe(true);
+    expect([...new Set(reads.filter((target) => target.endsWith('.md')))].sort())
+      .toEqual(developmentSheets.map(([name]) => join(path, 'content/public', name)).sort());
+    expect(reads).not.toContain(join(path, 'content/private/canary.md'));
+    expect(reads).not.toContain(join(path, 'elsewhere.md'));
+    // These are source assertions, not generated-answer or exhaustive coverage tests.
+    expect(developmentCopy('mission-regie-collections.md')).toContain('Aucun budget global');
+    expect(developmentCopy('projet-prototype-prets.md')).toContain("Aucun gain de temps, taux d'erreur, montant économisé ou taux d'adoption n'est établi");
+    expect(developmentCopy('projet-reperage-reserves.md')).toContain("le nombre d'objets distincts touchés n'est pas défini");
+    expect(readFileSync(join(path, 'content/private/canary.md'), 'utf8')).toBe('SYNTHETIC_PRIVATE_DO_NOT_READ');
+  });
+
+  it('never certifies uncommitted development copies as old HEAD, and verifies exact bytes only in a disposable commit', () => {
+    const before = git(root, ['status', '--porcelain=v1', '--untracked-files=all']);
+    const path = repository();
+    const oldRevision = commit(path);
+    rmSync(join(path, 'content/public/one.md'));
+    copyDevelopmentCorpus(path);
+    expect(validatePublicContent(path)).toEqual({ ok: true, count: 3, sourceRevision: null, diagnostics: [] });
+    expect(validatePublicContent(path, { revision: oldRevision })).toEqual({ ok: false, count: 3, sourceRevision: null,
+      diagnostics: [{ code: 'SNAPSHOT_MISMATCH', document: null }] });
+    const revision = commit(path);
+    expect(validatePublicContent(path, { revision })).toEqual({ ok: true, count: 3, sourceRevision: revision, diagnostics: [] });
+    const [name] = developmentSheets[0];
+    write(path, `content/public/${name}`, developmentCopy(name) + '\nChanged bytes.\n');
+    expect(validatePublicContent(path, { revision }).diagnostics).toContainEqual({ code: 'SNAPSHOT_MISMATCH', document: null });
+    expect(validatePublicContent(path, { revision }).sourceRevision).toBeNull();
+    expect(git(root, ['status', '--porcelain=v1', '--untracked-files=all'])).toBe(before);
   });
 });
 

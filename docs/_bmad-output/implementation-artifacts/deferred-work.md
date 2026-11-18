@@ -43,3 +43,7 @@
 - source_spec: `docs/_bmad-output/implementation-artifacts/spec-2-1-validate-public-content.md`
   summary: Restore the creation-based anchor of the 90-day lifecycle in the generated Epic 2 context.
   evidence: Reviews R3-B10/R3-E7 confirmed the regenerated Epic 4 dependency summary dropped the original creation-based qualification. Restore the authoritative creation-time deadline through authorized context maintenance before retention work; do not introduce activity-based sliding retention.
+
+- source_spec: `docs/_bmad-output/implementation-artifacts/spec-2-1-approve-synthetic-development-corpus.md`
+  summary: Make the owner-approved synthetic-development administrative-preparation exception discoverable from the content authoring instructions without weakening final-byte review for real content.
+  evidence: Review B10 and parent inspection confirm content/AGENTS.md still states an unconditional renewed final-byte review after rewrites, while content/README.md and the dated 2.1 handoff explicitly record BC's approval of proposed metadata/development-warning preparation before its actual edit instant. This medium agent-context consistency follow-up must point to that narrow synthetic-only decision, never authorize reuse of historical real-career approvals or bypass final review on later substantive edits. Agent-instruction edits are deferred under review policy; the current owner-approved scope remains recorded in the approved spec and handoff.
