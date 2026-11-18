@@ -83,8 +83,15 @@
 # - All activations used disposable local storage; operator D1 remains untouched.
 # - Story is review pending BC verification/acceptance, not recruiter approval.
 # - Linux/procfs and development-server-only asset delivery remain limitations.
+# STORY 2.3 OWNER ACCEPTANCE (BC approval, 2026-11-18):
+# - BC accepts local public publication and authorizes closure, commit and push.
+# - Occupied-port test startup was explained; stop operator-owned 5173/8787
+#   servers before the suite. No subsequent operator rerun output was supplied.
+# - Prior complete agent verification/review remains applicable; closure is docs
+#   and tracking only. Story 2.3 is done; Epic 2 remains in-progress.
+# - Development-only limits and downstream retrieval/model/launch gates remain.
 generated: 10-19-2026 21:56
-last_updated: 11-18-2026 12:43
+last_updated: 11-18-2026 13:23
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -102,7 +109,7 @@ development_status:
   2-0-define-and-pilot-the-content-authoring-workflow: done
   2-1-prepare-an-explicitly-public-knowledge-base: done
   2-2-build-reproducible-public-catalog-and-search-artifacts: done
-  2-3-activate-a-coherent-local-public-publication: review
+  2-3-activate-a-coherent-local-public-publication: done
   2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: backlog
   2-5-start-and-read-an-isolated-anonymous-conversation: backlog
   2-6-enforce-fair-and-private-conversation-creation-limits: backlog

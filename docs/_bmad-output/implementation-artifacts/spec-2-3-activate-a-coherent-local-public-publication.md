@@ -78,6 +78,13 @@ context: []
 
 - Workflow completion: spec is `done` for implementation and independent agent review; sprint Story 2.3 is `review` pending explicit owner inspection/acceptance. No deferred work was created. Finalization records a local conventional commit only, with no push. The operator handoff is documented in `../../development/application.md`; local D1 initialization/activation there are state-changing operations, unlike health probes.
 
+### Owner acceptance and closure — 2026-11-18
+
+- BC explicitly accepted Story 2.3 and authorized closure, commit and push. Acceptance was recorded at `2026-11-18T13:23:24Z` against implementation `79c54e55ec6657cb1340dbca7e4c3e9f1e4e37cf`.
+- During operator verification, the publication suite could not start because the development frontend already occupied port 5173. The fixed-port test prerequisite was clarified: stop the operator-owned frontend and Worker on ports 5173/8787 before running the suite. No subsequent operator test output was supplied; explicit acceptance is recorded without inventing a successful rerun.
+- The prior final agent verification and review evidence above remains applicable. Closure changes documentation/tracking only, leaves the spec `done`, moves sprint Story 2.3 from `review` to `done`, and keeps Epic 2 `in-progress`. No retained blocker or deferred work is introduced.
+- Preserve Linux/procfs and development-server-only asset limitations, explicit source revision and fictional/non-BC provenance. This acceptance is for local publication scope, not actual retrieval/model evaluation, hosted deployment or recruiter release. The present push is explicitly owner-authorized; it does not authorize deployment or database mutation.
+
 ## Spec Change Log
 
 ## Review Triage Log
