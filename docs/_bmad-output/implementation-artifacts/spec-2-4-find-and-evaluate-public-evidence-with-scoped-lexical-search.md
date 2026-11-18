@@ -72,6 +72,15 @@ context: []
 - Final matrix audit retains all original seven-row tests and adds unequal-score eligible topK=1, opposing chunk-ID/ordinal ties, oversized-first whole-chunk skipping, sequential ranks, twenty coordinated independent-reader observations, invalid expectation rejection, exact known per-case 6/10 scoring, copied-byte/toolchain identity and report-preserving negative CLI exits. All ran without skips. Corpus, dependencies/lockfile, migrations and deployed Worker entrypoint remain unchanged. Independent review is complete with no retained unresolved finding or deferred work; B1/B7 remain explicitly rejected. BC still owns final report/baseline assessment and acceptance.
 - Workflow completion: spec is done for implementation and agent review, with the full browser/publication regression rerun still environmentally blocked. Sprint Story 2.4 is review pending BC inspection/acceptance and that regression evidence; Epic 2 remains in-progress. Finalization creates a local conventional commit only, without push. The practical operator handoff is in ../../development/application.md; isolated retrieval tests do not mutate operator D1, while evaluation rewrites its versioned report.
 
+### Owner acceptance and closure — 2026-11-18
+
+- BC explicitly accepted Story 2.4 and authorized closure and a local commit. Acceptance was recorded at `2026-11-18T15:57:45Z` against implementation `01fe6fc05c9de87466f8d5161c00b60167599cd3`.
+- BC supplied an operator smoke run: all six simulation tests and 27/37 Playwright tests passed, including both retrieval cases. The ten browser/publication failures all report occupied ports 5173/8787. No successful subsequent full smoke run was supplied; closure preserves this environmental verification limit and does not claim 37/37 success.
+- The owner accepts the measured lexical baseline for this development story: 6/10 required passages across twelve fictional-corpus cases, with zero forbidden hits. Documented recall gaps remain; no semantic/vector expansion, actual-model quality, real-career acceptance or recruiter-release approval follows.
+- The regenerated evaluation report already present at closure changes only its application base revision to the implementation commit above; source SHA, input fingerprint, toolchain and all passage outcomes are unchanged. Preserve and include that report update in the closure commit.
+- Closure changes documentation/tracking only. The spec remains done, sprint Story 2.4 moves from review to done, and Epic 2 stays in-progress. Existing agent verification/review evidence remains recorded; no new code, corpus, dependency, migration, operator-state mutation, push or deployment is authorized by this closure.
+- Closure checks passed: all 34 focused retrieval/evaluation unit tests, both actual-D1 retrieval E2E cases (including twenty coordinated independent-reader observations and twelve corpus cases), tracking/report identity assertions and diff whitespace validation. Full smoke was not rerun during closure.
+
 ## Spec Change Log
 
 ## Review Triage Log
@@ -107,5 +116,5 @@ One transactional batch binds FTS to validated evidence. Binding alone cannot sa
 ## Verification
 
 - `npm run typecheck`, `npm test`, `npm run build`, `git diff --check` — pass.
-- Focused actual-D1 retrieval and full smoke/publication suites — pass with isolated storage and preserved existing controls.
+- Focused actual-D1 retrieval — pass with isolated storage and preserved existing controls. Full smoke/publication remains incompletely verified: the operator run passed 27/37 Playwright cases and ten failed at startup on occupied ports; no full-suite pass is claimed.
 - Documented retrieval evaluation command — reproducible report on the pinned fictional corpus; no skipped required cases or fabricated BC assessment.

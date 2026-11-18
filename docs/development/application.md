@@ -62,6 +62,19 @@ passed. Neither server nor its operator storage was stopped, reused or mutated
 for tests. Full smoke/publication verification remains to rerun when their owner
 has freed these fixed ports; no pass is claimed for those blocked cases.
 
+**Owner acceptance and closure (2026-11-18):** BC accepted Story 2.4 and its
+development lexical baseline against implementation
+`01fe6fc05c9de87466f8d5161c00b60167599cd3`, and authorized closure plus a local
+commit, not a push. The supplied operator smoke run passed all six simulation
+tests and 27/37 Playwright cases, including both retrieval cases. All ten
+browser/publication failures were occupied-port startup failures on 5173/8787.
+No subsequent complete pass was supplied; this environmental verification gap
+remains documented rather than being turned into a success claim. The accepted
+baseline retains its 6/10 required-passage recall and development-only fictional
+scope; acceptance is not a model-quality or recruiter-release guarantee. The
+existing regenerated report now identifies the implementation commit, with
+unchanged source, fingerprint and passage outcomes.
+
 ---
 
 # Current local publication — Story 2.3

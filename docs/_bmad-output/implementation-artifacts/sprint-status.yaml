@@ -101,8 +101,16 @@
 # - Full smoke attempt: 26/36 passed; ten existing browser/publication cases
 #   blocked by operator-owned servers on 5173/8787. Servers/storage untouched;
 #   rerun after owner frees ports before acceptance. No recruiter approval.
+# STORY 2.4 OWNER ACCEPTANCE (BC approval, 2026-11-18):
+# - BC accepts the development lexical baseline and authorizes closure/commit
+#   against implementation 01fe6fc05c9de87466f8d5161c00b60167599cd3.
+# - Operator smoke: six simulation and 27/37 Playwright cases passed; all ten
+#   browser/publication failures were occupied-port startup failures (5173/8787).
+#   No subsequent complete pass was supplied; preserve this verification limit.
+# - Story 2.4 is done; Epic 2 remains in-progress. Measured 6/10 recall and
+#   development-only boundaries stand. No semantic expansion, push or release.
 generated: 10-19-2026 21:56
-last_updated: 11-18-2026 14:25
+last_updated: 11-18-2026 15:57
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -121,7 +129,7 @@ development_status:
   2-1-prepare-an-explicitly-public-knowledge-base: done
   2-2-build-reproducible-public-catalog-and-search-artifacts: done
   2-3-activate-a-coherent-local-public-publication: done
-  2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: review
+  2-4-find-and-evaluate-public-evidence-with-scoped-lexical-search: done
   2-5-start-and-read-an-isolated-anonymous-conversation: backlog
   2-6-enforce-fair-and-private-conversation-creation-limits: backlog
   2-7-admit-one-immutable-global-question-at-a-time: backlog

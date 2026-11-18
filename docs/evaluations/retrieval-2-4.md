@@ -6,7 +6,7 @@ Rerun: `npm run evaluate:retrieval`. See [configuration and interpretation](../.
 
 Source: `4323afe312f43b6b87a014abee062e03e12f6022`
 
-Application base HEAD: `dd1ed890484ca6e9b4a5ebb845715a31a3cfc2f2`; working-tree implementation (not a committed release). Source identity is not application HEAD.
+Application base HEAD: `01fe6fc05c9de87466f8d5161c00b60167599cd3`; working-tree implementation (not a committed release). Source identity is not application HEAD.
 
 Catalog SHA-256: `053eec31f9374f443caada2221b093a912c18f0581e132bc2bae5252335034e6`
 
@@ -45,7 +45,7 @@ The complete deterministic result includes prepared terms, frozen scope, require
 {
   "version": 1,
   "sourceRevision": "4323afe312f43b6b87a014abee062e03e12f6022",
-  "applicationRevision": "dd1ed890484ca6e9b4a5ebb845715a31a3cfc2f2",
+  "applicationRevision": "01fe6fc05c9de87466f8d5161c00b60167599cd3",
   "applicationState": "working-tree implementation (not a committed release)",
   "catalogHash": "053eec31f9374f443caada2221b093a912c18f0581e132bc2bae5252335034e6",
   "searchHash": "88297f906c707949024c5a66507fd4111cdcdef8003d084847e43ce17df9c28a",
