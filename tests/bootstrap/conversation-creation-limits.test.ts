@@ -71,7 +71,7 @@ describe('conversation-creation-limits', () => {
   it('passes only the pseudonym to the atomic creation seam and preserves confirmed rate limits', async () => {
     const store: ConversationStore = {
       dailyCreationKey: vi.fn(async () => key), create: vi.fn(async () => 'rate_limited' as const),
-      findAuthenticated: vi.fn(), cleanupCreationLimits: vi.fn(),
+      readAdmissionState: vi.fn(), admit: vi.fn(), findAuthenticated: vi.fn(), cleanupCreationLimits: vi.fn(),
     };
     await expect(createConversation(store, clock, '192.0.2.1', 3)).rejects.toEqual(new ConversationRateLimited(window.expiresAt));
     expect(store.create).toHaveBeenCalledOnce();

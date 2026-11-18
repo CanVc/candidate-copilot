@@ -1,3 +1,100 @@
+# Immutable global question admission — Story 2.7 (controlled development)
+
+`admitConversationQuestion` is a portable **internal application service**, not a
+public message endpoint. It authenticates before saved-request lookup, validates
+exact direct/retry request shapes, and currently admits **only direct global**
+questions. Selected-resource/new-ID technical retries reject without admission;
+their normalized identities still participate in saved-ID conflict detection.
+No model, queue, result/answer table, completion flag or UI is added. Public
+`POST /api/conversations/:id/messages` remains unsupported until canonical result
+integration. The older Story 2.5/2.6 sections below are historical scope records;
+this section supersedes their empty-transcript/admission-unavailable description.
+Creation origin/privacy/IP controls are unchanged.
+
+## Admission and recovery contract
+
+- `action: 'submit'` admits one new logical request; an already interrupted ID
+  returns `interrupted` without processing. **Only explicit `action: 'recover'`**
+  reacquires an admitted ID. Neither GET nor ordinary duplicate submission
+  renews a lease. Recovery keeps original text, message, scope, position/count
+  and self context anchor; later questions cannot alter its interpretation root.
+- `admissionLimits` accepts explicit positive safe-integer overrides for
+  `maxQuestionCharacters` (initially 1,000), `maxMessages` (20) and
+  `leaseMilliseconds` (40,000). Shared `countQuestionCharacters` counts Unicode
+  code points: astral characters once, CR and LF each once, combining marks
+  separately. There is no normalization, trim-on-save or truncation. Blank and
+  malformed-Unicode questions reject. Recovery is not blocked merely by a cap.
+- Identity includes exact question text, sorted unique case-sensitive Resource
+  IDs, catalog SHA/hash and body variant. Saved-ID conflict/in-progress/busy
+  decisions precede live-catalog validation. Conflicts never substitute IDs.
+- Global scope freezes **all registry IDs, including zero-chunk documents**, in a
+  nonempty version-1 allowlist with `resources: []`. Missing/corrupt/empty/stale
+  publication rejects. Recovery checks all original members; additions never
+  widen it and withdrawal never narrows it. No historical live-publication FK.
+- The D1 adapter rechecks existence, creation-based retention, saved identity,
+  lease and count at mutation. A full validated publication is compared with
+  the live authority, Resources/maps, registry/document JSON, chunks and FTS
+  inside the write batch; a pointer-only or same-pointer corruption race cannot
+  admit mixed membership. A changed publication fails closed, not an automatic
+  retry. Lease/message/count/modified timestamp changes roll back together.
+  Counts derive from unique messages; no redundant mutable turn counter exists.
+- Acquisition returns an **internal** fresh attempt owner, distinct from request
+  ID. Only this owner may be used by later fenced processing. Results/finalization
+  are not implemented here. All admitted messages become interrupted when their
+  matching lease expires. A deliberately distinct new question may then count
+  normally without erasing the old one; recovery cannot steal its active lease.
+
+Authenticated public GET now returns ordered exact messages/scopes with explicit
+`in_progress`/`interrupted` status, current processing and admissibility. It never
+exposes attempt IDs, token hashes or internal submission identities, never
+renews processing, and remains `Cache-Control: no-store`. Missing publication
+blocks new admission but does not hide historical messages. Creation limits do
+not disable reads. `available: true` describes internal admission readiness, not
+an implemented public POST/result protocol or provider availability guarantee.
+
+## Owner verification of Story 2.7
+
+From the existing locked development checkout, with no operator migration or
+server restart:
+
+```bash
+npx vitest run tests/bootstrap/conversation-admission.test.ts
+npx playwright test conversations.spec.ts -g 'real D1 global admission'
+npm run typecheck
+npm test
+npm run build
+npm run test:smoke
+git diff --check
+```
+
+The focused Playwright case creates two independent workerd instances sharing
+**disposable D1**, applies 0001–0005 there, and verifies concurrent duplicate and
+competing requests, limits, immutable scope/anchor/text, explicit recovery,
+last-slot races, rollback at every mutation, A/B and same-pointer corruption
+interleavings, deletion/expiry fencing, and actual Chromium authenticated GETs
+for both active and interrupted messages. Normal service calls are uninstrumented;
+race cases split only at the production atomic port after application validation,
+mutate real D1 through the other instance, then commit under the real guard.
+Its test-only acquisition transport is not shipped in the Worker. Chromium uses
+the already installed executable with disposable environment/state; no install,
+operator database, credentials, live model or remote deployment is required.
+
+Implementation verification on baseline
+`9177f84c859e5687795f86f2c9e8eb634ecb1022`: four typechecks, **45 workstation
+fixtures + 469 Vitest cases**, both builds, six simulations and **40 Playwright
+cases** pass after all retained independent-review corrections. Final coordinator
+output: `/tmp/story-2-7-final-verification.log`; targeted correction logs:
+`/tmp/story-2-7-review-focused-unit.log` and `/tmp/story-2-7-review-admission-d1.log`.
+The three fresh review layers, individual triage, corrections, orchestration
+recovery and AC traceability are recorded in the Story 2.7 spec. Local commit and
+supervisor advancement are technical gates, never BC human/product acceptance.
+
+**Limitations:** access refusal at 90 days is not physical deletion. Purge,
+early admission cutoff, canonical results/finalization, provider policy/A05,
+execution-usage policy/A08, selected admission and UI remain later stories.
+Full-publication validation/guard cost has not been load-tested on large corpora.
+No hosted, provider, recruiter-launch, privacy-complete or BC acceptance claim.
+
 # Conversation creation allowance — Story 2.6 (controlled development)
 
 Creation now uses one shared D1 allowance: initially **10 per canonical trusted

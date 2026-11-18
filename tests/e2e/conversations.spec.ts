@@ -1,3 +1,4 @@
+import { chromium } from '@playwright/test';
 import { cpSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
@@ -9,6 +10,12 @@ test('real D1 isolated conversations and atomic creation limits and controlled A
   const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/conversations-runtime.mjs']));
   expect(output).toContain('PASS: real D1 conversations, independent readers');
   expect(output).toContain('no production UI or hosted ingress proof');
+});
+
+test('real D1 global admission and manual recovery across independent instances', async ({ local }) => {
+  for (const path of ['tests/e2e/conversation-admission-worker.ts', 'tests/e2e/conversation-admission-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
+  const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/conversation-admission-runtime.mjs', chromium.executablePath()]));
+  expect(output).toContain('PASS: real D1 admission');
 });
 
 test('Chromium-generated creation headers use checked-in frontend/Worker origin configuration', async ({ local, page }) => {
@@ -34,7 +41,7 @@ test('Chromium-generated creation headers use checked-in frontend/Worker origin 
     const response = await fetch(`/api/conversations/${credentials.conversationId}`, { headers: { Authorization: `Bearer ${credentials.sessionToken}` } });
     return { status: response.status, cache: response.headers.get('Cache-Control'), body: await response.json() };
   }, created.body);
-  expect(read).toEqual({ status: 200, cache: 'no-store', body: { conversationId: created.body.conversationId, transcript: [], processing: { status: 'idle' }, admission: { available: false, reason: 'admission_unavailable' } } });
+  expect(read).toEqual({ status: 200, cache: 'no-store', body: { conversationId: created.body.conversationId, transcript: [], processing: { status: 'idle' }, admission: { available: false, reason: 'scope_unavailable' } } });
 
   const utcDay = (time: number) => Math.floor(time / 86_400_000);
   const knownCreationsByDay = new Map<number, number>();

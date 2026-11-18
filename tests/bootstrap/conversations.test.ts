@@ -10,11 +10,13 @@ const now = new Date('2026-01-01T00:00:00.000Z');
 const clock = { now: () => now };
 const app = createWorker(clock);
 const jsonHeaders = { Origin: origin, 'Content-Type': 'application/json', 'Sec-Fetch-Site': 'same-origin', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty' };
-const view = (conversationId: string) => ({ conversationId, transcript: [], processing: { status: 'idle' }, admission: { available: false, reason: 'admission_unavailable' } });
+const view = (conversationId: string) => ({ conversationId, transcript: [], processing: { status: 'idle' }, admission: { available: false, reason: 'scope_unavailable' } });
 
 function fixture() {
   const rows: StoredConversation[] = [];
   const store: ConversationStore = {
+    readAdmissionState: vi.fn(async () => ({ messages: [], lease: null })),
+    admit: vi.fn(),
     dailyCreationKey: vi.fn(async () => 'a'.repeat(64)),
     cleanupCreationLimits: vi.fn(async () => {}),
     create: vi.fn(async (row) => { rows.push({ ...row }); return 'created' as const; }),
@@ -34,6 +36,12 @@ function dbFixture() {
     } };
   } }));
   const batch = vi.fn(async (statements: { sql: string; values: unknown[] }[]) => {
+    if (statements[0]!.sql.startsWith('SELECT id FROM conversations')) {
+      const [id, hash, after] = statements[0]!.values as string[];
+      const row = await store.findAuthenticated(id!, hash!, after!);
+      return [{ success: true, results: row ? [{ id: row.conversationId }] : [] }, { success: true, results: [] }, { success: true, results: [] }];
+    }
+    if (statements[0]!.sql === 'SELECT * FROM active_publication') return statements.map(() => ({ success: true, results: [] }));
     if (statements[0]!.sql.startsWith('UPDATE conversation_creation_key')) {
       return [{ success: true, results: [] }, { success: true, results: [{ day: now.getTime(), expires_at: now.getTime() + 86400000, daily_key: await store.dailyCreationKey({ day: now.getTime(), expiresAt: now.getTime() + 86400000 }) }] }];
     }

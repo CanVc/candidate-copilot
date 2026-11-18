@@ -51,3 +51,7 @@
 - source_spec: `docs/_bmad-output/implementation-artifacts/spec-2-6-enforce-fair-and-private-conversation-creation-limits.md`
   summary: Assess whether a large expired creation-counter backlog needs bounded cleanup to preserve recovery under D1 transaction limits (medium, unverified).
   evidence: Review B4 identifies an indexed but unbounded DELETE coupled atomically with key erasure; a sufficiently large failing transaction could prevent progress. No such backlog failure was demonstrated. Settle with disposable load measurements against current documented D1 transaction/resource limits and realistic growth; do not invent a retention grace or claim hosted cleanup reliability from current local tests.
+
+- source_spec: `docs/_bmad-output/implementation-artifacts/spec-2-7-admit-one-immutable-global-question-at-a-time.md`
+  summary: Measure full-publication admission guard payload and latency against representative populated corpus sizes and D1 limits (medium, unverified).
+  evidence: Review B8 observes repeated JSON bindings of documents/chunks/FTS to guarantee read-to-write coherence. No actual accepted-corpus limit or latency failure was demonstrated. Settle with isolated real-D1 size/latency/limit measurements before changing the guard; preserve exact catalog/registry/scope atomicity and fail-closed corruption checks. No new resource cap or production readiness is implied.

@@ -105,3 +105,32 @@ export class D1ResourceCatalog implements ResourceCatalog {
     } catch { return null; }
   }
 }
+
+// Compare the complete validated read with the write-transaction dataset, not
+// just its mutable pointer. JSON parameters avoid SQL/bind limits per document.
+export function publicationGuard(publication: PublicPublication): { sql: string; bindings: string[] } {
+  const { catalog, documents, chunks } = publication;
+  const tables = [
+    { actual: 'SELECT catalog_revision, catalog_hash FROM active_publication WHERE id = 1',
+      expected: "SELECT json_extract(value, '$.revision'), json_extract(value, '$.hash') FROM json_each(?)",
+      rows: [{ revision: publication.catalogRevision, hash: publication.catalogHash }] },
+    { actual: 'SELECT resource_id, name, description FROM public_resources',
+      expected: "SELECT json_extract(value, '$.resourceId'), json_extract(value, '$.name'), json_extract(value, '$.description') FROM json_each(?)", rows: catalog.resources },
+    { actual: 'SELECT resource_id, document_id FROM public_resource_documents',
+      expected: "SELECT json_extract(value, '$.resourceId'), json_extract(value, '$.documentId') FROM json_each(?)",
+      rows: catalog.resources.flatMap((r) => r.documentIds.map((documentId) => ({ resourceId: r.resourceId, documentId }))) },
+    { actual: 'SELECT document_id, source_path, json(document_json), chunk_count FROM public_documents',
+      expected: "SELECT json_extract(value, '$.documentId'), json_extract(value, '$.sourcePath'), json_extract(value, '$.document'), json_extract(value, '$.count') FROM json_each(?)",
+      rows: documents.map((document) => ({ documentId: document.documentId, sourcePath: document.sourcePath, document, count: chunks.filter((c) => c.documentId === document.documentId).length })) },
+    { actual: 'SELECT chunk_id, document_id, ordinal, json(chunk_json) FROM public_chunks',
+      expected: "SELECT json_extract(value, '$.chunkId'), json_extract(value, '$.documentId'), json_extract(value, '$.ordinal'), json_extract(value, '$.chunk') FROM json_each(?)",
+      rows: chunks.map((chunk) => ({ chunkId: chunk.chunkId, documentId: chunk.documentId, ordinal: chunk.ordinal, chunk })) },
+    { actual: 'SELECT chunk_id, text FROM public_chunks_fts',
+      expected: "SELECT json_extract(value, '$.chunkId'), json_extract(value, '$.text') FROM json_each(?)", rows: chunks },
+  ];
+  return {
+    sql: tables.map(({ actual, expected }) => `NOT EXISTS (${actual} EXCEPT ${expected}) AND NOT EXISTS (${expected} EXCEPT ${actual})`).join(' AND ')
+      + ` AND (SELECT COUNT(*) FROM public_chunks_fts) = ${chunks.length}`,
+    bindings: tables.flatMap(({ rows }) => [JSON.stringify(rows), JSON.stringify(rows)]),
+  };
+}

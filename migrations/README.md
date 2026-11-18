@@ -10,8 +10,8 @@ preserves existing data and applies only pending migrations; it never resets.
 `0003_conversations.sql` adds only conversation UUID, unique SHA-256 token hash
 and UTC creation/modification timestamps; raw tokens are never persisted.
 Conversation reads enforce the creation-based 90 × 24-hour deadline, without
-extending it on activity. Message/answer/lease schema and physical purge are
-later-story work, not speculative tables in this migration.
+extending it on activity. Message/lease schema is added separately by 0005;
+answer schema and physical purge remain later-story work.
 
 `0004_conversation_creation_limits.sql` adds the isolated daily-key singleton
 and pseudonymous creation counters (no address or Conversation linkage). The
@@ -24,6 +24,26 @@ physical rows; expiry is not proof of erasure or backup deletion. See the Story
 2.6 processing/topology limitations in application.md. Do not repair corrupted
 operator state by silently reseeding keys/counters. This story applies migrations
 only to disposable fixtures, never operator storage.
+
+`0005_conversation_admission.sql` adds only immutable `messages` (unique
+Conversation/request and ordered position, exact text/canonical identity, JSON
+global scope and self context anchor) and `conversation_processing_leases`
+(one current internal request/attempt/deadline per Conversation). A deferred
+same-Conversation message FK permits lease acquisition followed by message
+insertion in one D1 batch; a failed write rolls both back. An UPDATE trigger
+protects message snapshots. There is no live-publication FK, result table,
+completion flag or redundant count. Parent deletion cascades these content/control
+rows, but this is not a purge implementation or operator-deletion workflow.
+The 90-day creation deadline is not extended by new messages/recovery.
+
+Apply 0005 before running the new reader/service. It is additive and migration
+reruns preserve existing identity/counter/publication rows and admitted messages.
+Never roll back by deleting snapshots or restoring an older whole database.
+An older identity-only reader cannot display admitted messages: use a compatible
+reader or pause that old application and forward-repair; retaining schema/data is
+not a claim of old-reader transcript compatibility. Story 2.7 tests only apply
+migrations to disposable fixtures. See the focused verification commands in
+[application.md](../docs/development/application.md#owner-verification-of-story-27).
 
 Wrangler creates/manages its ledger and SQLite metadata; there is no custom
 migration engine. Conversation and existing unrelated data/ledger preservation

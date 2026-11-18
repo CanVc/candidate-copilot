@@ -77,7 +77,7 @@ export function createWorker(clockOverride?: Clock, addressAdapter = trustedCrea
   app.get('/api/conversations/:id', async (context) => {
     try {
       return context.json(await readConversation(new D1ConversationStore(context.env?.DB), clock,
-        context.req.param('id'), context.req.header('Authorization')));
+        context.req.param('id'), context.req.header('Authorization'), new D1ResourceCatalog(context.env?.DB)));
     } catch (error) {
       if (error instanceof ConversationUnavailable) {
         context.header('WWW-Authenticate', 'Bearer');

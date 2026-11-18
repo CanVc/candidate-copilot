@@ -1,3 +1,5 @@
+import type { ResourceCatalog } from '../ports/ResourceCatalog.ts';
+import { DEFAULT_ADMISSION_LIMITS } from '../shared/conversation-admission.ts';
 import { creationPseudonym, creationWindow } from './conversation-creation-limits.ts';
 import { ConversationRateLimited } from '../shared/conversation.ts';
 import type { Clock } from '../ports/Clock.ts';
@@ -30,14 +32,38 @@ export async function createConversation(store: ConversationStore, clock: Clock,
   }
 }
 
-export async function readConversation(store: ConversationStore, clock: Clock, conversationId: string, authorization: string | undefined): Promise<ConversationView> {
+export async function authenticateConversation(store: ConversationStore, clock: Clock, conversationId: string, authorization: string | undefined): Promise<string> {
   const credential = /^Bearer +([0-9a-f]{64})$/i.exec(authorization ?? '');
   if (!uuid.test(conversationId) || !credential || !token.test(credential[1]!)) throw new ConversationUnavailable();
   try {
     const createdAfter = new Date(clock.now().getTime() - CONVERSATION_RETENTION_MS).toISOString();
     const identity = await store.findAuthenticated(conversationId, await hashSessionToken(credential[1]!), createdAfter);
     if (!identity || identity.conversationId !== conversationId) throw new ConversationUnavailable();
-    return { conversationId, transcript: [], processing: { status: 'idle' }, admission: { available: false, reason: 'admission_unavailable' } };
+    return await hashSessionToken(credential[1]!);
+  } catch (error) {
+    if (error instanceof ConversationUnavailable) throw error;
+    throw new ConversationDependencyUnavailable();
+  }
+}
+
+export async function readConversation(store: ConversationStore, clock: Clock, conversationId: string, authorization: string | undefined, catalog?: ResourceCatalog, limits = DEFAULT_ADMISSION_LIMITS): Promise<ConversationView> {
+  const tokenHash = await authenticateConversation(store, clock, conversationId, authorization);
+  try {
+    const now = clock.now().getTime();
+    const state = await store.readAdmissionState(conversationId, tokenHash, new Date(now - CONVERSATION_RETENTION_MS).toISOString());
+    if (!state) throw new ConversationUnavailable();
+    const publication = await catalog?.readSnapshot();
+    const active = state.lease && state.lease.until > clock.now().getTime() ? state.lease : null;
+    return {
+      conversationId,
+      transcript: state.messages.map(({ submissionIdentity: _identity, contextAnchorMessageId: _anchor, ...message }) => ({
+        ...message, status: active?.requestId === message.requestId ? 'in_progress' : 'interrupted',
+      })),
+      processing: active ? { status: 'in_progress', requestId: active.requestId } : { status: 'idle' },
+      admission: active ? { available: false, reason: 'conversation_busy' } : state.messages.length >= limits.maxMessages
+        ? { available: false, reason: 'turn_limit_reached' } : !publication?.catalog.documents.length
+          ? { available: false, reason: 'scope_unavailable' } : { available: true },
+    };
   } catch (error) {
     if (error instanceof ConversationUnavailable) throw error;
     throw new ConversationDependencyUnavailable();

@@ -43,7 +43,7 @@ try {
     if (time) headers['X-Fixture-Now'] = time;
     return worker.fetch(`http://local/api/conversations/${id}`, { headers });
   };
-  const view = (id) => ({ conversationId: id, transcript: [], processing: { status: 'idle' }, admission: { available: false, reason: 'admission_unavailable' } });
+  const view = (id) => ({ conversationId: id, transcript: [], processing: { status: 'idle' }, admission: { available: false, reason: 'scope_unavailable' } });
   assert.deepEqual((await db.prepare('SELECT * FROM active_publication').all()).results, []);
   await db.prepare('CREATE TABLE unrelated_fixture (value TEXT)').run();
   await db.prepare("INSERT INTO unrelated_fixture VALUES ('preserved')").run();
@@ -82,7 +82,7 @@ try {
   assert.equal(await dump(), baseline, 'reads, unavailable effects and policy failures do not mutate any state');
   await one.applyD1Migrations('DB'); await two.applyD1Migrations('DB');
   assert.equal(await dump(), baseline, 'migration reruns preserve conversations, unrelated data and original ledger');
-  assert.deepEqual((await db.prepare('SELECT name FROM d1_migrations ORDER BY id').all()).results.map((r) => r.name), ['0001_local_bootstrap.sql', '0002_public_publication.sql', '0003_conversations.sql', '0004_conversation_creation_limits.sql']);
+  assert.deepEqual((await db.prepare('SELECT name FROM d1_migrations ORDER BY id').all()).results.map((r) => r.name), ['0001_local_bootstrap.sql', '0002_public_publication.sql', '0003_conversations.sql', '0004_conversation_creation_limits.sql', '0005_conversation_admission.sql']);
 
   await db.prepare("UPDATE conversations SET modified_at = '2026-03-31T23:59:59.999Z' WHERE id = ?").bind(a.conversationId).run();
   for (const worker of [one, two]) {
