@@ -8,9 +8,9 @@ export interface CreatedConversation {
 
 export interface ConversationView {
   conversationId: string;
-  transcript: Array<Omit<import('./conversation-admission.ts').AdmittedMessage, 'submissionIdentity' | 'contextAnchorMessageId'> & { status: 'in_progress' | 'interrupted' }>;
+  transcript: Array<Omit<import('./conversation-admission.ts').AdmittedMessage, 'submissionIdentity' | 'contextAnchorMessageId'> & { status: 'completed' | 'in_progress' | 'interrupted' }>;
   processing: { status: 'idle' } | { status: 'in_progress'; requestId: string };
-  admission: { available: true } | { available: false; reason: 'conversation_busy' | 'turn_limit_reached' | 'scope_unavailable' };
+  admission: { available: true } | { available: false; reason: 'processing_unavailable' | 'conversation_busy' | 'turn_limit_reached' | 'scope_unavailable' };
 }
 
 export const CREATION_UNCERTAINTY_NOTICE = 'La création a peut-être abouti, mais son accès n’a pas pu être reçu. Démarrez explicitement une nouvelle conversation ; cela peut consommer une autre autorisation. Aucune question ne sera envoyée automatiquement.';

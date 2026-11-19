@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-import { cpSync } from 'node:fs';
+import { cpSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { test, expect } from './local-fixture';
@@ -114,4 +114,13 @@ test('Chromium-generated creation headers use checked-in frontend/Worker origin 
   const output = await local.completed(local.startCommand(process.execPath, ['node_modules/wrangler/bin/wrangler.js', 'd1', 'execute', 'candidate-copilot-local', '--config', 'wrangler.jsonc', '--local', '--persist-to', '.wrangler/state', '--env-file', '/dev/null', '--json', '--command', 'SELECT COUNT(*) AS n FROM conversations']));
   expect(JSON.parse(output)[0].results).toEqual([{ n: persistedCreations }]);
   // This is HTTP/configuration verification, not acceptance of an entry UI.
+});
+
+test('real D1 complete results, populated 0005 upgrade and canonical Chromium POST GET replay', async ({ local }) => {
+  for (const path of ['tests/e2e/conversation-results-worker.ts', 'tests/e2e/conversation-results-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
+  // Hold only the disposable fixture's next migration until 0005 has real rows.
+  renameSync(join(local.project, 'migrations/0006_conversation_results.sql'), join(local.project, 'pending-conversation-results.sql'));
+  const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/conversation-results-runtime.mjs', chromium.executablePath()]));
+  expect(output).toContain('PASS: populated 0005-to-0006 upgrade preserves admitted rows and guarded completion');
+  expect(output).toContain('PASS: real D1 complete results');
 });

@@ -1,3 +1,115 @@
+# Atomic complete results — Story 2.8 (controlled development)
+
+Final technical review: two fresh three-layer passes, one re-derivation and all
+retained fixes verified. Final coordinator checks pass four typechecks, 45
+workstation fixtures, 533 unit cases, both builds, six simulations and all 41
+Playwright cases (`/tmp/story-2-8-final-coordinator-verification.log`). This
+supersedes the intermediate worker totals below, not BC human acceptance.
+Populated 0005→0006 migration, leading-NUL safe failure, previous-language
+withdrawal fallback, non-null historical headings and opposite citation orders
+are included. Ingress and graph/preflight scaling remain unverified deferrals.
+
+This section supersedes the historical Story 2.7 **no-result/no-message-POST**
+boundary below. Story 2.8 adds authenticated
+`POST /api/conversations/:id/messages`, canonical completed GET turns and saved
+same-ID replay. It adds no UI, real classifier/generator/provider, selected
+admission, new-ID retry execution, automatic recovery or physical purge.
+
+`submitConversationQuestion` authenticates before saved lookup and accepts only
+the existing exact submission shape. Direct global questions keep their exact
+admitted text, scope, identity, context anchor and position. Changed same-ID input
+conflicts. Same-ID completed replay precedes live catalog, processor, owner and
+turn-cap checks, returns the original result and consumes no processing call or
+turn. An interrupted POST does **not** automatically reacquire work; it returns
+`result_unavailable` with `retryMode: same_request`. Existing explicit internal
+admission recovery is unchanged; public recovery execution remains later work.
+
+## Persistence and development composition
+
+- Migration **0006** adds `answers`, `answer_blocks`, `source_excerpts` and
+  `answer_block_sources`. A unique message answer is the sole terminal marker.
+  Composite FKs keep citation edges inside their answer; an answer-leading index
+  bounds citation reconstruction to that answer. Historical excerpts
+  retain loaded text, path/title/section, location, stable document/chunk IDs,
+  content hash and source revision, with no live-publication FK.
+- One real D1 batch checks current Conversation existence/creation-based retention
+  and matching unexpired request/attempt ownership before inserting the answer.
+  All children, persisted failure metadata, modified timestamp and release of
+  that same owner commit or roll back together. Late workers cannot release a
+  successor, insert partial children or recreate deleted state.
+- Factual finalization checks **every original member**, including uncited and
+  zero-chunk documents, against current public membership and active revision in
+  that transaction. Ordinary atomic publication updates may change text, title
+  or path or add documents; none relabels loaded excerpts or widens eligibility.
+  Withdrawal records `failed/scope_unavailable` without factual blocks/excerpts.
+  BC's decision is persisted: **`retryable: false`, `retryMode: none`**. Restoration
+  never changes that saved result or authorizes technical retry.
+- POST returns complete, nonstreamed JSON only after canonical reconstruction.
+  GET turns distinguish `completed`, `in_progress`, `interrupted`; completed
+  `result` uses exactly the POST/replay schema. All five statuses use HTTP 200,
+  including recorded failures. Unconfirmed persistence uses safe HTTP 503
+  `result_unavailable`/`same_request`, not a fabricated terminal failure. Auth
+  failures remain neutral HTTP 401; authenticated responses are `no-store`.
+- `createWorker` takes one effective `limits` configuration for **both POST and
+  GET** (defaults: 1,000 code points, 20 admitted messages, 40-second lease).
+  Its optional processor factory is invoked lazily, never during saved replay.
+  The default Worker deliberately has **no new-processing adapter configured**:
+  new POSTs safely return 503 without admission, while saved GET/replay works.
+  Idle GET reports `admission.available: false` with `processing_unavailable`
+  when the catalog is usable but processing is unconfigured. Existing live
+  ownership still takes precedence over processing readiness.
+  `SyntheticConversationProcessor` is explicitly opt-in in disposable fixtures;
+  it selects deterministic test statuses, not visitor intent, and labels output
+  fictional/non-BC. No browser-authored answer/evidence or test-control route is
+  installed in the public Worker.
+- `catalog_stale` responses include top-level `catalogRevision` and `catalogHash`
+  from the deciding snapshot, including an atomic A→B publication race. Absent
+  active publication instead reports unavailable scope, not invented readiness.
+- Mechanical validation rejects sparse processor/citation arrays and checks exact shapes, supported enums, normalized BCP-47
+  declarations, bounded output, factual citations, graph uniqueness, eligible
+  public paths/provenance and application-owned failure metadata. It does not
+  establish actual language, semantic support, real-model safety or BC evidence.
+
+## Owner verification of Story 2.8
+
+From the existing locked checkout with installed Chromium; no operator migration,
+server restart, credentials, download or live-model call is needed:
+
+```bash
+npx vitest run tests/bootstrap/conversation-results.test.ts
+npx playwright test conversations.spec.ts -g 'real D1 complete results'
+npm run typecheck
+npm test
+npm run build
+npm run test:smoke
+git diff --check
+```
+
+The focused runtime creates two independent Workers sharing disposable D1,
+applies 0001–0006 there and exercises the real public protocol. Internal fixture
+controls pause only at the real atomic port, never through an unresolved Worker
+Promise. It proves all six write-boundary rollbacks (plus recorded-failure
+metadata rollback), duplicate and terminal races, stale/expired/deleted fences,
+lost receipts, cap/config parity, immutable scope and loaded-provenance changes,
+withdrawal/restoration and all five full-schema POST/GET/replay outcomes.
+Actual Chromium performs authenticated POST, GET and replay for every status.
+Fixtures reject non-local browser traffic and use the existing executable.
+
+Implementation checks on baseline
+`9953276e9973b80f566c5ad39f92c3006a44083a`: four typechecks,
+45 workstation fixtures, 529 Vitest cases, both builds, six simulations and all
+41 Playwright cases pass in the re-derived pass. Full output:
+`/tmp/story-2-8-rederived-full-verification.log`. Focused results include exact
+Unicode/whitespace block preservation, customized historical scope-failure copy,
+cited-refusal withdrawal, large immutable request identity, supported-language
+fallback and an actual citation-index query plan. The specification distinguishes
+this verification from superseded-pass evidence and interruptions. These are
+implementation-worker results, not independent review, BC acceptance or launch
+approval. Do not infer deletion from access expiry. Large-corpus guard/read cost,
+actual model behavior, privacy/provider policies and hosted operations remain
+unverified; earlier story limitations retain their owners. Message-body ingress
+resource bounds remain an unmeasured risk (B4), not a newly invented input limit.
+
 # Immutable global question admission — Story 2.7 (controlled development)
 
 `admitConversationQuestion` is a portable **internal application service**, not a

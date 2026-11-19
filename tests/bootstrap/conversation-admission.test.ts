@@ -23,6 +23,7 @@ async function fixture() {
   const clock = { now: () => new Date(now) };
   const catalog = { readSnapshot: vi.fn(async (): Promise<PublicPublication | null> => structuredClone(publication)) };
   const store: ConversationStore = {
+    finalize: vi.fn(),
     create: vi.fn(), cleanupCreationLimits: vi.fn(), dailyCreationKey: vi.fn(),
     findAuthenticated: vi.fn(async (id, credential, after) => exists && id === conversationId && credential === tokenHash && new Date(created).toISOString() > after ? { conversationId } : null),
     readAdmissionState: vi.fn(async () => structuredClone(state)),

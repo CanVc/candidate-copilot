@@ -15,6 +15,7 @@ const view = (conversationId: string) => ({ conversationId, transcript: [], proc
 function fixture() {
   const rows: StoredConversation[] = [];
   const store: ConversationStore = {
+    finalize: vi.fn(),
     readAdmissionState: vi.fn(async () => ({ messages: [], lease: null })),
     admit: vi.fn(),
     dailyCreationKey: vi.fn(async () => 'a'.repeat(64)),
@@ -158,7 +159,7 @@ describe('conversation creation and authenticated reads', () => {
     expect(f.rows).toEqual(baseline); expect(network).not.toHaveBeenCalled();
     for (const path of ['', '/admin/list', `/${c.conversationId}/messages`, `/${c.conversationId}/deletion-request`]) {
       const r = await app.request(`http://worker/api/conversations${path}`, { method: path === '' || path === '/admin/list' ? 'GET' : 'POST' }, f.env);
-      expect(r.status).toBe(404); expect(r.headers.get('cache-control')).toBe('no-store');
+      expect(r.status).toBe(path.endsWith('/messages') ? 401 : 404); expect(r.headers.get('cache-control')).toBe('no-store');
     }
     expect(f.rows).toEqual(baseline);
   });

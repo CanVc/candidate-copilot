@@ -1,3 +1,4 @@
+import type { ConversationResult } from '../shared/conversation-result.ts';
 import type { AdmissionLimits, AdmissionOutcome, AdmissionState, SubmissionIdentity } from '../shared/conversation-admission.ts';
 import type { PublicPublication } from './ResourceCatalog.ts';
 import type { CreationAllowance, CreationWindow } from '../shared/conversation.ts';
@@ -11,6 +12,7 @@ export interface StoredConversation {
 
 export interface ConversationStore {
   readAdmissionState(conversationId: string, sessionTokenHash: string, createdAfter: string): Promise<AdmissionState | null>;
+  finalize(command: AtomicFinalization): Promise<ConversationResult>;
   admit(command: AtomicAdmission): Promise<AdmissionOutcome>;
   dailyCreationKey(window: CreationWindow): Promise<string>;
   create(conversation: StoredConversation, allowance: CreationAllowance): Promise<'created' | 'rate_limited'>;
@@ -29,4 +31,13 @@ export interface AtomicAdmission {
   recover: boolean;
   limits: AdmissionLimits;
   publication: PublicPublication;
+}
+
+export interface AtomicFinalization {
+  conversationId: string;
+  sessionTokenHash: string;
+  requestId: string;
+  attemptId: string;
+  result: ConversationResult;
+  previousLanguage?: string;
 }

@@ -290,12 +290,12 @@ try {
       assert.equal(result.view.transcript.length, 1); assert.equal(result.view.transcript[0].question, browserInput.question);
       assert.deepEqual(result.view.transcript[0].submittedScope, browserAdmission.message.submittedScope);
       assert.equal(result.view.transcript[0].status, time ? 'interrupted' : 'in_progress');
-      assert.equal(result.view.admission.available, !!time);
+      assert.deepEqual(result.view.admission, { available: false, reason: time ? 'processing_unavailable' : 'conversation_busy' });
       assert(!JSON.stringify(result.view).includes(browserAdmission.lease.attemptId));
     }
     assert.equal(await snapshot(browserConversation), beforeRead, 'browser reads never renew, mutate or count');
   } finally { await browser.close(); }
   await one.applyD1Migrations('DB');
   assert.deepEqual((await rows(c))[0], oldRow, 'additive migration rerun preserves immutable history');
-  console.log('PASS: real D1 admission; independent-instance races, immutable snapshots, rollback, publication guards, explicit recovery, deletion/expiry fencing and actual Chromium authenticated reads. No results/models/public POST.');
+  console.log('PASS: real D1 admission; independent-instance races, immutable snapshots, rollback, publication guards, explicit recovery, deletion/expiry fencing and actual Chromium authenticated reads. Admission-only assertions; public result processing is unconfigured.');
 } finally { await server.close(); }

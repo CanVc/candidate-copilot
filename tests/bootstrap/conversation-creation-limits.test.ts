@@ -69,7 +69,7 @@ describe('conversation-creation-limits', () => {
   });
 
   it('passes only the pseudonym to the atomic creation seam and preserves confirmed rate limits', async () => {
-    const store: ConversationStore = {
+    const store: ConversationStore = { finalize: vi.fn(),
       dailyCreationKey: vi.fn(async () => key), create: vi.fn(async () => 'rate_limited' as const),
       readAdmissionState: vi.fn(), admit: vi.fn(), findAuthenticated: vi.fn(), cleanupCreationLimits: vi.fn(),
     };

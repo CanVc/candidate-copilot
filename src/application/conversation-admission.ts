@@ -2,7 +2,7 @@ import type { Clock } from '../ports/Clock.ts';
 import type { ConversationStore } from '../ports/ConversationStore.ts';
 import type { ResourceCatalog } from '../ports/ResourceCatalog.ts';
 import { ConversationUnavailable } from '../shared/conversation.ts';
-import { AdmissionRejected, admissionLimits, countQuestionCharacters, normalizeSubmission, sameIdentity, type AdmissionLimits, type AdmissionOutcome } from '../shared/conversation-admission.ts';
+import { AdmissionRejected, admissionLimits, countQuestionCharacters, normalizeSubmission, sameIdentity, type AdmissionLimits, type AdmissionOutcome, type CatalogIdentity } from '../shared/conversation-admission.ts';
 import { authenticateConversation, CONVERSATION_RETENTION_MS } from './conversations.ts';
 
 // Internal service only: acquisition is not a canonical HTTP result. Recovery
@@ -22,17 +22,19 @@ export async function admitConversationQuestion(
       if (!state) throw new ConversationUnavailable();
       const saved = state.messages.find((message) => message.requestId === requestId);
       if (saved && !sameIdentity(saved.submissionIdentity, identity)) throw new AdmissionRejected('request_conflict');
-      if (state.lease && state.lease.until > clock.now().getTime()) throw new AdmissionRejected(state.lease.requestId === requestId ? 'request_in_progress' : 'conversation_busy');
+      if (!saved?.result && state.lease && state.lease.until > clock.now().getTime()) throw new AdmissionRejected(state.lease.requestId === requestId ? 'request_in_progress' : 'conversation_busy');
       return { state, saved };
     };
-    const rejectPublication = async (code: 'scope_unavailable' | 'catalog_stale'): Promise<AdmissionOutcome> => {
+    const rejectPublication = async (code: 'scope_unavailable' | 'catalog_stale', currentCatalog?: CatalogIdentity): Promise<AdmissionOutcome> => {
       // A competing admission may have committed during the publication read.
       // Recheck saved precedence once; never retry processing or remap its scope.
       const { saved } = await readSavedState();
+      if (saved?.result) return { status: 'completed', message: saved };
       if (saved && action !== 'recover') return { status: 'interrupted', message: saved };
-      throw new AdmissionRejected(code);
+      throw new AdmissionRejected(code, currentCatalog);
     };
     const { state, saved } = await readSavedState();
+    if (saved?.result) return { status: 'completed', message: saved };
     if (saved && action !== 'recover') return { status: 'interrupted', message: saved };
     if (!saved) {
       if (action === 'recover') throw new AdmissionRejected('invalid_request');
@@ -46,7 +48,7 @@ export async function admitConversationQuestion(
     if (saved) {
       if (saved.submittedScope.eligibleDocumentIds.some((id) => !publication.catalog.documents.some((d) => d.documentId === id))) return await rejectPublication('scope_unavailable');
     } else if (identity.kind !== 'direct' || identity.catalogRevision !== publication.catalogRevision || identity.catalogHash !== publication.catalogHash) {
-      return await rejectPublication('catalog_stale');
+      return await rejectPublication('catalog_stale', { catalogRevision: publication.catalogRevision, catalogHash: publication.catalogHash });
     }
     return await store.admit({ conversationId, sessionTokenHash: tokenHash, requestId, identity,
       messageId: crypto.randomUUID(), attemptId: crypto.randomUUID(), recover: action === 'recover', limits, publication });

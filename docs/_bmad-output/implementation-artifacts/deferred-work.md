@@ -55,3 +55,11 @@
 - source_spec: `docs/_bmad-output/implementation-artifacts/spec-2-7-admit-one-immutable-global-question-at-a-time.md`
   summary: Measure full-publication admission guard payload and latency against representative populated corpus sizes and D1 limits (medium, unverified).
   evidence: Review B8 observes repeated JSON bindings of documents/chunks/FTS to guarantee read-to-write coherence. No actual accepted-corpus limit or latency failure was demonstrated. Settle with isolated real-D1 size/latency/limit measurements before changing the guard; preserve exact catalog/registry/scope atomicity and fail-closed corruption checks. No new resource cap or production readiness is implied.
+
+- source_spec: `docs/_bmad-output/implementation-artifacts/spec-2-8-commit-complete-results-atomically-and-replay-them-faithfully.md`
+  summary: Measure authenticated message-body buffering resource risk before selecting an ingress bound (medium, unverified).
+  evidence: Review B4 observes req.json buffers before shape/length rejection; no runtime memory or availability failure was demonstrated. Measure isolated Worker resource usage for large/misleading-length input and define a technical bound that accommodates approved catalog/input semantics without inventing an arbitrary Resource cap.
+
+- source_spec: `docs/_bmad-output/implementation-artifacts/spec-2-8-commit-complete-results-atomically-and-replay-them-faithfully.md`
+  summary: Measure canonical graph reconstruction and repeated authenticated preflight read costs (medium, unverified).
+  evidence: R2-B5/B6 identify repeated per-block filtering of snapshot edges and multiple auth/history reads on new POST. No current bounded-conversation CPU/latency/D1 limit failure was demonstrated. Benchmark representative maximum graphs and query timings before grouping edges or reusing preflight state; preserve canonical order, authentication-before-body/replay and atomic race guards.

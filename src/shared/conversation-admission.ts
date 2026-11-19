@@ -33,13 +33,15 @@ export interface AdmittedMessage {
   contextAnchorMessageId: string;
   submissionIdentity: SubmissionIdentity;
   submittedScope: SubmittedScope;
+  result?: import('./conversation-result.ts').ConversationResult;
 }
 export interface ProcessingLease { requestId: string; attemptId: string; until: number }
 export interface AdmissionState { messages: AdmittedMessage[]; lease: ProcessingLease | null }
 export type AdmissionErrorCode = 'invalid_request' | 'invalid_scope' | 'invalid_retry' | 'request_conflict' | 'request_in_progress' | 'conversation_busy' | 'catalog_stale' | 'scope_unavailable' | 'turn_limit_reached' | 'result_unavailable';
+export interface CatalogIdentity { catalogRevision: string; catalogHash: string }
 export class AdmissionRejected extends Error {
   readonly code: AdmissionErrorCode;
-  constructor(code: AdmissionErrorCode) { super(code); this.name = 'AdmissionRejected'; this.code = code; }
+  constructor(code: AdmissionErrorCode, readonly currentCatalog?: CatalogIdentity) { super(code); this.name = 'AdmissionRejected'; this.code = code; }
 }
 export function normalizeSubmission(value: unknown): { requestId: string; identity: SubmissionIdentity } {
   try {
@@ -62,4 +64,4 @@ export function normalizeSubmission(value: unknown): { requestId: string; identi
   }
 }
 export function sameIdentity(a: SubmissionIdentity, b: SubmissionIdentity): boolean { return jcs(a) === jcs(b); }
-export type AdmissionOutcome = { status: 'admitted' | 'recovered'; message: AdmittedMessage; lease: ProcessingLease } | { status: 'interrupted'; message: AdmittedMessage };
+export type AdmissionOutcome = { status: 'admitted' | 'recovered'; message: AdmittedMessage; lease: ProcessingLease } | { status: 'interrupted' | 'completed'; message: AdmittedMessage };

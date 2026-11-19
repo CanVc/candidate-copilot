@@ -11,7 +11,7 @@ preserves existing data and applies only pending migrations; it never resets.
 and UTC creation/modification timestamps; raw tokens are never persisted.
 Conversation reads enforce the creation-based 90 × 24-hour deadline, without
 extending it on activity. Message/lease schema is added separately by 0005;
-answer schema and physical purge remain later-story work.
+0006 adds canonical results; physical purge remains later-story work.
 
 `0004_conversation_creation_limits.sql` adds the isolated daily-key singleton
 and pseudonymous creation counters (no address or Conversation linkage). The
@@ -44,6 +44,27 @@ reader or pause that old application and forward-repair; retaining schema/data i
 not a claim of old-reader transcript compatibility. Story 2.7 tests only apply
 migrations to disposable fixtures. See the focused verification commands in
 [application.md](../docs/development/application.md#owner-verification-of-story-27).
+
+`0006_conversation_results.sql` adds the unique terminal `answers` row per
+message, ordered `answer_blocks` and `source_excerpts`, and ordered
+`answer_block_sources` with same-answer composite foreign keys and an
+answer-leading citation lookup index (verified using the actual D1 query plan). The answer stores
+actual declared language and complete failure JSON (code, message, retryable,
+retryMode); `scope_unavailable` is constrained to false/none. Historical excerpts
+have no live-index FK. All result rows cascade only with Conversation-owned data.
+The store commits answer/children/metadata/modified timestamp/same-owner lease
+release in one ownership/retention-guarded batch, with factual membership checked
+against the coherent current publication rather than old evidence text equality.
+
+Apply 0006 before using the result-aware reader/POST service. It is additive;
+existing admitted messages/scopes/anchors and publication/counters are unchanged.
+A pre-0006 reader cannot recognize completed results: do not roll it back into
+serving traffic or let it reacquire terminal messages. Use compatible code or
+pause/forward-repair, never erase results or restore the whole Conversation DB.
+Implementation verification applies migrations only to disposable D1 and proves
+rerun preservation, every-write rollback and historical evidence after publication
+changes. No operator migration, purge or deployment was performed. See
+[Story 2.8 verification](../docs/development/application.md#owner-verification-of-story-28).
 
 Wrangler creates/manages its ledger and SQLite metadata; there is no custom
 migration engine. Conversation and existing unrelated data/ledger preservation
