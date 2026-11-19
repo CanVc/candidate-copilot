@@ -5,6 +5,12 @@ import { fileURLToPath, URL } from 'node:url';
 import { test, expect } from './local-fixture';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+test('real D1 eligible answer generation and canonical Chromium results', async ({ local }) => {
+  for (const path of ['tests/e2e/answer-generation-worker.ts', 'tests/e2e/answer-generation-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
+  const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/answer-generation-runtime.mjs', chromium.executablePath()]));
+  expect(output).toContain('PASS: real D1 answer generation with Chromium');
+});
+
 test('real D1 bounded context and populated context-reset upgrade with Chromium', async ({ local }) => {
   for (const path of ['tests/e2e/professional-intent-worker.ts', 'tests/e2e/conversation-context-worker.ts', 'tests/e2e/conversation-context-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
   renameSync(join(local.project, 'migrations/0007_conversation_context_reset.sql'), join(local.project, 'pending-context-reset.sql'));

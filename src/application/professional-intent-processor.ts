@@ -1,3 +1,5 @@
+import { GENERATION_CONTEXT_LIMIT } from './generate-answer.ts';
+import { answerTemplateLanguage } from '../shared/answer-generation.ts';
 import type { PreparedModelCall } from '../ports/ModelTokenAccounting.ts';
 import { contextFallbackLanguage, selectConversationExchanges } from './conversation-context.ts';
 import type { ConversationProcessor, ConversationProcessingContext } from '../ports/ConversationProcessor.ts';
@@ -21,8 +23,9 @@ export interface ProfessionalIntentContinuation {
     conversationContext: ClassifyTurnRequest['conversationContext'];
     // Re-select for the continuation's receiver; canonical records never escape.
     selectConversationContext: (fits: (history: ClassifyTurnRequest['conversationContext']) => boolean) => ClassifyTurnRequest['conversationContext'] | null;
+    fallbackLanguage?: 'en' | 'fr';
     signal?: AbortSignal;
-  }): ReturnType<ConversationProcessor['process']>;
+  }): Promise<Awaited<ReturnType<ConversationProcessor['process']>> | typeof GENERATION_CONTEXT_LIMIT>;
 }
 
 // Shared runtime request/catalog assembly. Its default byte-only history selector
@@ -125,8 +128,8 @@ export class ModelAwareIntentPreparation extends BoundedSimulationIntentPreparat
   }
 }
 
-function missingContext(context: ConversationProcessingContext, contextReset = false) {
-  const language = contextFallbackLanguage(context);
+function missingContext(context: ConversationProcessingContext, contextReset = false, currentLanguage?: string) {
+  const language = answerTemplateLanguage(currentLanguage, contextFallbackLanguage(context));
   return { draft: directIntentDraft({ decision: 'clarify', reasonCode: 'missing_context', responseLanguage: language,
     clarificationQuestion: CONTEXT_RESTATEMENT[language] }),
     sources: [], ...(contextReset ? { contextReset: true as const } : {}) };
@@ -153,9 +156,10 @@ export class ProfessionalIntentProcessor implements ConversationProcessor {
     Object.freeze(submittedScope.eligibleDocumentIds); Object.freeze(submittedScope.resources); Object.freeze(submittedScope);
     try {
       const output = await this.continuation.continue({ question: message.question, classification: outcome.classification,
-        submittedScope, conversationContext: prepared.request.conversationContext,
+        submittedScope, conversationContext: prepared.request.conversationContext, fallbackLanguage: contextFallbackLanguage(context),
         selectConversationContext: (fits) => selectConversationExchanges(context, this.bounds.historyBytes, fits), ...options });
       if (context.signal?.aborted) return { failure: 'processing_unavailable', language: outcome.classification.responseLanguage };
+      if (output === GENERATION_CONTEXT_LIMIT) return missingContext(context, true, outcome.classification.responseLanguage);
       if ('draft' in output) {
         const { contextReset: _untrustedReset, ...ordinary } = output;
         return { ...ordinary, language: outcome.classification.responseLanguage };

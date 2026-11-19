@@ -1,3 +1,155 @@
+# Eligible structured answer generation — Story 2.11 (technical review)
+
+The portable continuation now joins the real classifier/context selector to scoped
+D1 retrieval, one structured generator call, mechanical validation and the
+existing atomic result finalizer. **Production remains unconfigured.** Only the
+disposable fixture composes `EligibleEvidenceContinuation` with
+`ScriptedAnswerGenerator`; `generate(string)` remains the bootstrap ping.
+
+## Contracts and safety boundaries
+
+- `src/shared/answer-generation.ts` owns the exact request/draft schema and
+  configurable structural bounds. Only paragraph/summary blocks require citations;
+  nonempty evidence may still yield limitations. Every non-failed redirect must
+  contain a refusal, including unsourced partial results. Failed/error drafts map
+  to application-owned processing failure, never raw model explanations.
+- Candidate chunks are checked for frozen document membership, duplicates,
+  public paths, original provenance, Unicode and configured forbidden patterns
+  before prompting, including candidates beyond the selected-pool count cap.
+  Canonical hard limits constrain configuration; selection also reserves aggregate
+  reconstructed excerpt/metadata and block-ID space before a call. Whole ranked
+  chunks alone are selected. A private copied
+  pool supplies original-language persisted excerpts and citation edges; model
+  output cannot author source metadata, scope, reset or retry policy.
+- `answerReceiver` is the actual generation accounting descriptor. Every candidate
+  uses the processor's real 2.10 callback to reselect canonical complete exchanges,
+  including required pending clarification chains. Classifier-pruned history is
+  not reused. The configurable default history allowance remains 3,000 tokens;
+  each other component, exact serialized framing and output reservation are
+  independently checked. Dispatch independently reconstructs typed expected
+  instructions/data/projections, not merely generic envelope integrity.
+- Successful empty retrieval avoids generation, returning scoped insufficiency
+  (plus reason-specific value-judgment, commitment or bypass refusal). Nonempty evidence that cannot fit, or missing/nonfitting
+  required context, returns the identity-only core limit outcome. The processor
+  emits its exact local restatement and trusted reset marker; arbitrary
+  continuation `contextReset` remains stripped. No truncation, summary call,
+  repair, regeneration, search rewrite, retry or fallback provider is added.
+- The required `GenerationRetriever` port distinguishes coherent missing publication
+  or frozen members from actual dependency failure in one read. It also reports
+  whole-chunk budget exhaustion separately from successful no-match. Legacy
+  retrieval readers remain fail-closed with their existing empty-budget behavior.
+  Corrupt publication is not treated as confirmed withdrawal in either classifier
+  preparation or generation search. Typed schema/policy errors remain invalid
+  results, not technical reset provenance.
+- Full normalized language declarations must agree (`en-US` differs from `en-GB`).
+  Local copy uses supported current language, supported preceding-root language,
+  then French, recording the actual copy language. Source excerpts remain unchanged.
+- Finalization still owns atomic all-frozen-member checks, canonical children and
+  lease release. Stable-ID reindex/title/path changes retain loaded provenance.
+  Withdrawal of even an uncited zero-chunk member blocks factual finalization.
+  Saved `scope_unavailable` remains nonretryable/`none` after restoration; same-ID
+  replay does no classification, retrieval or generation, even without publication.
+
+## Reproduce and inspect
+
+```bash
+npx vitest run tests/bootstrap/{answer-generation,professional-intent,conversation-context,model-context-budget,conversation-results,retrieval}.test.ts
+npx playwright test conversations.spec.ts -g 'eligible answer generation'
+timeout 1200s bash -c 'npm run typecheck && npm test && npm run build && npm run test:smoke' > /tmp/story-2-11-full-verification.log 2>&1
+```
+
+The new real-D1/workerd/Chromium fixture checks auth-before-replay, isolation,
+POST/GET/replay parity and exact call counts, source reconstruction, hostile
+inputs/outputs, no-match/redirect, receiver-specific pending context and limits,
+dependency faults, loaded-provenance reindex, uncited withdrawal/restoration,
+rollback and expired/successor-owner fences. Existing result, retrieval and context
+fault suites are retained without relaxed assertions, skips or timeouts.
+
+### Re-derivation verification — historical blocker, corrected before review
+
+The amended implementation passed **420 focused units**, four typechecks and the
+standalone actual D1/Chromium generation fixture. The complete command then passed
+45 workstation fixtures, **863 units / 18 files**, both builds, six simulations
+and **43/44 Playwright tests**. The new generation pipeline passed, including
+multi-document/chunk reconstruction with reversed citations, language switches,
+current-versus-previous local language precedence and preparation/search corruption.
+
+The full command **failed** the retained professional-intent fixture at
+`tests/e2e/professional-intent-runtime.mjs:172`: expected `scope_unavailable`,
+observed `processing_unavailable`. Its `member` fault at
+`tests/e2e/professional-intent-worker.ts:38` deletes a registry member without
+updating the catalog digest, so the publication is incoherent, not a confirmed
+coherent withdrawal. The amended B7 contract requires dependency classification
+for corruption. No assertion, timeout or retry was changed. The stalled-health
+assertion passed this run; earlier recurrence remains unexplained.
+
+**Stopped without rerunning.** Supervisor coordination was unavailable because
+the parent workflow was blocking. Proposed next step requires parent approval:
+make that legacy member fixture a coherent atomic withdrawal while retaining all
+its existing assertions, then perform targeted and complete verification. This
+implementation is partial pending that decision, independent review and final
+checks; historical pass-1 evidence in the spec does not certify this revision.
+Spec/sprint tracking was not changed by this writer.
+
+| Temporary evidence | SHA-256 |
+| --- | --- |
+| `/tmp/story-2-11-rederive-full.log` (failed complete command) | `de37c43f0862cbf8b3afad1ae7582ac20b83d426c85db20bef6627e2a0774b46` |
+| `/tmp/story-2-11-rederive-failure-context.md` | `348608ab860983de3e1d948f60be188fb4d8d12dc0a3c90dca71d3c41cc23f80` |
+| `/tmp/story-2-11-rederive-focused.log` (420 passing) | `fb7850e624c148b940376dc44b4d4f30305f4c122c9a2e29aba167fb0e25b951` |
+| `/tmp/story-2-11-rederive-pipeline.log` (passing) | `428a21babbe5b6bfb03d6f81c139656b6bbffda0302e1a7b8f2a42daf717aad1` |
+
+After the writer stopped, the supervisor authorized an inline fixture-only
+correction because retained-worker continuation was unavailable. The legacy
+withdrawal now updates registry/mappings and catalog digest atomically and
+explicitly verifies a coherent publication; all existing assertions are unchanged.
+Separate corruption scenarios still require processing_unavailable. The complete
+reconstructible partial patch and failure context remain preserved in `/tmp`.
+
+Coordinator verification now **passes**: 420 focused units and three D1/Chromium
+pipelines; then the unchanged full chain with four typechecks, 45 workstation
+fixtures, **863 units**, builds, six simulations and **44 Playwright tests**.
+Full log `/tmp/story-2-11-rederived-coordinator-verification.log`, SHA-256
+`426c8d96207001c3ffa89e154ba2a1211d1b8530f77a8c8af0881f808fb703d4`.
+No health assertion/configuration was changed; its earlier recurrence remains
+unexplained. The complete 19-file diff was personally audited before the second
+fresh three-layer review. That evidence is superseded by the completed pass-2
+corrections below.
+
+### Reviewed implementation verification
+
+Two fresh complete three-layer reviews are finished; each finding has an individual
+verdict in the story spec. Ten retained pass-2 patches/regressions are complete,
+with no deferred finding. Portable generation now independently enforces the exact
+output reservation, rejects invalid prepared binding without context reset, checks
+forbidden local IDs/citations and rejects impossible canonical configuration.
+Tests additionally cover generated limitation/refusal-only results, coherent
+search-time withdrawal, exact byte/citation boundaries, configured output patterns,
+every localized fixture block and zero processing-publication reads on replay.
+The existing finalizer is unchanged; no full corruption-revalidation claim is made.
+
+Latest focused checks: **431 units and three D1/Chromium pipelines PASS**.
+Latest full chain: **four typechecks, 45 workstation fixtures, 874 units, both
+builds, six simulations and 44 Playwright tests PASS**, without retries or weakened
+assertions. Log `/tmp/story-2-11-pass2-patch-full.log`, SHA-256
+`45347433f7c48d1d3274b61060660b0fc4ae196f1909fb6eeacf4ed4b61e89b8`.
+The conventional local commit is followed by the complete committed-revision gate;
+its immutable commit and result are reported in the final acceptance handoff.
+
+## Human handoff and limits
+
+Inspect the controlled no-match/refusal/restatement copy and original-language
+fiction/non-attribution in saved excerpts. Real-model meaning, entailment,
+completeness, proper block labels, refusal and actual language still require
+human evaluation. Synthetic scalar accounting demonstrates mechanics only, not
+real-provider token correctness. Patterns are not comprehensive privacy detection.
+No UI, production provider binding/free-quota/A05 (2.12), shared deadlines/A08
+(2.13), selected admission, public recovery/retry (2.18/2.19), deployment or
+operator migration is delivered here. Independent review, committed-revision
+verification and parent final advancement remain separate from implementation;
+sprint stays **review**, and BC product/human acceptance is pending.
+
+---
+
 # Bounded conversation context — Story 2.10 (controlled development)
 
 The delivered disposable composition now uses `ModelAwareIntentPreparation`.

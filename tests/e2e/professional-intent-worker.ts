@@ -1,3 +1,4 @@
+import { jcs, normalizeCatalog } from '../../src/shared/public-catalog.ts';
 import { deterministicReceiver } from '../../src/adapters/llm/deterministic-accounting.ts';
 import { DEFAULT_MODEL_CONTEXT_BUDGET } from '../../src/shared/model-context-budget.ts';
 import { createWorker } from '../../src/worker/index.ts';
@@ -35,7 +36,21 @@ return {
           readOnce = true;
           if (fault === 'dependency') return target.batch([...statements, target.prepare('SELECT * FROM nonexistent_intent_fixture_table')]);
           if (fault === 'publication') await target.prepare('DELETE FROM active_publication').run();
-          if (fault === 'member') await target.prepare("DELETE FROM public_documents WHERE document_id = 'uncited'").run();
+          if (fault === 'member') {
+            // Fixture withdrawal is a coherent atomic publication, not corruption.
+            const before = await new D1ResourceCatalog(target).readSnapshot();
+            if (!before || before.catalog.resources.length || before.chunks.some((chunk) => chunk.documentId === 'uncited')) throw new Error('Invalid withdrawal fixture');
+            const next = normalizeCatalog({ ...before.catalog, documents: before.catalog.documents.filter((doc) => doc.documentId !== 'uncited') });
+            const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(jcs(next)));
+            const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+            await target.batch([
+              target.prepare("DELETE FROM public_resource_documents WHERE document_id = 'uncited'"),
+              target.prepare("DELETE FROM public_documents WHERE document_id = 'uncited'"),
+              target.prepare('UPDATE active_publication SET catalog_hash = ? WHERE id = 1').bind(hash),
+            ]);
+            const after = await new D1ResourceCatalog(target).readProcessingSnapshot();
+            if (after.kind !== 'available' || after.publication.catalogHash !== hash || after.publication.documents.some((doc) => doc.documentId === 'uncited')) throw new Error('Incoherent withdrawal fixture');
+          }
         }
         return target.batch(statements);
       };

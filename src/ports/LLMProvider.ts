@@ -11,3 +11,9 @@ export interface LLMProvider {
   // remain a controlled rejection, never an accepted unaccounted response.
   classify(input: PreparedModelCall, options?: ClassificationOptions): Promise<unknown>;
 }
+
+// Structured factual continuation is separate from the bootstrap string ping.
+export interface AnswerGenerator {
+  readonly answerReceiver: ModelTokenAccounting;
+  generateAnswer(input: PreparedModelCall, options?: ClassificationOptions): Promise<unknown>;
+}

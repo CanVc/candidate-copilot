@@ -1,4 +1,4 @@
-import { RetrievalUnavailable, type RetrievalRequest, type RetrievalResult, type Retriever } from '../ports/Retriever.ts';
+import { RetrievalUnavailable, type RetrievalRequest, type RetrievalResult, type Retriever, type GenerationRetriever } from '../ports/Retriever.ts';
 import { exactObject, publicString, stringSet, validUnicode } from '../shared/public-catalog.ts';
 
 export function validateRetrievalRequest(request: RetrievalRequest): RetrievalRequest {
@@ -15,12 +15,19 @@ export function validateRetrievalRequest(request: RetrievalRequest): RetrievalRe
 }
 
 export async function retrieveEvidence(retriever: Retriever, request: RetrievalRequest): Promise<RetrievalResult> {
+  try { return await retrieveGenerationEvidence({ retrieveForGeneration: (input) => retriever.retrieve(input) }, request); } catch { throw new RetrievalUnavailable(); }
+}
+
+export async function retrieveGenerationEvidence(retriever: GenerationRetriever, request: RetrievalRequest): Promise<RetrievalResult> {
   try {
     const trusted = validateRetrievalRequest(request);
     const membership = new Set(trusted.eligibleDocumentIds);
     // Do not let an adapter mutate the membership used for the mechanical guard.
-    const result = await retriever.retrieve(trusted);
+    const result = await retriever.retrieveForGeneration(trusted);
     if (!Array.isArray(result.chunks) || result.chunks.some((chunk) => !membership.has(chunk.documentId))) throw new Error();
     return result;
-  } catch { throw new RetrievalUnavailable(); }
+  } catch (error) {
+    if (error instanceof RetrievalUnavailable) throw error;
+    throw new RetrievalUnavailable();
+  }
 }

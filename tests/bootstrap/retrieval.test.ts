@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { retrieveEvidence, validateRetrievalRequest } from '../../src/application/retrieve-evidence.ts';
+import { retrieveEvidence, retrieveGenerationEvidence, validateRetrievalRequest } from '../../src/application/retrieve-evidence.ts';
 import { D1Retriever, encodeLexicalTerms } from '../../src/adapters/d1/retriever.ts';
 import { D1ResourceCatalog } from '../../src/adapters/d1/publication.ts';
-import { RetrievalUnavailable, type RetrievalRequest, type Retriever } from '../../src/ports/Retriever.ts';
+import { RetrievalUnavailable, RetrievalScopeUnavailable, RetrievalDependencyUnavailable, RetrievalLimitExceeded, type RetrievalRequest, type Retriever } from '../../src/ports/Retriever.ts';
 import type { PublicPublication } from '../../src/ports/ResourceCatalog.ts';
 import type { PublicChunk } from '../../src/shared/public-evidence.ts';
 
@@ -129,5 +129,43 @@ describe('D1Retriever encoding, transactional selection and limits', () => {
   it('redacts D1 faults without returning partial evidence', async () => {
     const db = { prepare() { throw new Error('SQL SECRET'); } } as unknown as D1Database;
     await expect(new D1Retriever(db).retrieve(request)).rejects.toMatchObject({ message: 'retrieval_unavailable' });
+  });
+});
+
+
+describe('D1Retriever generation-only failure distinction', () => {
+  it('preserves legacy empty overflow while generation reports a limit from one read', async () => {
+    const spy = vi.spyOn(D1ResourceCatalog.prototype, 'readSearchSnapshot').mockResolvedValue(snapshot([chunk('big', 'too large')]));
+    try {
+      const retriever = new D1Retriever(database().db, { topK: 1, textBudget: 1 });
+      await expect(retrieveEvidence(retriever, request)).resolves.toEqual({ chunks: [] });
+      spy.mockClear();
+      await expect(retrieveGenerationEvidence(retriever, request)).rejects.toBeInstanceOf(RetrievalLimitExceeded);
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally { spy.mockRestore(); }
+  });
+  it('reports absent publication and coherent missing members, not query errors, as withdrawal', async () => {
+    const spy = vi.spyOn(D1ResourceCatalog.prototype, 'readSearchSnapshot');
+    try {
+      for (const value of [null, snapshot([], ['different'])]) {
+        spy.mockResolvedValue(value);
+        await expect(new D1Retriever(database().db).retrieveForGeneration(request)).rejects.toBeInstanceOf(RetrievalScopeUnavailable);
+      }
+      spy.mockRejectedValue(new Error('RAW_DATABASE_DIAGNOSTIC'));
+      await expect(new D1Retriever(database().db).retrieveForGeneration(request)).rejects.toBeInstanceOf(RetrievalDependencyUnavailable);
+      expect(spy).toHaveBeenCalledTimes(3);
+    } finally { spy.mockRestore(); }
+  });
+  it('keeps legacy readers closed while distinguishing successful absence from corrupt publication', async () => {
+    const batch = vi.fn(async () => Array.from({ length: 7 }, () => ({ success: true, results: [] as unknown[] })));
+    const db = { prepare: () => ({}), batch } as unknown as D1Database;
+    const catalog = new D1ResourceCatalog(db), statement = {} as D1PreparedStatement;
+    await expect(catalog.readSearchSnapshot(statement, true)).resolves.toBeNull();
+    batch.mockImplementation(async () => [{ success: true, results: [{ id: 2 }] }, ...Array.from({ length: 6 }, () => ({ success: true, results: [] }))]);
+    await expect(catalog.readSearchSnapshot(statement)).resolves.toBeNull();
+    await expect(catalog.readSearchSnapshot(statement, true)).rejects.toThrow('Publication validation unavailable');
+    batch.mockImplementation(async () => [{ success: true, results: [{ id: 2 }] }, ...Array.from({ length: 5 }, () => ({ success: true, results: [] }))]);
+    await expect(catalog.readProcessingSnapshot()).resolves.toEqual({ kind: 'dependency_failure' });
+    expect(batch).toHaveBeenCalledTimes(4);
   });
 });

@@ -21,10 +21,10 @@ export class D1ResourceCatalog implements ResourceCatalog {
   }
   // Search rows and all validation reads belong to the same D1 transaction.
   // Callers must resolve match IDs only against this returned publication.
-  async readSearchSnapshot(statement: D1PreparedStatement): Promise<{
+  async readSearchSnapshot(statement: D1PreparedStatement, reportDependency = false): Promise<{
     publication: PublicPublication; matches: Record<string, unknown>[];
   } | null> {
-    return this.readBatch(statement);
+    return this.readBatch(statement, reportDependency);
   }
   private async readBatch(statement?: D1PreparedStatement, reportDependency = false): Promise<{
     publication: PublicPublication; matches: Record<string, unknown>[];
@@ -50,6 +50,7 @@ export class D1ResourceCatalog implements ResourceCatalog {
     }
     try {
       const [authority, resources, maps, registry, chunks, fts] = results.map((r) => r.results)!;
+      if (authority!.length === 0) return null;
       if (authority!.length !== 1 || authority![0]!.id !== 1 || !registry!.length) throw new Error();
       const row = authority![0]!;
       const catalogRevision = fullRevision(row.catalog_revision);
@@ -114,7 +115,10 @@ export class D1ResourceCatalog implements ResourceCatalog {
       if (evidence.length !== registry!.reduce((n, r) => n + Number(r.chunk_count), 0)) throw new Error();
       return { publication: { catalogRevision, catalogHash, catalogAssetPath: assetPath, catalog, documents, chunks: evidence },
         matches: statement ? results[6]!.results : [] };
-    } catch { return null; }
+    } catch {
+      if (reportDependency) throw new Error('Publication validation unavailable');
+      return null;
+    }
   }
 }
 

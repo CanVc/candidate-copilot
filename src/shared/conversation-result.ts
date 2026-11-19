@@ -37,6 +37,7 @@ export interface ResultDraft {
   blocks: Array<Omit<AnswerBlock, 'blockId'>>;
 }
 export interface LoadedSource { responseLocalId: string; chunk: RetrievedChunk }
+export const CANONICAL_RESULT_LIMITS = Object.freeze({ blocks: 100, excerpts: 100, text: 16000, excerptText: 100000, serializedContent: 500000 });
 const statuses = ['answered', 'partial', 'clarification', 'refused', 'failed'];
 const kinds = ['paragraph', 'summary', 'limitation', 'refusal', 'transition', 'clarification', 'error'];
 const failureText = {
@@ -44,7 +45,7 @@ const failureText = {
   invalid_result: { fr: 'Impossible de produire un résultat valide pour le moment.', en: 'A valid result could not be produced at this time.' },
   processing_unavailable: { fr: 'Le traitement est indisponible pour le moment.', en: 'Processing is currently unavailable.' },
 };
-function text(value: unknown, maximum = 16_000): string {
+function text(value: unknown, maximum: number = CANONICAL_RESULT_LIMITS.text): string {
   if (typeof value !== 'string' || !value.trim() || value.includes('\0') || value.length > maximum || !validUnicode(value)) throw new Error('Invalid result');
   return value;
 }
@@ -107,8 +108,8 @@ export function validateConversationResult(value: ConversationResult): void {
       jcs(stringSet(scope.eligibleDocumentIds)) !== jcs(scope.eligibleDocumentIds)) throw new Error('Invalid result scope');
   for (const id of [value.requestId, value.messageId, value.answerId]) publicString(id);
   if (!statuses.includes(value.status) || resultLanguage(value.language) !== value.language ||
-      !Array.isArray(value.blocks) || !value.blocks.length || value.blocks.length > 100 ||
-      !Array.isArray(value.sourceExcerpts) || value.sourceExcerpts.length > 100 || JSON.stringify({ status: value.status, language: value.language, blocks: value.blocks, sourceExcerpts: value.sourceExcerpts, error: value.error }).length > 500_000) throw new Error('Invalid result');
+      !Array.isArray(value.blocks) || !value.blocks.length || value.blocks.length > CANONICAL_RESULT_LIMITS.blocks ||
+      !Array.isArray(value.sourceExcerpts) || value.sourceExcerpts.length > CANONICAL_RESULT_LIMITS.excerpts || JSON.stringify({ status: value.status, language: value.language, blocks: value.blocks, sourceExcerpts: value.sourceExcerpts, error: value.error }).length > CANONICAL_RESULT_LIMITS.serializedContent) throw new Error('Invalid result');
   const sourceIds = new Set<string>();
   const excerptIds = new Set<string>();
   for (const source of value.sourceExcerpts) {
@@ -117,7 +118,7 @@ export function validateConversationResult(value: ConversationResult): void {
     sourcePath(source.sourcePath); fullRevision(source.sourceRevision);
     if (!/^[0-9a-f]{64}$/.test(source.contentHash) || !value.submittedScope.eligibleDocumentIds.includes(source.documentId) ||
         sourceIds.has(source.responseLocalId) || excerptIds.has(source.sourceExcerptId)) throw new Error('Invalid excerpt');
-    text(source.excerpt, 100_000); text(source.sourceTitle); text(source.location);
+    text(source.excerpt, CANONICAL_RESULT_LIMITS.excerptText); text(source.sourceTitle); text(source.location);
     if (source.sectionTitle !== null) text(source.sectionTitle);
     sourceIds.add(source.responseLocalId); excerptIds.add(source.sourceExcerptId);
   }
