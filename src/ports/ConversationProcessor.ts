@@ -10,7 +10,7 @@ export interface ConversationProcessingContext {
 export interface ConversationProcessor {
   process(message: AdmittedMessage, context: ConversationProcessingContext): Promise<
     // Optional language is validated classification metadata, never read from an invalid draft.
-    | { draft: unknown; sources: LoadedSource[]; language?: string }
+    | { draft: unknown; sources: LoadedSource[]; language?: string; contextReset?: true }
     | { failure: ResultFailureCode; language?: string }
   >;
 }

@@ -1,5 +1,5 @@
 import { exactObject, validUnicode } from './public-catalog.ts';
-import { resultLanguage, type ResultDraft } from './conversation-result.ts';
+import { resultLanguage, type ConversationResult, type ResultDraft } from './conversation-result.ts';
 
 export interface ClassifyTurnRequest {
   question: string;
@@ -28,7 +28,7 @@ export interface IntentBounds {
   directText: number; outputBytes: number; historyBytes: number; catalogBytes: number;
   catalogEntries: number; aliases: number; metadataText: number; requestBytes: number;
 }
-// Simulation byte bounds are not model-token accounting (Story 2.10).
+// Structural/Unicode/byte bounds are independent of receiver token budgets.
 export const DEFAULT_INTENT_BOUNDS: Readonly<IntentBounds> = Object.freeze({
   question: 4000, topic: 200, resolvedQuestion: 4000, term: 64, terms: 16,
   directText: 600, outputBytes: 12000, historyBytes: 12000, catalogBytes: 12000,
@@ -106,4 +106,16 @@ export function validateClassifyTurnResult(value: unknown, bounds: Readonly<Inte
 export function directIntentDraft(result: Exclude<ClassifyTurnResult, IntentContinuation>): ResultDraft {
   return { status: result.decision === 'refuse' ? 'refused' : 'clarification', language: result.responseLanguage,
     blocks: [{ kind: result.decision === 'refuse' ? 'refusal' : 'clarification', text: result.decision === 'refuse' ? result.refusalMessage : result.clarificationQuestion, sourceIds: [] }] };
+}
+
+export const CONTEXT_RESTATEMENT = Object.freeze({
+  en: 'Could you restate the professional question with the necessary context?',
+  fr: 'Pouvez-vous reformuler la question professionnelle avec le contexte nécessaire ?',
+});
+
+// Called only after canonical result validation, at both service and store boundaries.
+export function assertContextResetResult(result: ConversationResult): void {
+  if (result.status !== 'clarification' || result.sourceExcerpts.length ||
+    result.blocks.length !== 1 || result.blocks[0]?.kind !== 'clarification' ||
+    (result.language !== 'en' && result.language !== 'fr') || result.blocks[0].text !== CONTEXT_RESTATEMENT[result.language]) throw new Error('Invalid context reset');
 }

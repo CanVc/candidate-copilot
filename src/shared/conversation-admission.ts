@@ -33,6 +33,8 @@ export interface AdmittedMessage {
   contextAnchorMessageId: string;
   submissionIdentity: SubmissionIdentity;
   submittedScope: SubmittedScope;
+  // Internal answer-owned provenance; never accepted or returned by HTTP.
+  contextReset?: boolean;
   result?: import('./conversation-result.ts').ConversationResult;
 }
 export interface ProcessingLease { requestId: string; attemptId: string; until: number }

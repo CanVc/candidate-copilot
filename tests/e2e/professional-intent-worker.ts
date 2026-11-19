@@ -1,21 +1,25 @@
+import { deterministicReceiver } from '../../src/adapters/llm/deterministic-accounting.ts';
+import { DEFAULT_MODEL_CONTEXT_BUDGET } from '../../src/shared/model-context-budget.ts';
 import { createWorker } from '../../src/worker/index.ts';
 import { D1ConversationStore } from '../../src/adapters/d1/conversations.ts';
 import { D1ResourceCatalog } from '../../src/adapters/d1/publication.ts';
 import { D1Retriever } from '../../src/adapters/d1/retriever.ts';
 import { ScriptedLLMProvider } from '../../src/adapters/llm/scripted.ts';
-import { BoundedSimulationIntentPreparation, ProfessionalIntentProcessor } from '../../src/application/professional-intent-processor.ts';
+import { ModelAwareIntentPreparation, ProfessionalIntentProcessor } from '../../src/application/professional-intent-processor.ts';
 import { submitConversationQuestion } from '../../src/application/conversation-results.ts';
 import { retrieveEvidence } from '../../src/application/retrieve-evidence.ts';
 import type { AtomicFinalization } from '../../src/ports/ConversationStore.ts';
 import type { ClassificationPrompt } from '../../src/ports/LLMProvider.ts';
+import { validateConversationResult } from '../../src/shared/conversation-result.ts';
 import { intentBounds } from '../../src/shared/professional-intent.ts';
 import type { IntentContinuation } from '../../src/shared/professional-intent.ts';
 
+export function createIntentFixture(maxMessages = 5, contextBudgets = false) {
 // Disposable controls only; no fixture route/header exists in the public Worker.
 const prepared = new Map<string, AtomicFinalization>();
 const prompts: ClassificationPrompt[] = [], continuations: Array<{ classification: IntentContinuation; eligibleDocumentIds: string[] }> = [];
 let retrievals = 0, preparationReads = 0;
-export default {
+return {
   async fetch(request: Request, env: Cloudflare.Env, context: ExecutionContext) {
     const path = new URL(request.url).pathname;
     const clock = { now: () => new Date(request.headers.get('X-Fixture-Now') ?? '2026-01-01T00:00:00Z') };
@@ -39,8 +43,14 @@ export default {
       return typeof value === 'function' ? value.bind(target) : value;
     } });
     const bounds = intentBounds(request.headers.has('X-Fixture-Request-Bytes') ? { requestBytes: Number(request.headers.get('X-Fixture-Request-Bytes')) } : {});
-    const processor = () => new ProfessionalIntentProcessor(new ScriptedLLMProvider(async (prompt) => {
+    const receiver = deterministicReceiver(request.headers.get('X-Fixture-Profile') === 'scalar-v1' ? 'scalar-v1' : 'scalar-pair-v1', contextBudgets ? {
+      capacity: Number(request.headers.get('X-Fixture-Capacity') ?? 32000),
+      budget: { output: Number(request.headers.get('X-Fixture-Output') ?? 2000), components: { ...DEFAULT_MODEL_CONTEXT_BUDGET.components,
+        history: Number(request.headers.get('X-Fixture-History') ?? 3000) } },
+    } : {});
+    const processor = () => { const provider = new ScriptedLLMProvider(async (prompt) => {
       prompts.push(prompt);
+      if (branch === 'forged-reset') return { decision: 'clarify', reasonCode: 'missing_context', responseLanguage: language, clarificationQuestion: 'Which project?', contextReset: true };
       if (branch === 'throw') throw new Error('RAW_PROVIDER_SECRET');
       if (branch === 'array-decision') return { decision: ['clarify'], reasonCode: 'material_ambiguity', responseLanguage: language, clarificationQuestion: 'Which project?' };
       if (branch === 'invalid') return { decision: 'clarify', reasonCode: 'material_ambiguity', responseLanguage: language, clarificationQuestion: 'Which project?', searchTerms: ['mixed'] };
@@ -50,7 +60,7 @@ export default {
         clarificationQuestion: 'De quelle décision professionnelle parlez-vous ?' };
       return { decision: ['tokens65', 'zero-token', 'structured-failure', 'invalid-draft'].includes(branch) ? 'answer' : branch, reasonCode: branch === 'redirect' ? 'professional_value_judgment' : 'professional_question', responseLanguage: language,
         professionalTopic: 'Architecture', resolvedQuestion: 'Which professional architecture decisions are documented?', searchTerms: branch === 'tokens65' ? [...Array.from({ length: 15 }, () => 'a b c d'), 'a b c d e'] : branch === 'zero-token' ? ['\u0301'] : ['architecture'] };
-    }), new BoundedSimulationIntentPreparation(new D1ResourceCatalog(preparationDb), bounds), { continue: async (input) => {
+    }, receiver); return new ProfessionalIntentProcessor(provider, new ModelAwareIntentPreparation(new D1ResourceCatalog(preparationDb), provider, bounds), { continue: async (input) => {
       continuations.push({ classification: input.classification, eligibleDocumentIds: [...input.submittedScope.eligibleDocumentIds] });
       if (branch === 'structured-failure') return { failure: 'processing_unavailable' };
       if (branch === 'invalid-draft') return { draft: { language: 'fr', blocks: 'invalid' }, sources: [], language: 'fr' };
@@ -62,7 +72,7 @@ export default {
         ...(input.classification.decision === 'redirect' ? [{ kind: 'refusal', text: 'Synthetic boundary: no value judgment or hiring recommendation about BC.', sourceIds: [] }] : []),
         { kind: sources.length ? 'paragraph' : 'limitation', text: 'Synthetic development fixture, not evidence about BC.', sourceIds: sources.map((source) => source.responseLocalId) },
       ] }, sources };
-    } }, bounds);
+    } }, bounds); };
     if (path === '/__fixture/stats') return Response.json({ prompts, continuations, retrievals, preparationReads });
     if (path === '/__fixture/prepare') {
       const body = await request.json() as { conversationId: string; input: unknown; gate: string };
@@ -71,10 +81,20 @@ export default {
       catch { return Response.json({ prepared: prepared.has(body.gate) }); }
     }
     if (path.startsWith('/__fixture/finalize/')) {
-      try { return Response.json(await store.finalize(prepared.get(path.split('/').at(-1)!)!)); }
+      const command = structuredClone(prepared.get(path.split('/').at(-1)!)!);
+      // Disposable adapter-defense probes bypass service association validation,
+      // but still require an otherwise valid canonical result.
+      const resetFault = contextBudgets && request.headers.get('X-Fixture-Reset-Association');
+      if (resetFault === 'template') command.result.blocks[0]!.text = 'Which professional project?';
+      if (resetFault === 'language') command.result.language = command.result.language === 'en' ? 'fr' : 'en';
+      validateConversationResult(command.result);
+      try { return Response.json(await store.finalize(command)); }
       catch { return Response.json({ error: 'result_unavailable' }); }
     }
-    return createWorker(clock, () => '127.0.0.1', { limits: { maxMessages: 5 },
+    return createWorker(clock, () => '127.0.0.1', { limits: { maxMessages },
       ...(request.headers.has('X-Fixture-Disabled') ? {} : { processor }) }).fetch(request, env, context);
   },
 };
+
+}
+export default createIntentFixture();

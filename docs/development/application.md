@@ -1,3 +1,181 @@
+# Bounded conversation context — Story 2.10 (controlled development)
+
+The delivered disposable composition now uses `ModelAwareIntentPreparation`.
+Production still has **no configured processor/provider**. No factual generator,
+retry/recovery admission, selected admission, UI, live model or operator migration
+is enabled. The Story 2.9 section below is historical context; its byte-only
+history selector remains for unchanged regression fixtures. Its base class still
+owns shared runtime request/catalog assembly; the delivered subclass overrides
+history selection and acceptance with receiver-aware accounting.
+
+## Receiving-model accounting contract
+
+`LLMProvider.receiver` binds model/version, tokenizer/profile/version, exact
+serialization/framing version, capacities, component budgets and counting to the
+same adapter that accepts the call. `prepareProfessionalIntent` uses the identical
+trusted instructions and validated data serialization for selection and dispatch.
+`prepareModelCall` freezes the exact serialized input, component/whole-input counts
+and output reservation. Immediately before dispatch, `validatePreparedModelCall`
+requires independently derived expected instructions, data and component
+projections from the actual typed request, and checks receiver identity (including
+the actual descriptor/functions), serialization, counts and reservation again.
+`validateModelCallIntegrity` is only the adapter-side integrity defense; it does
+not replace the mandatory typed-consumer expected-input check. Nonempty serialized
+inputs require positive token counts; empty components may count as zero. Missing/invalid/changed accounting, modified envelopes
+or overflow cause a local restatement, never an unaccounted model call.
+
+History defaults to **3,000 receiver tokens**, configurable in `receiver.budget`.
+Independent initial engine allocations are instructions 6,000, question 4,000,
+catalog/scope 4,000, evidence 12,000, handoff 2,000 and output 2,000 tokens.
+Every component is checked separately; the exact serialized input **including
+framing/metadata plus output** must also fit receiver capacity. Structural/Unicode
+and UTF-8 byte bounds remain separate, not token estimates. Nothing silently
+truncates the immutable question or summarizes through another model.
+
+`deterministicReceiver` supplies only explicit local synthetic vocabularies:
+`scalar-v1` assigns one token per Unicode scalar and `scalar-pair-v1` packs pairs.
+Their golden vectors, distinct counts and captured exact JSON framing prove
+mechanics, **not actual provider tokens, semantic safety or language quality**.
+Story 2.12 must bind real model/tokenizer/context/output capacity using official
+provider facts. A05/A08 remain later owner gates.
+
+The same `prepareModelCall`/`validatePreparedModelCall` envelope and
+`selectConversationExchanges` fit callback support a different future generation
+receiver, including independently counted eligible evidence and handoff metadata.
+Its typed consumer must supply independent expected projections to validation,
+not reuse caller-authored component strings. The selection callback is checked
+even when history is empty.
+Tests exercise receiver-specific reselection; Story 2.11 must wire its actual
+generator. Bootstrap `generate('bootstrap-ping')` remains a nonfactual fixture,
+not a generation integration or a budgeted product call.
+
+## Canonical roots, clarification chains and reset provenance
+
+`resolveConversationContext` consumes the authenticated post-admission snapshot.
+It validates unique identities, self-root direct messages or bounded earlier
+failed/retryable links, matching questions/scopes/roots, and excludes later topics.
+Missing/forward/cyclic/foreign/nonretryable/mismatched lineage yields unavailable
+context. Future retry/retry-of-retry cases are **typed synthetic unit fixtures**;
+D1 still admits only direct self-anchors. Supported preceding-root language then
+French governs local templates before classification; there is no language detector.
+The immutable current question and explicit language request govern classification.
+
+Selection retains chronological complete question/response pairs. The immediately
+preceding exchange and **all pending model clarifications across failed replies**
+(including the complete failed question/error pairs) are indispensable, selected once before optional older exchanges/catalog. History and
+catalog interpret only: no old excerpt attachments, credentials, unnecessary IDs,
+policy authority or additional evidence eligibility. Missing/unrepresentable or
+oversized indispensable context asks for restatement without provider/retrieval.
+
+Migration `0007_conversation_context_reset.sql` adds `answers.context_reset`,
+default false for old rows. Only local missing-context/limit clarifications set it;
+model outputs cannot author it, ordinary outcomes stay false, and HTTP never
+accepts/returns it. The application canonical-result handler verifies association
+with the exact supported local clarification and records invalid_result with
+marker false on inconsistency; the D1 adapter retains the same defense. The marker lives in the answer row, sharing its atomic
+rollback, lease fences, retention and deletion cascade. The **unique answer**
+remains the only terminal authority; immutable message/scope/history are untouched.
+Selection stops before the most recent marked exchange, retaining that whole pair
+if representable. An unusable marked pair asks again; a clean marked reformulation
+allows the next reply to recover without reimporting poisoned history. Matching
+text without trusted provenance never resets a model clarification chain.
+
+Scope withdrawal remains false/none after restoration; dependency failure remains
+distinct. Canonical POST/GET/replay and stale-owner fencing are unchanged.
+
+## Verification and human handoff
+
+Run only normal builds and disposable fixtures; these commands do not authorize
+migration of operator storage, remote calls, deployment or activation:
+
+```bash
+timeout 1200 bash -c 'npm run typecheck && npx vitest run tests/bootstrap/conversation-context.test.ts tests/bootstrap/model-context-budget.test.ts tests/bootstrap/professional-intent.test.ts tests/bootstrap/conversation-results.test.ts'
+timeout 1200 bash -c 'npx playwright test conversations.spec.ts'
+timeout 1200 bash -c 'npm run typecheck && npm test && npm run build && npm run test:smoke'
+```
+
+Historical pass-1 implementation evidence below is against the uncommitted working tree based on
+`14fd8635d502458d23d5bae414b5f95cbdcd194a`, not a committed-release certificate.
+Focused units passed (243 before the additional forged-provenance case); all six
+conversation E2Es passed. Logs: `/tmp/story-2-10-focused.log`,
+`/tmp/story-2-10-context-e2e-rerun.log`. Initial full verification passed four
+typechecks, 45 workstation fixtures, 713 units, both builds, six simulation tests
+and 42/43 Playwright. The only failure was an old expected migration count (six,
+now seven), corrected without weakening assertions. Earlier focused failures were
+also fixture compatibility expectations (migration list and positional old answer
+INSERT), corrected with the new migration name and explicit columns; no runtime
+launch failure occurred. Full initial output:
+`/tmp/story-2-10-full-verification.log`.
+
+Final full rerun after the additional exact serialized-history boundary test
+passed: four typechecks, **45 workstation fixtures, 714 unit tests, both builds,
+six simulation tests and all 43 Playwright cases**. Complete combined output:
+`/tmp/story-2-10-final-full-verification.log`. Final focused typechecks and all
+245 classifier/context/result cases also passed:
+`/tmp/story-2-10-final-focused.log`. No staged files,
+commit, hosted mutation or live/paid provider call was made.
+
+Re-derivation verification (this working tree): exact typed-payload projection
+binding, nonempty-count rejection, failed-reply dependency bridging, empty-history
+fit validation, service marker validation and safe new-direct fallback now have
+regressions. Populated catalog tests isolate token-only component and total pruning;
+actual question serialization has exact boundary tests. Persisted failed chains,
+aggregate-reset next follow-up and positive/negative receiver-capacity outcomes
+are asserted, including exact histories, calls, statuses and provenance markers.
+Final verification passed four typechecks, 271 focused verbose cases, 45
+workstation fixtures, 740 unit tests, both builds, six simulations and all 43
+Playwright cases: `/tmp/story-2-10-rederivation-verified.log`. Earlier passing
+focused/context/full logs are `/tmp/story-2-10-rederivation-focused.log`,
+`/tmp/story-2-10-rederivation-context-e2e.log` and
+`/tmp/story-2-10-rederivation-full.log`.
+
+One intervening run failed the unchanged stalled-health browser assertion at
+`tests/e2e/bootstrap.spec.ts:82` (5000ms, still “Vérification du Worker…”):
+`/tmp/story-2-10-rederivation-final.log`; its error context is retained at
+`/tmp/story-2-10-rederivation-health-failure-context.md`. Inspection found no story
+edits to frontend health/App, that test or runner configuration; Vite started
+normally. This does not prove the failure's cause. Supervisor authorized one
+unchanged focused rerun and one unchanged full rerun: both passed, respectively
+`/tmp/story-2-10-rederivation-health-rerun.log` and the verified log above. No test,
+timeout, retries, assertion or runner setting was changed to obtain a pass.
+
+The full run report is `/tmp/story-2-10-rederivation.json`. Coordinator-owned
+spec/sprint index entries are preserved; the implementation worker stages and
+commits nothing.
+Independent review, coordinator tracker reconciliation and final advancement remain
+separate gates, not implied by these deterministic results or BC acceptance.
+
+The new real-D1/Chromium fixture proves populated 0006 upgrade/defaults, complete
+long/clarification/current-language sequences, poison/individual/aggregate recovery,
+exact captured budgets/prompts, reset persistence/rollback/replay/stale fences,
+deletion cascade, auth/browser-history rejection and immutable scope. The unchanged
+2.9 scenarios run with the new preparer in D1. Unit tests cover exact 3000/3001,
+configurable/component/aggregate/output boundaries, invalid accounting, receiver
+changes, mutation rejection and synthetic future lineage. No mocks establish actual
+model meaning, actual answer language or live-provider token correctness.
+
+Final coordinator closure: both complete fresh three-layer reviews, one
+specification-driven re-derivation and every retained correction are complete.
+The continuation now exposes attachment-free receiver-specific reselection through
+an internal callback; interrupted pending dependencies request restatement,
+scripted outputs honor their reserved token budget, and the shared reset assertion
+is tested directly at both application and disposable D1 boundaries. Final personal
+full checks passed **753 units, 284 focused units, 45 workstation fixtures, both
+builds, four typechecks, six simulations and 43 Playwright** without skipped tests
+or weakened assertions. Full log: `/tmp/story-2-10-final-coordinator-verification.log`
+(SHA256 `83e71053f7cccf6d60e55f9f22262847a13616b65ee1ecd0995e9d427ca7a9c1`).
+
+A durable command/outcome/report-hash manifest, all individual review verdicts and
+the practical developer checklist are committed in the
+[Story 2.10 spec](../_bmad-output/implementation-artifacts/spec-2-10-preserve-bounded-follow-up-and-clarification-context.md#durable-evidence-manifest).
+That manifest preserves evidence identities, not raw /tmp availability in another
+checkout. The earlier unexplained health assertion remains recorded, not diagnosed
+as flakiness. Postcommit full checks and explicit supervisor technical advancement
+are still distinct from these working-tree results. **Sprint is review; BC human
+acceptance and recruiter-launch authorization are not granted.**
+
+---
+
 # Professional intent — Story 2.9 (controlled development)
 
 Story 2.9 adds the portable classifier and direct-result path; the default Worker

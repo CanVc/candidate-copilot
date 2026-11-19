@@ -5,6 +5,13 @@ import { fileURLToPath, URL } from 'node:url';
 import { test, expect } from './local-fixture';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+test('real D1 bounded context and populated context-reset upgrade with Chromium', async ({ local }) => {
+  for (const path of ['tests/e2e/professional-intent-worker.ts', 'tests/e2e/conversation-context-worker.ts', 'tests/e2e/conversation-context-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
+  renameSync(join(local.project, 'migrations/0007_conversation_context_reset.sql'), join(local.project, 'pending-context-reset.sql'));
+  const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/conversation-context-runtime.mjs', chromium.executablePath()]));
+  expect(output).toContain('PASS: real D1 bounded conversation context');
+});
+
 test('real D1 professional intent classifier and canonical Chromium direct results', async ({ local }) => {
   for (const path of ['tests/e2e/professional-intent-worker.ts', 'tests/e2e/professional-intent-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
   const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/professional-intent-runtime.mjs', chromium.executablePath()]));
@@ -125,6 +132,7 @@ test('Chromium-generated creation headers use checked-in frontend/Worker origin 
 test('real D1 complete results, populated 0005 upgrade and canonical Chromium POST GET replay', async ({ local }) => {
   for (const path of ['tests/e2e/conversation-results-worker.ts', 'tests/e2e/conversation-results-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
   // Hold only the disposable fixture's next migration until 0005 has real rows.
+  renameSync(join(local.project, 'migrations/0007_conversation_context_reset.sql'), join(local.project, 'pending-conversation-context.sql'));
   renameSync(join(local.project, 'migrations/0006_conversation_results.sql'), join(local.project, 'pending-conversation-results.sql'));
   const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/conversation-results-runtime.mjs', chromium.executablePath()]));
   expect(output).toContain('PASS: populated 0005-to-0006 upgrade preserves admitted rows and guarded completion');

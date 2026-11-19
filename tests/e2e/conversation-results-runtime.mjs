@@ -102,6 +102,8 @@ try {
   await one.applyD1Migrations('DB');
   assert.deepEqual(await oldRows(), beforeUpgrade);
   assert.equal((await db.prepare('SELECT name FROM d1_migrations ORDER BY id DESC LIMIT 1').first()).name, '0006_conversation_results.sql');
+  renameSync(join(root, 'pending-conversation-context.sql'), join(root, 'migrations/0007_conversation_context_reset.sql'));
+  await one.applyD1Migrations('DB');
   assert.deepEqual(await prepare(upgrade, upgradeInput, 'upgrade', { path: 'prepare-existing' }), { prepared: true });
   const beforeExpiredUpgrade = await snapshot();
   assert.deepEqual(await finalize('upgrade', 40_000), { error: 'result_unavailable' });
@@ -360,7 +362,7 @@ try {
     { code: 'scope_unavailable', message: 'safe', retryable: false },
     { code: 'scope_unavailable', message: null, retryable: false, retryMode: 'none' },
     { code: 'processing_unavailable', message: 'safe', retryable: true, retryMode: 'none' }]) {
-    await assert.rejects(db.prepare('INSERT INTO answers VALUES (?, ?, ?, ?, ?, ?)').bind(randomUUID(), constraintMessage.id, 'failed', 'fr', JSON.stringify(metadata), at(0)).run(), /CHECK/);
+    await assert.rejects(db.prepare('INSERT INTO answers (id, message_id, status, language, error_json, created_at) VALUES (?, ?, ?, ?, ?, ?)').bind(randomUUID(), constraintMessage.id, 'failed', 'fr', JSON.stringify(metadata), at(0)).run(), /CHECK/);
   }
   // Malformed body/output authority cannot enter persistence; authentication wins.
   const invalid = await create();

@@ -40,4 +40,5 @@ export interface AtomicFinalization {
   attemptId: string;
   result: ConversationResult;
   previousLanguage?: string;
+  contextReset?: boolean;
 }

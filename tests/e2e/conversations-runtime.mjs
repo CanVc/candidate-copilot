@@ -82,7 +82,7 @@ try {
   assert.equal(await dump(), baseline, 'reads, unavailable effects and policy failures do not mutate any state');
   await one.applyD1Migrations('DB'); await two.applyD1Migrations('DB');
   assert.equal(await dump(), baseline, 'migration reruns preserve conversations, unrelated data and original ledger');
-  assert.deepEqual((await db.prepare('SELECT name FROM d1_migrations ORDER BY id').all()).results.map((r) => r.name), ['0001_local_bootstrap.sql', '0002_public_publication.sql', '0003_conversations.sql', '0004_conversation_creation_limits.sql', '0005_conversation_admission.sql', '0006_conversation_results.sql']);
+  assert.deepEqual((await db.prepare('SELECT name FROM d1_migrations ORDER BY id').all()).results.map((r) => r.name), ['0001_local_bootstrap.sql', '0002_public_publication.sql', '0003_conversations.sql', '0004_conversation_creation_limits.sql', '0005_conversation_admission.sql', '0006_conversation_results.sql', '0007_conversation_context_reset.sql']);
 
   await db.prepare("UPDATE conversations SET modified_at = '2026-03-31T23:59:59.999Z' WHERE id = ?").bind(a.conversationId).run();
   for (const worker of [one, two]) {

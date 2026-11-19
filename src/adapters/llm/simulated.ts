@@ -1,6 +1,8 @@
+import { deterministicReceiver } from './deterministic-accounting.ts';
 import type { ClassificationPrompt, LLMProvider } from '../../ports/LLMProvider';
 
 export class SimulatedLLMProvider implements LLMProvider {
+  readonly receiver = deterministicReceiver();
   async classify(_input: ClassificationPrompt): Promise<unknown> { throw new Error('Classifier is not configured'); }
   async generate(input: string): Promise<string> {
     if (input !== 'bootstrap-ping') {

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { completeResult, controlledFailure, validateConversationResult, type ResultDraft, type LoadedSource } from '../../src/shared/conversation-result.ts';
 import { AdmissionRejected, type AdmissionState, type AdmittedMessage } from '../../src/shared/conversation-admission.ts';
+import { CONTEXT_RESTATEMENT } from '../../src/shared/professional-intent.ts';
 import { submitConversationQuestion } from '../../src/application/conversation-results.ts';
 import { admitConversationQuestion } from '../../src/application/conversation-admission.ts';
 import { hashSessionToken, readConversation } from '../../src/application/conversations.ts';
@@ -227,6 +228,51 @@ describe('conversation-results portable service', () => {
     });
     await f.submit();
     expect(f.processor.process).toHaveBeenCalledWith(expect.any(Object), { precedingMessages: [], contextAvailable: false });
+  });
+
+  it.each(['en', 'fr', 'wrong-text', 'wrong-language', 'wrong-status'])('validates reset provenance inside canonical handling: %s', async (kind) => {
+    const f = await fixture();
+    const valid = kind === 'en' || kind === 'fr';
+    const language = kind === 'fr' ? 'fr' : kind === 'wrong-language' ? 'de' : 'en';
+    f.processor.process.mockResolvedValue({ draft: { status: kind === 'wrong-status' ? 'refused' : 'clarification', language,
+      blocks: [{ kind: kind === 'wrong-status' ? 'refusal' : 'clarification', text: valid ? CONTEXT_RESTATEMENT[kind] : 'Which project?', sourceIds: [] }] }, sources: [], contextReset: true });
+    const result = await f.submit();
+    expect(result.status).toBe(valid ? 'clarification' : 'failed');
+    if (!valid) expect(result.error?.code).toBe('invalid_result');
+    expect(f.store.finalize).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ contextReset: valid }));
+    expect(f.state.lease).toBeNull(); expect(await f.submit()).toEqual(result); expect(f.processor.process).toHaveBeenCalledTimes(1);
+  });
+  it('retains authenticated initial English fallback only for a new direct admission when reread throws', async () => {
+    const f = await fixture();
+    const prior = { ...structuredClone(message), messageId: 'prior', requestId: 'prior' };
+    prior.result = controlledFailure(prior, 'processing_unavailable', 'en'); f.state.messages.push(prior);
+    const read = vi.mocked(f.store.readAdmissionState).getMockImplementation()!;
+    vi.mocked(f.store.readAdmissionState).mockImplementation(async (...args) => {
+      if (f.state.lease) throw new Error('Read failed');
+      return read(...args);
+    });
+    const result = await submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body, { maxMessages: 2 });
+    expect(result.error?.code).toBe('processing_unavailable'); expect(result.language).toBe('en');
+    expect(f.processor.process).not.toHaveBeenCalled(); expect(f.store.finalize).toHaveBeenCalledTimes(1);
+  });
+  it.each(['recovered', 'missing-root'] as const)('does not borrow initial later English context for %s admission fixtures', async (kind) => {
+    // Synthetic internal outcomes only; HTTP retry/recovery remains unsupported.
+    const f = await fixture(), prior = { ...structuredClone(message), messageId: 'later-topic', requestId: 'later-topic' };
+    prior.result = controlledFailure(prior, 'processing_unavailable', 'en'); f.state.messages.push(prior);
+    const admit = vi.mocked(f.store.admit).getMockImplementation()!;
+    vi.mocked(f.store.admit).mockImplementation(async (command) => {
+      const result = await admit(command);
+      if (!('lease' in result)) throw new Error('Expected admitted fixture');
+      return kind === 'recovered' ? { ...result, status: 'recovered' } : { ...result, message: { ...result.message, contextAnchorMessageId: 'missing' } };
+    });
+    const read = vi.mocked(f.store.readAdmissionState).getMockImplementation()!;
+    vi.mocked(f.store.readAdmissionState).mockImplementation(async (...args) => {
+      if (f.state.lease) throw new Error('Read failed');
+      return read(...args);
+    });
+    const result = await submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body, { maxMessages: 2 });
+    expect(result.error?.code).toBe('processing_unavailable'); expect(result.language).toBe('fr');
+    expect(f.processor.process).not.toHaveBeenCalled();
   });
   it('normalizes malformed output into recorded failure, preserving the admitted exact message and scope', async () => {
     const f = await fixture(); f.processor.process.mockResolvedValue({ draft: { ...draft, blocks: [{ kind: 'paragraph', text: 'unchecked', sourceIds: ['forged'] }] }, sources: [source] });

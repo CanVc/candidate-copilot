@@ -1,3 +1,5 @@
+import type { ModelCallInput, ModelTokenAccounting, PreparedModelCall } from '../ports/ModelTokenAccounting.ts';
+import { prepareModelCall, validatePreparedModelCall } from '../shared/model-context-budget.ts';
 import type { ClassificationOptions, LLMProvider } from '../ports/LLMProvider.ts';
 import { DEFAULT_INTENT_BOUNDS, DEFAULT_INTENT_FORBIDDEN, INTENT_REASONS, directIntentDraft, validateClassifyTurnRequest, validateClassifyTurnResult,
   type ClassifyTurnRequest, type IntentBounds, type IntentContinuation } from '../shared/professional-intent.ts';
@@ -22,19 +24,38 @@ Active structural limits (string lengths in UTF-16 code units; serialized output
 Search terms accept Unicode letters, numbers and combining marks separated by single spaces, apostrophes (straight or curly), or hyphens. Each term must yield at least one token starting with a letter or number followed by letters/numbers/combining marks. Maximum 64 lexical tokens across all terms and 64 UTF-16 code units per token, independently of configured term length. No SQL/raw FTS syntax. Strings must be nonempty, well-formed Unicode, with no C0 or DEL control characters except tab, CR and LF.`;
 }
 
+export function professionalIntentInput(request: ClassifyTurnRequest, bounds: Readonly<IntentBounds>): ModelCallInput {
+  const validated = validateClassifyTurnRequest(request, bounds);
+  const instructions = professionalIntentInstructions(bounds);
+  return { instructions, data: JSON.stringify(validated), components: { instructions,
+    question: JSON.stringify(validated.question), history: JSON.stringify(validated.conversationContext),
+    catalog: JSON.stringify({ documentaryScope: validated.documentaryScope, publicCatalog: validated.publicCatalog }),
+    evidence: '', handoff: JSON.stringify({ languagePolicy: validated.languagePolicy }),
+  } };
+}
+export function prepareProfessionalIntent(receiver: ModelTokenAccounting, request: ClassifyTurnRequest, bounds: Readonly<IntentBounds>): PreparedModelCall {
+  return prepareModelCall(receiver, professionalIntentInput(request, bounds));
+}
+
 export type ClassifiedIntent = { kind: 'direct'; draft: ResultDraft }
   | { kind: 'continuation'; classification: IntentContinuation }
+  | { kind: 'limit' }
   | { kind: 'failure'; failure: 'invalid_result' | 'processing_unavailable' };
 
 export async function classifyProfessionalIntent(provider: LLMProvider, request: ClassifyTurnRequest,
   bounds: Readonly<IntentBounds> = DEFAULT_INTENT_BOUNDS, forbidden: readonly RegExp[] = DEFAULT_INTENT_FORBIDDEN,
-  options: ClassificationOptions = {}): Promise<ClassifiedIntent> {
+  options: ClassificationOptions = {}, prepared?: PreparedModelCall): Promise<ClassifiedIntent> {
   if (options.signal?.aborted) return { kind: 'failure', failure: 'processing_unavailable' };
-  let data: string;
-  try { data = JSON.stringify(validateClassifyTurnRequest(request, bounds)); }
+  let expected: ModelCallInput;
+  try { expected = professionalIntentInput(request, bounds); }
   catch { return { kind: 'failure', failure: 'invalid_result' }; }
+  let call: PreparedModelCall;
+  try {
+    call = prepared ?? prepareModelCall(provider.receiver, expected);
+    validatePreparedModelCall(provider.receiver, call, expected);
+  } catch { return { kind: 'limit' }; }
   let raw: unknown;
-  try { raw = await provider.classify({ instructions: professionalIntentInstructions(bounds), data }, options); }
+  try { raw = await provider.classify(call, options); }
   catch { return { kind: 'failure', failure: 'processing_unavailable' }; }
   if (options.signal?.aborted) return { kind: 'failure', failure: 'processing_unavailable' };
   try {

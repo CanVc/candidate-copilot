@@ -129,7 +129,7 @@
 # - Closure is documentation/tracking only, without code/operator mutation,
 #   push, deployment or implied later-story integration/recruiter approval.
 generated: 10-19-2026 21:56
-last_updated: 11-19-2026 11:32
+last_updated: 11-19-2026 15:05
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -167,7 +167,11 @@ development_status:
   # No new deferred item; BC human inspection/acceptance remains pending.
   # Byte-bounded simulation only; 2.10 model accounting and 2.13 deadline orchestration remain later work.
   2-9-resolve-professional-intent-boundaries-and-clarification: review # BC acceptance pending
-  2-10-preserve-bounded-follow-up-and-clarification-context: backlog
+  # 2.10 technical completion: two fresh three-layer reviews, one re-derivation and all retained patches.
+  # 753 units, 284 focused, 45 fixtures, builds, 6 simulations and 43 Playwright pass.
+  # Native wait/index-gate incidents and unexplained earlier health assertion retained honestly.
+  # Synthetic receiver accounting only; no live provider, generator or retry admission. BC acceptance pending.
+  2-10-preserve-bounded-follow-up-and-clarification-context: review
   2-11-generate-and-validate-answers-against-eligible-evidence: backlog
   2-12-integrate-a-replaceable-real-provider-with-safe-free-quota-b: backlog
   2-13-bound-processing-and-expose-honest-failure-outcomes: backlog

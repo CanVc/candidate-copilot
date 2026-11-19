@@ -1,14 +1,15 @@
+import type { PreparedModelCall } from '../ports/ModelTokenAccounting.ts';
+import { contextFallbackLanguage, selectConversationExchanges } from './conversation-context.ts';
 import type { ConversationProcessor, ConversationProcessingContext } from '../ports/ConversationProcessor.ts';
 import type { LLMProvider } from '../ports/LLMProvider.ts';
 import type { ResourceCatalog } from '../ports/ResourceCatalog.ts';
 import type { AdmittedMessage, SubmittedScope } from '../shared/conversation-admission.ts';
-import { resultLanguage } from '../shared/conversation-result.ts';
-import { DEFAULT_INTENT_FORBIDDEN, directIntentDraft, intentBounds, intentBytes, intentText, validateClassifyTurnRequest,
+import { CONTEXT_RESTATEMENT, DEFAULT_INTENT_FORBIDDEN, directIntentDraft, intentBounds, intentBytes, intentText, validateClassifyTurnRequest,
   type ClassifyTurnRequest, type IntentBounds, type IntentContinuation } from '../shared/professional-intent.ts';
-import { classifyProfessionalIntent } from './classify-professional-intent.ts';
+import { classifyProfessionalIntent, prepareProfessionalIntent } from './classify-professional-intent.ts';
 
-export type PreparedIntent = { kind: 'ready'; request: ClassifyTurnRequest }
-  | { kind: 'missing_context' } | { kind: 'scope_unavailable' } | { kind: 'processing_unavailable' };
+export type PreparedIntent = { kind: 'ready'; request: ClassifyTurnRequest; call?: PreparedModelCall }
+  | { kind: 'missing_context'; contextReset?: true } | { kind: 'scope_unavailable' } | { kind: 'processing_unavailable' };
 export interface IntentPreparation {
   prepare(message: AdmittedMessage, context: ConversationProcessingContext): Promise<PreparedIntent>;
 }
@@ -18,23 +19,20 @@ export interface ProfessionalIntentContinuation {
     classification: IntentContinuation;
     submittedScope: Readonly<SubmittedScope>;
     conversationContext: ClassifyTurnRequest['conversationContext'];
+    // Re-select for the continuation's receiver; canonical records never escape.
+    selectConversationContext: (fits: (history: ClassifyTurnRequest['conversationContext']) => boolean) => ClassifyTurnRequest['conversationContext'] | null;
     signal?: AbortSignal;
   }): ReturnType<ConversationProcessor['process']>;
 }
 
-// Conservative local simulation only. Complete recent exchanges, JSON UTF-8 byte
-// bounds, and no excerpt attachments. Real receiving-model accounting is 2.10.
+// Shared runtime request/catalog assembly. Its default byte-only history selector
+// remains for legacy 2.9 regressions; delivered composition overrides selection and
+// acceptance with ModelAwareIntentPreparation, not byte-to-token accounting.
 export class BoundedSimulationIntentPreparation implements IntentPreparation {
-  constructor(private readonly catalog: ResourceCatalog, private readonly bounds: Readonly<IntentBounds> = intentBounds()) {}
-  async prepare(message: AdmittedMessage, context: ConversationProcessingContext): Promise<PreparedIntent> {
-    const request: ClassifyTurnRequest = { question: message.question,
-      documentaryScope: { mode: message.submittedScope.mode, resourceNames: [] },
-      conversationContext: [], publicCatalog: [], languagePolicy: 'follow-current-question-or-explicit-request' };
-    // Reserve the immutable base before optional metadata. Unrepresentable input
-    // is missing interpretation context, not malformed model output.
-    try { validateClassifyTurnRequest(request, this.bounds); }
-    catch { return { kind: 'missing_context' }; }
-    if (!context.contextAvailable) return { kind: 'missing_context' };
+  constructor(private readonly catalog: ResourceCatalog, protected readonly bounds: Readonly<IntentBounds> = intentBounds()) {}
+  protected accept(request: ClassifyTurnRequest): void { validateClassifyTurnRequest(request, this.bounds); }
+  protected selectHistory(request: ClassifyTurnRequest, context: ConversationProcessingContext): ClassifyTurnRequest['conversationContext'] | null {
+    if (!context.contextAvailable) return null;
     for (let i = context.precedingMessages.length - 1; i >= 0; i--) {
       const turn = context.precedingMessages[i]!;
       let exchange: ClassifyTurnRequest['conversationContext'];
@@ -46,11 +44,21 @@ export class BoundedSimulationIntentPreparation implements IntentPreparation {
         ];
         validateClassifyTurnRequest({ ...request, conversationContext: [...exchange, ...request.conversationContext] }, this.bounds);
       } catch {
-        if (!request.conversationContext.length) return { kind: 'missing_context' };
+        if (!request.conversationContext.length) return null;
         break; // A usable recent exchange lets a clean clarification reply recover.
       }
       request.conversationContext.unshift(...exchange);
     }
+    return request.conversationContext;
+  }
+  async prepare(message: AdmittedMessage, context: ConversationProcessingContext): Promise<PreparedIntent> {
+    const request: ClassifyTurnRequest = { question: message.question,
+      documentaryScope: { mode: message.submittedScope.mode, resourceNames: [] },
+      conversationContext: [], publicCatalog: [], languagePolicy: 'follow-current-question-or-explicit-request' };
+    try { this.accept(request); } catch { return { kind: 'missing_context' }; }
+    const history = this.selectHistory(request, context);
+    if (history === null) return { kind: 'missing_context' };
+    request.conversationContext = history;
     let publication;
     try {
       if (this.catalog.readProcessingSnapshot) {
@@ -66,8 +74,9 @@ export class BoundedSimulationIntentPreparation implements IntentPreparation {
     };
     const fits = (entry: ClassifyTurnRequest['publicCatalog'][number], replaceLast = false) => {
       const entries = replaceLast ? request.publicCatalog.slice(0, -1) : request.publicCatalog;
-      return entries.length < this.bounds.catalogEntries && intentBytes([...entries, entry]) <= this.bounds.catalogBytes &&
-        intentBytes({ ...request, publicCatalog: [...entries, entry] }) <= this.bounds.requestBytes;
+      if (entries.length >= this.bounds.catalogEntries || intentBytes([...entries, entry]) > this.bounds.catalogBytes ||
+        intentBytes({ ...request, publicCatalog: [...entries, entry] }) > this.bounds.requestBytes) return false;
+      try { this.accept({ ...request, publicCatalog: [...entries, entry] }); return true; } catch { return false; }
     };
     const add = (topic: unknown, aliases: unknown = [], description?: unknown) => {
       if (!usable(topic)) return;
@@ -99,9 +108,28 @@ export class BoundedSimulationIntentPreparation implements IntentPreparation {
   }
 }
 
-function clarificationLanguage(context: ConversationProcessingContext): 'en' | 'fr' {
-  const previous = [...context.precedingMessages].reverse().find((message) => message.result)?.result?.language;
-  try { return resultLanguage(previous).split('-')[0] === 'en' ? 'en' : 'fr'; } catch { return 'fr'; }
+export class ModelAwareIntentPreparation extends BoundedSimulationIntentPreparation {
+  constructor(catalog: ResourceCatalog, private readonly provider: LLMProvider, bounds: Readonly<IntentBounds> = intentBounds()) { super(catalog, bounds); }
+  protected override accept(request: ClassifyTurnRequest): void { prepareProfessionalIntent(this.provider.receiver, request, this.bounds); }
+  protected override selectHistory(request: ClassifyTurnRequest, context: ConversationProcessingContext): ClassifyTurnRequest['conversationContext'] | null {
+    return selectConversationExchanges(context, this.bounds.historyBytes, (conversationContext) => {
+      try { this.accept({ ...request, conversationContext }); return true; } catch { return false; }
+    });
+  }
+  override async prepare(message: AdmittedMessage, context: ConversationProcessingContext): Promise<PreparedIntent> {
+    const prepared = await super.prepare(message, context);
+    if (prepared.kind === 'missing_context') return { kind: 'missing_context', contextReset: true };
+    if (prepared.kind !== 'ready') return prepared;
+    try { return { ...prepared, call: prepareProfessionalIntent(this.provider.receiver, prepared.request, this.bounds) }; }
+    catch { return { kind: 'missing_context', contextReset: true }; }
+  }
+}
+
+function missingContext(context: ConversationProcessingContext, contextReset = false) {
+  const language = contextFallbackLanguage(context);
+  return { draft: directIntentDraft({ decision: 'clarify', reasonCode: 'missing_context', responseLanguage: language,
+    clarificationQuestion: CONTEXT_RESTATEMENT[language] }),
+    sources: [], ...(contextReset ? { contextReset: true as const } : {}) };
 }
 export class ProfessionalIntentProcessor implements ConversationProcessor {
   constructor(private readonly provider: LLMProvider, private readonly preparation: IntentPreparation,
@@ -114,13 +142,10 @@ export class ProfessionalIntentProcessor implements ConversationProcessor {
     catch { return { failure: 'invalid_result' }; }
     if (context.signal?.aborted) return { failure: 'processing_unavailable' };
     if (prepared.kind === 'scope_unavailable' || prepared.kind === 'processing_unavailable') return { failure: prepared.kind };
-    if (prepared.kind === 'missing_context') {
-      const language = clarificationLanguage(context);
-      return { draft: directIntentDraft({ decision: 'clarify', reasonCode: 'missing_context', responseLanguage: language,
-        clarificationQuestion: language === 'en' ? 'Could you restate the professional question with the necessary context?' : 'Pouvez-vous reformuler la question professionnelle avec le contexte nécessaire ?' }), sources: [] };
-    }
+    if (prepared.kind === 'missing_context') return missingContext(context, prepared.contextReset);
     const options = context.signal ? { signal: context.signal } : {};
-    const outcome = await classifyProfessionalIntent(this.provider, prepared.request, this.bounds, this.forbidden, options);
+    const outcome = await classifyProfessionalIntent(this.provider, prepared.request, this.bounds, this.forbidden, options, prepared.call);
+    if (outcome.kind === 'limit') return missingContext(context, true);
     if (outcome.kind === 'failure') return { failure: outcome.failure };
     if (outcome.kind === 'direct') return { draft: outcome.draft, sources: [] };
     // Separate copies ensure no downstream adapter can alter admitted authority.
@@ -128,8 +153,13 @@ export class ProfessionalIntentProcessor implements ConversationProcessor {
     Object.freeze(submittedScope.eligibleDocumentIds); Object.freeze(submittedScope.resources); Object.freeze(submittedScope);
     try {
       const output = await this.continuation.continue({ question: message.question, classification: outcome.classification,
-        submittedScope, conversationContext: prepared.request.conversationContext, ...options });
+        submittedScope, conversationContext: prepared.request.conversationContext,
+        selectConversationContext: (fits) => selectConversationExchanges(context, this.bounds.historyBytes, fits), ...options });
       if (context.signal?.aborted) return { failure: 'processing_unavailable', language: outcome.classification.responseLanguage };
+      if ('draft' in output) {
+        const { contextReset: _untrustedReset, ...ordinary } = output;
+        return { ...ordinary, language: outcome.classification.responseLanguage };
+      }
       return 'failure' in output && output.language !== undefined
         ? output : { ...output, language: outcome.classification.responseLanguage };
     } catch { return { failure: 'processing_unavailable', language: outcome.classification.responseLanguage }; }

@@ -56,7 +56,7 @@ export async function readConversation(store: ConversationStore, clock: Clock, c
     const active = state.lease && state.lease.until > clock.now().getTime() ? state.lease : null;
     return {
       conversationId,
-      transcript: state.messages.map(({ submissionIdentity: _identity, contextAnchorMessageId: _anchor, ...message }) => ({
+      transcript: state.messages.map(({ submissionIdentity: _identity, contextAnchorMessageId: _anchor, contextReset: _reset, ...message }) => ({
         ...message, status: message.result ? 'completed' : active?.requestId === message.requestId ? 'in_progress' : 'interrupted',
       })),
       processing: active ? { status: 'in_progress', requestId: active.requestId } : { status: 'idle' },

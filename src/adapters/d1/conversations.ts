@@ -1,3 +1,4 @@
+import { assertContextResetResult } from '../../shared/professional-intent.ts';
 import { controlledFailure, factualResult, validateConversationResult, type ConversationResult, type AnswerBlock, type SourceExcerpt } from '../../shared/conversation-result.ts';
 import { CONVERSATION_RETENTION_MS } from '../../application/conversations.ts';
 import { AdmissionRejected, type AdmittedMessage, type AdmissionState, type AdmissionOutcome, type SubmissionIdentity } from '../../shared/conversation-admission.ts';
@@ -31,7 +32,8 @@ export class D1ConversationStore implements ConversationStore {
     return { messages: results[1]!.results.map((row) => {
       const message = readMessage(row);
       const result = readResult(message, results.slice(3).map((r) => r.results));
-      return result ? { ...message, result } : message;
+      const answer = results[3]!.results.find((a) => a.message_id === message.messageId);
+      return result ? { ...message, result, contextReset: answer?.context_reset === 1 } : message;
     }), lease: lease ? {
       requestId: String(lease.request_id), attemptId: String(lease.attempt_id), until: Number(lease.processing_until),
     } : null };
@@ -109,6 +111,7 @@ export class D1ConversationStore implements ConversationStore {
   async finalize(command: AtomicFinalization): Promise<ConversationResult> {
     const { conversationId, sessionTokenHash, requestId, attemptId, result } = command;
     validateConversationResult(result);
+    if (command.contextReset) assertContextResetResult(result);
     if (result.requestId !== requestId) throw new Error('Invalid finalization identity');
     const now = this.nowSql();
     const failure = controlledFailure({ messageId: result.messageId, requestId, submittedScope: result.submittedScope },
@@ -143,14 +146,14 @@ export class D1ConversationStore implements ConversationStore {
     const blocks = JSON.stringify(result.blocks), excerpts = JSON.stringify(result.sourceExcerpts);
     const failureBlocks = JSON.stringify(failure.blocks);
     const results = await this.db.batch<Record<string, unknown>>([
-      this.db.prepare(`INSERT INTO answers (id, message_id, status, language, error_json, created_at)
+      this.db.prepare(`INSERT INTO answers (id, message_id, status, language, error_json, created_at, context_reset)
         SELECT ?, m.id, json_extract(${chosen}, '$.status'), json_extract(${chosen}, '$.language'),
-          json_extract(${chosen}, '$.error'), strftime('%Y-%m-%dT%H:%M:%fZ', ${now} / 1000.0, 'unixepoch')
+          json_extract(${chosen}, '$.error'), strftime('%Y-%m-%dT%H:%M:%fZ', ${now} / 1000.0, 'unixepoch'), ?
         FROM messages m JOIN conversations c ON c.id = m.conversation_id
         JOIN conversation_processing_leases l ON l.conversation_id = c.id
         WHERE ${owner} AND json(m.submitted_scope) = json(?)
           AND NOT EXISTS (SELECT 1 FROM answers WHERE message_id = m.id)`)
-        .bind(result.answerId, ...Array.from({ length: 3 }, () => [Number(factualResult(result)), JSON.stringify(failure), JSON.stringify(result)]).flat(),
+        .bind(result.answerId, ...Array.from({ length: 3 }, () => [Number(factualResult(result)), JSON.stringify(failure), JSON.stringify(result)]).flat(), Number(command.contextReset === true),
           conversationId, requestId, result.messageId, sessionTokenHash, attemptId, JSON.stringify(result.submittedScope)),
       this.db.prepare(`INSERT INTO answer_blocks (id, answer_id, sequence, kind, text)
         SELECT json_extract(b.value, '$.blockId'), a.id, CAST(b.key AS INTEGER), json_extract(b.value, '$.kind'), json_extract(b.value, '$.text')

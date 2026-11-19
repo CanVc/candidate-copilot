@@ -1,3 +1,5 @@
+import { assertContextResetResult } from '../shared/professional-intent.ts';
+import { contextFallbackLanguage, resolveConversationContext } from './conversation-context.ts';
 import type { Clock } from '../ports/Clock.ts';
 import type { ConversationStore } from '../ports/ConversationStore.ts';
 import type { ConversationProcessor } from '../ports/ConversationProcessor.ts';
@@ -29,28 +31,33 @@ export async function submitConversationQuestion(
     // repeated interrupted POST into an automatic processing restart.
     if (!('lease' in admission)) throw new AdmissionRejected('result_unavailable');
     const { message, lease } = admission;
-    let lastLanguage = [...state.messages].reverse().find((m) => m.result)?.result?.language;
+    // Only a genuinely new direct admission can safely use the initial snapshot
+    // if the post-admission read fails. Existing roots must never borrow later topics.
+    let lastLanguage: string | undefined = admission.status === 'admitted' && !saved && identity.kind === 'direct' && message.submissionIdentity.kind === 'direct' &&
+      message.contextAnchorMessageId === message.messageId
+      ? contextFallbackLanguage({ precedingMessages: state.messages, contextAvailable: true }) : undefined;
+    let contextReset = false;
     let result: ConversationResult;
     try {
       // Admission can race another completed turn. Read authoritative context
       // after acquisition, anchored before this message, never later turns.
       const contextState = await store.readAdmissionState(conversationId, tokenHash, new Date(clock.now().getTime() - CONVERSATION_RETENTION_MS).toISOString());
       if (!contextState) throw new ConversationUnavailable();
-      const anchor = contextState.messages.findIndex((m) => m.messageId === message.contextAnchorMessageId);
-      const precedingMessages = anchor >= 0 ? contextState.messages.slice(0, anchor) : [];
-      lastLanguage = [...precedingMessages].reverse().find((m) => m.result)?.result?.language;
-      const output = await processor.process(message, {
-        precedingMessages,
-        contextAvailable: anchor >= 0,
-      });
+      const context = resolveConversationContext(contextState, message, limits.maxMessages);
+      lastLanguage = contextFallbackLanguage(context);
+      const output = await processor.process(message, context);
       try {
         result = 'failure' in output ? controlledFailure(message, output.failure, output.language, lastLanguage)
           : completeResult(message, output.draft, output.sources);
+        if ('draft' in output && output.contextReset === true) {
+          assertContextResetResult(result);
+          contextReset = true;
+        }
       } catch { result = controlledFailure(message, 'invalid_result', output.language, lastLanguage); }
     } catch { result = controlledFailure(message, 'processing_unavailable', lastLanguage); }
     // Persistence uncertainty is NOT a recorded failure. Never replace an
     // unconfirmed commit with a second answer or return an unchecked draft.
-    return await store.finalize({ conversationId, sessionTokenHash: tokenHash, requestId, attemptId: lease.attemptId, result,
+    return await store.finalize({ conversationId, sessionTokenHash: tokenHash, requestId, attemptId: lease.attemptId, result, contextReset,
       ...(lastLanguage === undefined ? {} : { previousLanguage: lastLanguage }) });
   } catch (error) {
     if (error instanceof ConversationUnavailable || error instanceof AdmissionRejected) throw error;

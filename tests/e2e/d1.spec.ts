@@ -46,7 +46,7 @@ ${entry}`));
     expect(tables[0]?.results.map((row) => row.name)).toEqual(['_cf_METADATA', 'active_publication', 'answer_block_sources', 'answer_blocks', 'answers', 'conversation_creation_counters', 'conversation_creation_key', 'conversation_processing_leases', 'conversations', 'd1_migrations', 'messages', 'public_chunks', 'public_chunks_fts', 'public_chunks_fts_config', 'public_chunks_fts_content', 'public_chunks_fts_data', 'public_chunks_fts_docsize', 'public_chunks_fts_idx', 'public_documents', 'public_resource_documents', 'public_resources', 'source_excerpts', 'sqlite_sequence']);
     expect((await sql(local, 'SELECT * FROM active_publication'))[0]?.results).toEqual([]);
     const before = await sql(local, 'SELECT * FROM d1_migrations');
-    expect(before[0]?.results).toHaveLength(6);
+    expect(before[0]?.results).toHaveLength(7);
     expect(before[0]?.results[0]?.name).toBe('0001_local_bootstrap.sql');
     await sql(local, "CREATE TABLE fixture_only (id INTEGER PRIMARY KEY, value TEXT NOT NULL); INSERT INTO fixture_only VALUES (1, 'cli-owned')");
     await run(local, setup('init'));
@@ -68,7 +68,7 @@ ${entry}`));
     for (const action of ['init', 'check', 'types']) await run(local, setup(action));
     delete local.env.CLOUDFLARE_ENV;
     delete local.env.WRANGLER_ENV;
-    expect((await sql(local, 'SELECT name FROM d1_migrations'))[0]?.results).toEqual([{ name: '0001_local_bootstrap.sql' }, { name: '0002_public_publication.sql' }, { name: '0003_conversations.sql' }, { name: '0004_conversation_creation_limits.sql' }, { name: '0005_conversation_admission.sql' }, { name: '0006_conversation_results.sql' }]);
+    expect((await sql(local, 'SELECT name FROM d1_migrations'))[0]?.results).toEqual([{ name: '0001_local_bootstrap.sql' }, { name: '0002_public_publication.sql' }, { name: '0003_conversations.sql' }, { name: '0004_conversation_creation_limits.sql' }, { name: '0005_conversation_admission.sql' }, { name: '0006_conversation_results.sql' }, { name: '0007_conversation_context_reset.sql' }]);
   });
 
   test('rejects missing, renamed, wrong-identity, remote, preview and additional bindings before storage access', async ({ local }) => {
