@@ -1,6 +1,6 @@
 import { catalogAssetPath, exactObject, fullRevision, jcs, normalizeCatalog, publicString, validUnicode } from '../../shared/public-catalog.ts';
 import { chunkIdPreimage, contentHashPreimage, type PublicChunk, type SearchDocument } from '../../shared/public-evidence.ts';
-import type { PublicPublication, ResourceCatalog } from '../../ports/ResourceCatalog.ts';
+import type { ProcessingPublicationRead, PublicPublication, ResourceCatalog } from '../../ports/ResourceCatalog.ts';
 
 async function hash(text: string): Promise<string> {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -13,6 +13,12 @@ export class D1ResourceCatalog implements ResourceCatalog {
   async readSnapshot(): Promise<PublicPublication | null> {
     return (await this.readBatch())?.publication ?? null;
   }
+  async readProcessingSnapshot(): Promise<ProcessingPublicationRead> {
+    try {
+      const snapshot = await this.readBatch(undefined, true);
+      return snapshot ? { kind: 'available', publication: snapshot.publication } : { kind: 'unavailable' };
+    } catch { return { kind: 'dependency_failure' }; }
+  }
   // Search rows and all validation reads belong to the same D1 transaction.
   // Callers must resolve match IDs only against this returned publication.
   async readSearchSnapshot(statement: D1PreparedStatement): Promise<{
@@ -20,9 +26,10 @@ export class D1ResourceCatalog implements ResourceCatalog {
   } | null> {
     return this.readBatch(statement);
   }
-  private async readBatch(statement?: D1PreparedStatement): Promise<{
+  private async readBatch(statement?: D1PreparedStatement, reportDependency = false): Promise<{
     publication: PublicPublication; matches: Record<string, unknown>[];
   } | null> {
+    let results: D1Result<Record<string, unknown>>[];
     try {
       // D1 batch is one transaction. Never read an authority pointer first and
       // then issue unguarded data queries, even across independent Workers.
@@ -35,8 +42,13 @@ export class D1ResourceCatalog implements ResourceCatalog {
         'SELECT chunk_id, text FROM public_chunks_fts',
       ].map((sql) => this.db.prepare(sql));
       if (statement) reads.push(statement);
-      const results = await this.db.batch<Record<string, unknown>>(reads);
+      results = await this.db.batch<Record<string, unknown>>(reads);
       if (results.length !== reads.length || results.some((r) => !r.success)) throw new Error();
+    } catch {
+      if (reportDependency) throw new Error('Publication dependency unavailable');
+      return null;
+    }
+    try {
       const [authority, resources, maps, registry, chunks, fts] = results.map((r) => r.results)!;
       if (authority!.length !== 1 || authority![0]!.id !== 1 || !registry!.length) throw new Error();
       const row = authority![0]!;

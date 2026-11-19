@@ -11,5 +11,12 @@ export interface PublicPublication extends PublicationIdentity {
   documents: SearchDocument[];
   chunks: PublicChunk[];
 }
+export type ProcessingPublicationRead = { kind: 'available'; publication: PublicPublication }
+  | { kind: 'unavailable' } | { kind: 'dependency_failure' };
+
 // Null means unavailable: callers must not process evidence or infer global scope.
-export interface ResourceCatalog { readSnapshot(): Promise<PublicPublication | null> }
+export interface ResourceCatalog {
+  readSnapshot(): Promise<PublicPublication | null>;
+  // Processing must distinguish a failed read from confirmed publication loss.
+  readProcessingSnapshot?(): Promise<ProcessingPublicationRead>;
+}

@@ -107,7 +107,7 @@ export function createWorker(clockOverride?: Clock, addressAdapter = trustedCrea
       try { body = await context.req.json(); } catch { throw new AdmissionRejected('invalid_request'); }
       if (body && typeof body === 'object' && 'requestId' in body && typeof body.requestId === 'string') requestId = body.requestId;
       const catalog = new D1ResourceCatalog(context.env?.DB);
-      return context.json(await submitConversationQuestion(store, catalog, clock, options.processor ? { process: (message) => options.processor!(catalog).process(message) } : undefined, id, authorization, body, limits), 200);
+      return context.json(await submitConversationQuestion(store, catalog, clock, options.processor ? { process: (message, processingContext) => options.processor!(catalog).process(message, processingContext) } : undefined, id, authorization, body, limits), 200);
     } catch (error) {
       if (error instanceof ConversationUnavailable) {
         context.header('WWW-Authenticate', 'Bearer');

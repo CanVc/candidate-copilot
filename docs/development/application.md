@@ -1,3 +1,142 @@
+# Professional intent — Story 2.9 (controlled development)
+
+Story 2.9 adds the portable classifier and direct-result path; the default Worker
+still has **no configured processor**. Only the explicit disposable test
+composition uses `ScriptedLLMProvider` and `ProfessionalIntentProcessor`. The
+bootstrap `generate('bootstrap-ping')` fixture remains unchanged. No live model,
+factual generator, new route, schema migration or chat UI is enabled.
+
+## Classification and trust boundaries
+
+- `ClassifyTurnRequest` follows the spine: immutable current question, documentary
+  scope labels, bounded server-owned conversation context, public interpretation
+  catalog and current-question/explicit-request language policy. Trusted policy
+  and serialized untrusted data are separate provider arguments. Conversation,
+  message, request and document IDs, credentials, review metadata, source paths
+  and old excerpt attachments are not model-payload fields.
+- The provider is called once per prepared attempt, never on saved replay.
+  `answer`/`redirect` require an owned reason, professional topic, standalone
+  question and bounded lexical terms; `refuse`/`clarify` require only their direct
+  text plus reason/language. Extra or mixed fields, sparse arrays, malformed
+  Unicode/tags, lexical syntax, oversized output and configured forbidden markers
+  fail closed without repair, reclassification or a fifth business decision.
+- Professional value judgments instruct a redirect to eligible documented facts,
+  not yes/no, fit assessment or hiring recommendation. Sensitive-personal topics
+  instruct refusal; commitments/bypass cannot authorize disclosure, negotiation,
+  promises, hidden instructions or fabricated evidence. Catalog/history remain
+  interpretation data, never evidence or policy; missing catalog terms do not
+  prohibit a professional topic. These instructions are **not semantic proof**.
+- Direct classifier text persists unchanged as `clarification/clarification` or
+  `refused/refusal`, with normalized declared BCP-47 language and no sources,
+  retrieval or second generation call. Invalid classification becomes controlled
+  `invalid_result`; dependency failure becomes `processing_unavailable` if saved.
+  Unknown persistence remains `result_unavailable`, not a recorded failure.
+- Answer/redirect continue through a typed seam retaining decision, reason,
+  current question, context and a separately copied/frozen admitted allowlist.
+  The test continuation exercises real scoped FTS and returns explicitly synthetic
+  text, not an operational factual generator. Existing atomic ownership,
+  membership, replay, auth and scope-unavailable **false/none after restoration**
+  semantics remain intact.
+
+## Bounded preparation and later-story seams
+
+`BoundedSimulationIntentPreparation` selects complete recent question/answer
+exchanges before the immutable server context anchor, never later turns or
+browser history. The immediately preceding question/clarification pair is
+included before older exchanges. Missing, unrepresentable or nonfitting immediate context asks a
+controlled clarification without a model call. Template language uses supported
+recorded language, otherwise French; the core does not guess the current text's
+language. An unusable older exchange stops history selection after a usable
+recent pair, so a clean clarification reply can recover from earlier admitted
+control text. No admission character policy or input sanitization is added.
+Full root-context prioritization and recovery execution remain later
+work, not claimed here.
+
+Defaults in `DEFAULT_INTENT_BOUNDS`: 12,000 UTF-8 JSON bytes each for history and
+catalog, 32,000 for the data request, 12,000 for classifier output, 40 catalog
+entries, 16 aliases/entry and 16 search terms. Text bounds use UTF-16 length:
+4,000 current/resolved question, 200 topic, 64 term, 600 direct/metadata text.
+Admission's independent 1,000-code-point question limit is unchanged. Oversized
+current questions are never truncated: an unrepresentable/nonfitting immutable
+base takes the controlled clarification path, not `invalid_result`. Preparation
+reserves the question/scope/language-policy envelope and most-recent necessary
+complete exchange first, then admits whole older exchanges and optional metadata
+only while both component and aggregate data-byte bounds hold. These bytes do
+not include a receiving model's policy tokens or reserved generation capacity.
+Catalog projection deterministically
+includes only eligible public titles/topics/aliases and fully eligible project
+names/descriptions, omitting invalid optional strings/entries and whole nonfitting
+metadata while preserving usable titles/aliases where possible, without changing
+the complete frozen eligibility set. It never includes chunks or review fields.
+These are configurable **simulation byte/structural bounds, not token counts**.
+The trusted classifier instructions include the active output bounds and accepted
+lexical grammar, including a nonempty encoder token per term and at most 64 total
+lexical tokens and 64 UTF-16 code units per token even when term bounds increase.
+Structured downstream failures without a declaration preserve the validated
+current language for existing template fallback. Invalid downstream drafts use
+separate validated classifier-language metadata for failure templates, never the
+invalid draft's language or a relabeled answer.
+
+The D1 catalog's internal processing read distinguishes a failed storage batch
+(`processing_unavailable`, retryable/new_request when recorded) from confirmed
+missing/incoherent publication or membership (`scope_unavailable`, false/none).
+Legacy health/admission/search readers retain fail-closed null behavior. No
+second read or automatic retry is performed; saved results remain identical after
+restoration.
+
+Story 2.10 must implement receiving-model 3,000-token history and separate
+component/total-capacity accounting with reserved output.
+
+The processor/provider/continuation accept an optional orchestration-owned
+`AbortSignal`, kept outside model data. Already-cancelled attempts and late
+classifier completions do not start a continuation; a continuation finishing after
+cancellation is also discarded. **No timing engine is
+implemented or operational timing claim made**: Story 2.13 owns the mandatory
+30-second total budget including the 5-second classifier ceiling and finalization
+reserve. Cancellation does not establish that remote work stopped. Existing
+40-second lease/finalization fencing remains active; no automatic retry/failover
+or new usage policy is introduced.
+
+## Reproduce and inspect Story 2.9
+
+Use the locked checkout and installed Chromium; these commands create disposable
+local D1/Worker/browser fixtures only, without operator migrations or live models:
+
+```bash
+npx vitest run tests/bootstrap/professional-intent.test.ts tests/bootstrap/conversation-results.test.ts
+npx playwright test conversations.spec.ts -g 'real D1 professional intent'
+npm run typecheck
+npm test
+npm run build
+npm run test:smoke
+git diff --check
+```
+
+The focused runtime checks exact direct text/language/status/no citations,
+answer/redirect's real FTS continuation, all branches, injected metadata, bounded
+same-Conversation context, POST/GET/replay parity, no extra calls at cap or lost
+receipt, disabled processing replay, auth/isolation, unknown persistence,
+withdrawal/restoration and stale fences. Regressions include an actual failing D1
+preparation batch after successful admission and finalization, missing publication
+and member after admission, three sequential poisoned-history/recovery HTTP
+submissions, valid empty optional publication metadata, exact aggregate bounds,
+non-string discriminator, zero-token/65-token output and structured-failure
+language. Independent policy-string assertions protect the approved instructions;
+they still cannot establish that a real model follows them. Chromium exercises the actual HTTP
+protocol, not an undelivered chat UI or accessibility journey. The existing
+Story 2.8 result regressions are retained.
+
+Deterministic routing and schema tests do not establish actual-model semantics,
+actual language, citation entailment, privacy guarantees or BC acceptance.
+A05 sensitive-input transmission/disclosure and A08 measured recovery-usage policy
+remain unresolved later gates; no exception, blanket input ban or consent is
+invented. The catalog port still loads a whole publication internally; large
+publication/read costs and inherited ingress/graph/preflight risks are unmeasured.
+Independent review and BC inspection remain required; sprint stays review.
+Current command logs/counts are recorded in the Story 2.9 specification.
+
+---
+
 # Atomic complete results — Story 2.8 (controlled development)
 
 Final technical review: two fresh three-layer passes, one re-derivation and all

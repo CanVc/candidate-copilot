@@ -29,14 +29,24 @@ export async function submitConversationQuestion(
     // repeated interrupted POST into an automatic processing restart.
     if (!('lease' in admission)) throw new AdmissionRejected('result_unavailable');
     const { message, lease } = admission;
-    const lastLanguage = [...state.messages].reverse().find((m) => m.result)?.result?.language;
+    let lastLanguage = [...state.messages].reverse().find((m) => m.result)?.result?.language;
     let result: ConversationResult;
     try {
-      const output = await processor.process(message);
+      // Admission can race another completed turn. Read authoritative context
+      // after acquisition, anchored before this message, never later turns.
+      const contextState = await store.readAdmissionState(conversationId, tokenHash, new Date(clock.now().getTime() - CONVERSATION_RETENTION_MS).toISOString());
+      if (!contextState) throw new ConversationUnavailable();
+      const anchor = contextState.messages.findIndex((m) => m.messageId === message.contextAnchorMessageId);
+      const precedingMessages = anchor >= 0 ? contextState.messages.slice(0, anchor) : [];
+      lastLanguage = [...precedingMessages].reverse().find((m) => m.result)?.result?.language;
+      const output = await processor.process(message, {
+        precedingMessages,
+        contextAvailable: anchor >= 0,
+      });
       try {
         result = 'failure' in output ? controlledFailure(message, output.failure, output.language, lastLanguage)
           : completeResult(message, output.draft, output.sources);
-      } catch { result = controlledFailure(message, 'invalid_result', lastLanguage); }
+      } catch { result = controlledFailure(message, 'invalid_result', output.language, lastLanguage); }
     } catch { result = controlledFailure(message, 'processing_unavailable', lastLanguage); }
     // Persistence uncertainty is NOT a recorded failure. Never replace an
     // unconfirmed commit with a second answer or return an unchecked draft.

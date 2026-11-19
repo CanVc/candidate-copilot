@@ -200,11 +200,50 @@ describe('conversation-results portable service', () => {
     vi.mocked(f.store.admit).mockResolvedValue({ status: 'completed', message: { ...message, result } });
     expect(await f.submit()).toEqual(result); expect(f.processor.process).not.toHaveBeenCalled(); expect(f.store.finalize).not.toHaveBeenCalled();
   });
+  it('reads post-admission context before the immutable anchor and uses its language, never later turns', async () => {
+    const f = await fixture(), admit = vi.mocked(f.store.admit).getMockImplementation()!;
+    const prior: AdmittedMessage = { ...structuredClone(message), messageId: 'prior', requestId: 'prior' };
+    prior.result = controlledFailure(prior, 'processing_unavailable', 'en');
+    const later: AdmittedMessage = { ...structuredClone(message), messageId: 'later', requestId: 'later' };
+    later.result = controlledFailure(later, 'processing_unavailable', 'fr');
+    vi.mocked(f.store.admit).mockImplementation(async (command) => {
+      const result = await admit(command);
+      // Simulate authoritative state differing from the original preflight read.
+      f.state.messages.unshift(prior); f.state.messages.push(later);
+      return result;
+    });
+    f.processor.process.mockResolvedValue({ failure: 'processing_unavailable' });
+    const result = await f.submit();
+    expect(f.processor.process).toHaveBeenCalledWith(expect.any(Object), { precedingMessages: [prior], contextAvailable: true });
+    expect(result.language).toBe('en');
+    expect(vi.mocked(f.store.finalize).mock.calls[0]?.[0].previousLanguage).toBe('en');
+  });
+  it('passes unavailable context explicitly when the authoritative anchor is missing', async () => {
+    const f = await fixture(), read = vi.mocked(f.store.readAdmissionState).getMockImplementation()!;
+    vi.mocked(f.store.readAdmissionState).mockImplementation(async (...args) => {
+      const state = await read(...args);
+      if (state?.lease) state.messages = [];
+      return state;
+    });
+    await f.submit();
+    expect(f.processor.process).toHaveBeenCalledWith(expect.any(Object), { precedingMessages: [], contextAvailable: false });
+  });
   it('normalizes malformed output into recorded failure, preserving the admitted exact message and scope', async () => {
     const f = await fixture(); f.processor.process.mockResolvedValue({ draft: { ...draft, blocks: [{ kind: 'paragraph', text: 'unchecked', sourceIds: ['forged'] }] }, sources: [source] });
     const result = await f.submit(); expect(result.status).toBe('failed'); expect(result.error?.code).toBe('invalid_result');
     expect(JSON.stringify(result)).not.toContain('unchecked'); expect(result.submittedScope).toEqual(message.submittedScope);
     expect(f.state.messages[0]?.question).toBe(body.question); expect(f.processor.process).toHaveBeenCalledOnce();
+  });
+  it('uses validated processor language, not invalid draft language, for canonical validation failure', async () => {
+    const f = await fixture();
+    const previous = { ...structuredClone(message), messageId: 'prior', requestId: 'prior' };
+    previous.result = controlledFailure(previous, 'processing_unavailable', 'fr');
+    f.state.messages.push(previous);
+    f.processor.process.mockResolvedValue({ draft: { language: 'fr', blocks: 'invalid' }, sources: [], language: 'en-US' });
+    const result = await submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body, { maxMessages: 2 });
+    expect(result.status).toBe('failed'); expect(result.error?.code).toBe('invalid_result');
+    expect(result.language).toBe('en'); expect(result.blocks[0]?.text).toBe('A valid result could not be produced at this time.');
+    expect(f.processor.process).toHaveBeenCalledTimes(1);
   });
   it('records a safe invalid_result for NUL text instead of passing it to persistence', async () => {
     const f = await fixture();

@@ -5,6 +5,12 @@ import { fileURLToPath, URL } from 'node:url';
 import { test, expect } from './local-fixture';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+test('real D1 professional intent classifier and canonical Chromium direct results', async ({ local }) => {
+  for (const path of ['tests/e2e/professional-intent-worker.ts', 'tests/e2e/professional-intent-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
+  const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/professional-intent-runtime.mjs', chromium.executablePath()]));
+  expect(output).toContain('PASS: real D1 professional intent');
+});
+
 test('real D1 isolated conversations and atomic creation limits and controlled A07/A09 fixtures', async ({ local }) => {
   for (const path of ['tests/e2e/conversations-worker.ts', 'tests/e2e/conversations-runtime.mjs']) cpSync(join(root, path), join(local.project, path));
   const output = await local.completed(local.startCommand(process.execPath, ['tests/e2e/conversations-runtime.mjs']));
