@@ -33,4 +33,14 @@ Only direct HTTPS POST `https://api.cloudflare.com/client/v4/accounts/{matched-i
 
 The local byte/component checks and upstream response limits are **not a live tokenizer**, neuron estimate, guarantee of admission or billing cap. HTTP, malformed output and deadline failures stop; no diagnostic text or assumed completion is reported. No other invocation is authorized by a zero count.
 
-Official references: [Workers AI REST](https://developers.cloudflare.com/workers-ai/get-started/rest-api/), [model](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/), [JSON mode](https://developers.cloudflare.com/workers-ai/features/json-mode/), [pricing/Free daily allocation](https://developers.cloudflare.com/workers-ai/platform/pricing/), [memberships](https://developers.cloudflare.com/api/resources/memberships/methods/list/). See [dated operator observation and earlier offline evidence](workers-ai.md). Tests substitute synthetic browser/auth and HTTPS boundaries; only a future deliberate operator run can provide a pilot receipt. Neither is 2.12 story acceptance, an assessment of quality, or authorization to activate any service.
+Official references: [Workers AI REST](https://developers.cloudflare.com/workers-ai/get-started/rest-api/), [model](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/), [JSON mode](https://developers.cloudflare.com/workers-ai/features/json-mode/), [pricing/Free daily allocation](https://developers.cloudflare.com/workers-ai/platform/pricing/), [memberships](https://developers.cloudflare.com/api/resources/memberships/methods/list/). See [dated operator observation and earlier offline evidence](workers-ai.md). Tests substitute synthetic browser/auth and HTTPS boundaries. They are distinct from the operator receipt below.
+
+## Operator receipt — first authorized pilot
+
+BC returned only this receipt from the terminal run:
+
+```json
+{"pilot":"2.12/long-documented","status":"processing_unavailable","attemptsThisInvocation":{"classifier":1,"generator":0}}
+```
+
+The account-membership gate passed, one classifier dispatch was attempted locally and no generator dispatch was attempted. No validated answer was returned. The receipt contains no HTTP status, provider error code, timing or usage; it does not identify a cause, confirm remote completion, or measure consumption. Retain this failed sample without replay. No change to story status, no quality judgment, and no authorization for another attempt.
