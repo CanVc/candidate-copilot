@@ -29,6 +29,8 @@ try {
     console.log(JSON.stringify(await db.prepare(`SELECT (SELECT count(*) FROM conversations) AS conversations,
       (SELECT coalesce(sum(creations),0) FROM conversation_creation_counters) AS creations,
       (SELECT count(*) FROM messages) AS messages, (SELECT count(*) FROM answers) AS answers`).first()));
+  } else if (process.argv[2] === 'remove-publication') {
+    await db.batch(['active_publication', 'public_chunks_fts', 'public_chunks', 'public_documents'].map(table => db.prepare(`DELETE FROM ${table}`)));
   } else if (process.argv[2] === 'seed') {
     // Exactly these approved fictional development copies, never a content directory walk.
     const revision = '4323afe312f43b6b87a014abee062e03e12f6022';

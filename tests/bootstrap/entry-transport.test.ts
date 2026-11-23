@@ -65,12 +65,14 @@ it.each([
   ['catalog_stale', 500, 'unknown'], ['malformed success', 200, 'unknown'], ['failed', 200, 'failed'],
 ] as const)('one exact initial message, %s / %i', async (code, status, expected) => {
   const question = '  Quels choix ?\n😀  ';
+  let saved: ReturnType<typeof recorded> | undefined;
   const fetch = vi.fn(async (_url: string, init: RequestInit) => {
     const { requestId } = JSON.parse(init.body as string);
-    return response(code === 'failed' ? recorded(requestId) : { requestId, error: { code } }, status);
+    saved = recorded(requestId);
+    return response(code === 'failed' ? saved : { requestId, error: { code } }, status);
   });
   vi.stubGlobal('fetch', fetch);
-  expect(await submitInitial(access, scope, question, signal())).toBe(expected);
+  expect(await submitInitial(access, scope, question, signal())).toEqual(expected === 'failed' ? { question, result: saved } : expected);
   expect(fetch).toHaveBeenCalledTimes(1);
   const [url, init] = fetch.mock.calls[0]!;
   expect(url).toBe(`/api/conversations/${access.conversationId}/messages`);
@@ -86,11 +88,19 @@ it.each(['requestId', 'catalogRevision', 'catalogHash'] as const)('refuses valid
   expect(await submitInitial(access, scope, 'Fiction ?', signal())).toBe('unknown');
 });
 
+it('refuses a correlated 200 whose saved paragraph cites an absent excerpt', async () => {
+  vi.stubGlobal('fetch', async (_url: string, init: RequestInit) => {
+    const { error: _error, ...receipt } = recorded(JSON.parse(init.body as string).requestId);
+    return response({ ...receipt, status: 'answered', blocks: [{ blockId: 'b1', kind: 'paragraph', text: 'Fiction', sourceIds: ['missing'] }] });
+  });
+  expect(await submitInitial(access, scope, 'Fiction ?', signal())).toBe('unknown');
+});
+
 it('message waits past the shorter creation deadline for a valid recorded receipt', async () => {
   vi.useFakeTimers();
   vi.stubGlobal('fetch', (_url: string, init: RequestInit) => new Promise(resolve => setTimeout(() => resolve(response(recorded(JSON.parse(init.body as string).requestId))), 5000)));
   const result = submitInitial(access, scope, 'Fiction ?', signal()); await vi.advanceTimersByTimeAsync(5000);
-  expect(await result).toBe('failed');
+  expect(await result).toMatchObject({ question: 'Fiction ?', result: { status: 'failed' } });
 });
 
 it('message deadline is unknown; no second POST or creation', async () => {

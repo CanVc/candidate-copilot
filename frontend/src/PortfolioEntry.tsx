@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CREATION_UNCERTAINTY_NOTICE, type CreatedConversation } from '../../src/shared/conversation';
 import { countQuestionCharacters, DEFAULT_ADMISSION_LIMITS, type CatalogIdentity } from '../../src/shared/conversation-admission';
-import { createEntry, initialScope, submitInitial, type Submission } from './entry-transport';
+import { createEntry, initialScope, submitInitial, type ReceivedTurn, type Submission } from './entry-transport';
+
+import { AnswerTurn } from './AnswerTurn';
 
 const suggestions = [
   'Comment les emplacements des objets étaient-ils vérifiés dans les réserves du musée fictif ?',
@@ -20,7 +22,7 @@ const notices = {
   access: 'Cette conversation n’est pas accessible.',
   unverified: 'Impossible de vérifier que cette conversation peut recevoir une question. Aucun envoi.',
   rejected: 'Le service local n’a pas accepté cette question.',
-} satisfies Record<Submission | 'checking' | 'ready' | 'sending' | 'unverified', string>;
+} satisfies Record<Exclude<Submission, ReceivedTurn> | 'failed' | 'recorded' | 'checking' | 'ready' | 'sending' | 'unverified', string>;
 type Screen = 'landing' | 'creating' | 'uncertain' | 'limited' | 'rejected' | 'interrupted' | 'conversation';
 const marker = '#conversation-locale'; // Non-identifying reload marker, never an access credential.
 const max = DEFAULT_ADMISSION_LIMITS.maxQuestionCharacters;
@@ -42,19 +44,27 @@ export default function PortfolioEntry() {
   const [screen, setScreen] = useState<Screen>(() => resume ? 'limited' : typeof location !== 'undefined' && location.hash === marker ? 'interrupted' : 'landing');
   const [notice, setNotice] = useState<keyof typeof notices>('checking');
   const [question, setQuestion] = useState('');
+  const [turn, setTurn] = useState<ReceivedTurn | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [free, setFree] = useState(false);
   const lifecycle = useRef<AbortController | null>(null);
   const gate = useRef<'landing' | 'renew' | 'locked' | 'ready'>(screen === 'interrupted' ? 'renew' : 'landing');
   const pending = useRef<{ access: CreatedConversation; scope: CatalogIdentity } | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const composer = useRef<HTMLFormElement>(null);
+  const answerHeading = useRef<HTMLHeadingElement>(null);
+  const handOffFocus = useRef(false);
+  useLayoutEffect(() => {
+    if (turn && handOffFocus.current) answerHeading.current?.focus({ preventScroll: true });
+    handOffFocus.current = false;
+  }, [turn]);
 
   useEffect(() => {
     const stop = () => { lifecycle.current?.abort(); pending.current = null; };
     const leave = () => {
       stop();
-      if (location.hash === marker && !readLimit()) {
-        gate.current = 'renew'; setQuestion(''); setScreen('interrupted');
+      if (lifecycle.current && !readLimit()) {
+        gate.current = 'renew'; setTurn(null); setQuestion(''); setScreen('interrupted');
       }
     };
     window.addEventListener('pagehide', leave);
@@ -73,7 +83,13 @@ export default function PortfolioEntry() {
     const { signal } = lifecycle.current;
     setSubmitted(true); setNotice('sending');
     const result = await submitInitial(access, scope, text, signal);
-    if (!signal.aborted) setNotice(result);
+    if (signal.aborted) return;
+    if (typeof result === 'string') setNotice(result);
+    else {
+      handOffFocus.current = composer.current?.contains(document.activeElement) === true;
+      setTurn(result);
+      setNotice(result.result.status === 'failed' ? 'failed' : 'recorded');
+    }
   }
   async function enter(suggestion?: string) {
     if (gate.current !== 'landing' && !(gate.current === 'renew' && suggestion === undefined)) return;
@@ -127,7 +143,7 @@ export default function PortfolioEntry() {
       </details>
       <TrustNotice />
       <section className="receipt" aria-label="État de la conversation"><p role="status">{notices[notice]}</p></section>
-      {free ? <form className="composer" onSubmit={event => { event.preventDefault(); void send(question); }}>
+      {turn ? <AnswerTurn question={turn.question} result={turn.result} headingRef={answerHeading} /> : free ? <form ref={composer} className="composer" onSubmit={event => { event.preventDefault(); void send(question); }}>
         <label htmlFor="question">Votre première question</label>
         <textarea id="question" value={question} required readOnly={submitted || notice !== 'ready'}
           aria-describedby="count" onChange={event => setQuestion(event.currentTarget.value)} />

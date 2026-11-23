@@ -133,7 +133,7 @@
 # - Tracking closure only: no new tests run. Prior verification limits and deferred risks still stand.
 # - This acceptance does not cover later stories, provider activation, billing or launch.
 generated: 10-19-2026 21:56
-last_updated: 11-23-2026 16:10
+last_updated: 11-23-2026 17:18
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -183,7 +183,7 @@ development_status:
   2-13-bound-processing-and-expose-honest-failure-outcomes: in-progress
   2-14-evaluate-actual-global-scope-answers-before-ui-completion: in-progress
   2-15-enter-a-french-portfolio-conversation-with-optional-guidance: in-progress
-  2-16-read-answers-and-inspect-passage-local-source-excerpts: backlog
+  2-16-read-answers-and-inspect-passage-local-source-excerpts: in-progress
   2-17-compose-the-next-question-without-altering-the-sent-one: backlog
   2-18-verify-unknown-outcomes-and-recover-the-original-submission: backlog
   2-19-retry-a-recorded-technical-failure-in-its-original-context: backlog

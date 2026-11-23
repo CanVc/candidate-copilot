@@ -30,3 +30,36 @@ summary { cursor: pointer; font-weight: 600; }
 .composer:focus-within { border-color: var(--focus-border); }
 .composer div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
 footer { margin-top: 1.5rem; }
+
+html { scrollbar-gutter: stable; }
+.answer-turn { min-width: 0; }
+.sent-question, .saved-answer { border-radius: 1rem; padding: 1rem 1.25rem; }
+.sent-question { background: var(--ink); color: var(--white); margin-inline-start: auto; width: fit-content; max-width: 100%; }
+.sent-question, .answer-passage > p, .saved-excerpt blockquote { white-space: pre-wrap; }
+.saved-answer { background: var(--assistant-surface); border: 1px solid var(--source-border); }
+.saved-answer h2 { color: var(--green); }
+.citations { display: flex; gap: .4rem; flex-wrap: wrap; }
+.file-token, .file-count, .file-row button { color: var(--green); background: var(--warm-white); border-color: var(--source-border); }
+.file-token:not(:disabled):hover, .file-count:not(:disabled):hover, .file-row button:not(:disabled):hover { background: var(--mint); }
+.file-token, .file-count { border-radius: 2rem; font-size: .9rem; padding: .35rem .75rem; max-width: 100%; overflow-wrap: anywhere; }
+.file-count { display: none; align-items: center; gap: 0; min-height: 44px; }
+.file-circle { display: grid; place-items: center; border-radius: 50%; background: var(--mint); border: 1px solid var(--resource-border); width: 1.8rem; aspect-ratio: 1; }
+.file-circle + .file-circle { margin-inline-start: -.55rem; }
+.file-circle + span:not(.file-circle) { margin-inline-start: .3rem; }
+@media (max-width: 40rem) { .file-count { display: inline-flex; } .file-token { display: none; } }
+.source-viewer { position: fixed; inset: auto; margin: 0; background: var(--warm-white); color: var(--ink); border: 1px solid var(--card-border); border-radius: 1rem; padding: 1rem; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; }
+.source-viewer[open] { display: flex; flex-direction: column; overflow: hidden; }
+.viewer-files { overflow: auto; overscroll-behavior: contain; }
+.viewer-head { flex-shrink: 0; }
+.margin-panel { top: 1rem; right: 1rem; width: 19rem; max-height: calc(100dvh - 2rem); }
+.modal-sheet { inset-inline: 0; bottom: 0; width: min(100%, 38rem); max-width: 100%; max-height: 80dvh; margin-inline: auto; border-radius: 1rem 1rem 0 0; }
+.modal-sheet::backdrop { background: rgb(25 33 29 / .35); }
+html:has(.modal-sheet:modal) { overflow: hidden; }
+.viewer-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.viewer-head h2, .file-row h3, .saved-excerpt h4, .file-row p { margin: 0; }
+.file-row { border-top: 1px solid var(--line); padding-top: .8rem; margin-top: .8rem; }
+.file-row button { width: 100%; text-align: start; overflow-wrap: anywhere; }
+.saved-excerpt { padding-top: .75rem; }
+.saved-excerpt blockquote { margin: .6rem 0; border-inline-start: 2px solid var(--source-border); padding-inline-start: .7rem; }
+.saved-excerpt dd { margin: 0 0 .4rem; }
+.saved-excerpt dt { font-weight: bold; }

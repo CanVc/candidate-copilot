@@ -64,7 +64,8 @@ export async function initialScope(access: CreatedConversation, signal: AbortSig
     return health.status === 503 && object(health.body) && health.body.status === 'unavailable' ? 'scope' : 'unverified';
   } catch { return 'unverified'; }
 }
-export type Submission = 'recorded' | 'failed' | 'unknown' | 'stale' | 'scope' | 'processor' | 'access' | 'rejected';
+export type ReceivedTurn = { question: string; result: ConversationResult };
+export type Submission = ReceivedTurn | 'unknown' | 'stale' | 'scope' | 'processor' | 'access' | 'rejected';
 export async function submitInitial(access: CreatedConversation, scope: CatalogIdentity, question: string, signal: AbortSignal): Promise<Submission> {
   try {
     const requestId = crypto.randomUUID();
@@ -78,7 +79,7 @@ export async function submitInitial(access: CreatedConversation, scope: CatalogI
       const result = body as unknown as ConversationResult;
       validateConversationResult(result);
       if (result.submittedScope.catalogRevision !== scope.catalogRevision || result.submittedScope.catalogHash !== scope.catalogHash) return 'unknown';
-      return result.status === 'failed' ? 'failed' : 'recorded';
+      return { question, result };
     }
     if (object(body.error)) {
       if (status === 409 && body.error.code === 'catalog_stale') return 'stale';

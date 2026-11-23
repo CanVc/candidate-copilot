@@ -9,15 +9,17 @@ import type { ConversationView, CreatedConversation } from '../../src/shared/con
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const url = 'http://127.0.0.1:5173/';
 const fixtureDb = (local: LocalFixture, action: string) => local.completed(local.startCommand(process.execPath, ['tests/e2e/portfolio-entry-db.mjs', action]));
-async function start(local: LocalFixture, simulated = true, published = true) {
+async function start(local: LocalFixture, simulated: boolean | 'middle' | 'failed' = true, published = true) {
   for (const file of ['tests/e2e/portfolio-entry-db.mjs', 'tests/e2e/portfolio-entry-worker.ts',
     ...['build.ts', 'chunk.ts', 'markdown-blocks.ts', 'policy.json', 'publish.ts', 'validate.ts'].map(name => `tools/public-content/${name}`),
     ...['mission-regie-collections.md', 'projet-prototype-prets.md', 'projet-reperage-reserves.md'].map(name => `content/public/${name}`)]) {
     cpSync(join(root, file), join(local.project, file), { recursive: true });
   }
   if (simulated) {
+    const entry = 'tests/e2e/portfolio-entry-runtime.ts';
+    writeFileSync(join(local.project, entry), `export { ${simulated === true ? 'default' : `${simulated} as default`} } from './portfolio-entry-worker.ts';`);
     const config = join(local.project, 'wrangler.jsonc');
-    writeFileSync(config, readFileSync(config, 'utf8').replace('src/worker/index.ts', 'tests/e2e/portfolio-entry-worker.ts'));
+    writeFileSync(config, readFileSync(config, 'utf8').replace('src/worker/index.ts', entry));
   }
   await local.completed(local.startCommand(process.execPath, ['scripts/local-d1.mjs', 'init']));
   if (published) await fixtureDb(local, 'seed');
@@ -40,7 +42,7 @@ async function canonical(page: Page, creation: CreatedConversation, expectedQues
   expect(turn?.status).toBe('completed');
   expect(turn?.submittedScope.mode).toBe('global_public');
   expect(turn?.submittedScope.eligibleDocumentIds.length).toBe(3);
-  expect(turn?.result?.status).toBe('clarification');
+  expect(turn?.result?.status).toBe(receipt.status);
   expect(turn?.result).toEqual(receipt);
 }
 
@@ -112,7 +114,11 @@ for (const mobile of [false, true]) for (const freeEntry of [false, true]) {
       }
       await expect(status(page)).toContainText('enregistré un résultat simulé');
       if (mobile === freeEntry) await page.screenshot({ fullPage: true, path: info.outputPath('entry-guide.png') });
-      await canonical(page, access, expected, await (await message).json() as ConversationResult);
+      const saved = await (await message).json() as ConversationResult;
+      expect(saved.status).toBe('clarification');
+      await canonical(page, access, expected, saved);
+      expect(await page.locator('.sent-question').textContent()).toBe(expected);
+      await expect(page.locator('.answer-passage > p')).toHaveText(saved.blocks.map(b => b.text));
       await page.reload(); await expect(page.getByText(/ne reprend pas un accès/)).toBeVisible();
       await counts(local, 1, 1);
       expect({ external, creates, posts }).toEqual({ external: 0, creates: 1, posts: 1 });
@@ -142,6 +148,7 @@ test('lost completed message result is unknown; reload never recovers or replays
   await page.route('**/messages', async route => { posts++; expect((await route.fetch()).status()).toBe(200); await route.abort(); });
   await page.goto(url); await page.locator('.suggestion').last().click();
   await expect(status(page)).toContainText('Résultat inconnu');
+  await expect(page.locator('.answer-turn')).toHaveCount(0);
   await page.reload(); await expect(page.getByText(/ne reprend pas un accès/)).toBeVisible();
   await counts(local, 1, 1); expect(posts).toBe(1);
 });
@@ -220,5 +227,58 @@ test('stale publication identity is rejected, not updated and resubmitted', asyn
   });
   await page.goto(url); await page.locator('.suggestion').first().click();
   await expect(status(page)).toContainText('catalogue a changé');
+  await expect(page.locator('.answer-turn')).toHaveCount(0);
   await counts(local, 1, 0);
 });
+
+test('confirmed answer hands off composer focus; changed fragment cannot retain a turn on explicit renewal', async ({ local, page }) => {
+  await start(local); await page.goto(url); await free(page).click();
+  const field = page.getByLabel('Votre première question'); await expect(field).toBeEditable();
+  let release!: () => void, received!: () => void;
+  const hold = new Promise<void>(r => { release = r; }), ready = new Promise<void>(r => { received = r; });
+  await page.route('**/messages', async route => {
+    const response = await route.fetch(); received(); await hold; await route.fulfill({ response });
+  });
+  await field.fill('Une question fictive ?'); await page.getByRole('button', { name: 'Envoyer' }).click();
+  try { await ready; await field.focus(); } finally { release(); }
+  await expect(page.getByRole('heading', { name: 'Demande de précision' })).toBeFocused();
+  await page.goto(`${url}#autre`); await page.evaluate(() => (globalThis as unknown as { dispatchEvent(event: Event): boolean }).dispatchEvent(new Event('pagehide')));
+  await expect(page.locator('.answer-turn')).toHaveCount(0);
+  await page.getByRole('button', { name: /nouvelle conversation vide/ }).click();
+  await expect(field).toBeEditable(); await expect(field).toHaveValue(''); await expect(page.locator('.answer-turn')).toHaveCount(0);
+  await counts(local, 2, 1);
+});
+
+for (const mode of ['middle', 'failed'] as const) {
+  test(`saved ${mode} receipt is rendered from real simulated workerd/D1`, async ({ local, page }) => {
+    await start(local, mode);
+    await page.goto(url);
+    const creation = page.waitForResponse(r => r.url() === `${url}api/conversations` && r.status() === 201);
+    const message = page.waitForResponse(r => r.url().endsWith('/messages') && r.status() === 200);
+    const trigger = page.locator('.suggestion').first(), question = await trigger.innerText();
+    await trigger.click();
+    const access = await (await creation).json() as CreatedConversation, result = await (await message).json() as ConversationResult;
+    await expect(page.locator('.answer-passage > p')).toHaveText(result.blocks.map(b => b.text));
+    await counts(local, 1, 1);
+    if (mode === 'failed') {
+      expect(result.status).toBe('failed'); await expect(status(page)).toContainText('enregistré un échec');
+      await expect(page.locator('.citations')).toHaveCount(0);
+    } else {
+      expect(result.status).toBe('answered');
+      await fixtureDb(local, 'remove-publication');
+      const [source] = result.sourceExcerpts;
+      expect(source!.sectionTitle).toBe('Solution et choix importants');
+      expect(source!.location).toContain(';context:');
+      await page.getByRole('button', { name: source!.sourceTitle }).click();
+      const viewer = page.getByRole('dialog');
+      expect(await viewer.locator('blockquote').textContent()).toBe(source!.excerpt);
+      await expect(viewer.locator('blockquote')).toContainText('inventé et sans rapport avec BC');
+      await expect(viewer.getByRole('heading', { name: source!.sectionTitle! })).toBeVisible();
+      for (const [label, value] of Object.entries({ Fichier: source!.sourcePath, Révision: source!.sourceRevision,
+        Emplacement: source!.location, Document: source!.documentId, Fragment: source!.sourceChunkId, Empreinte: source!.contentHash })) {
+        expect(await viewer.locator('dl div').filter({ has: page.getByText(label, { exact: true }) }).locator('dd').textContent()).toBe(value);
+      }
+    }
+    await canonical(page, access, question, result);
+  });
+}
