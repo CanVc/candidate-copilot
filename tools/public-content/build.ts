@@ -2,7 +2,7 @@ import { parse } from 'yaml';
 import { catalogAssetPath, compareUtf16, jcs, normalizeCatalog, publicString, sourcePath, type PublicCatalog } from '../../src/shared/public-catalog.ts';
 import { searchPreimage, type PublicMetadata, type PublicSearchArtifacts, type SearchDocument } from '../../src/shared/public-evidence.ts';
 import { chunkDocument, sha256 } from './chunk.ts';
-import { readCommittedPublicContent } from './validate.ts';
+import { readCommittedPublicContent, type CommittedSource } from './validate.ts';
 import { publishBundle } from './publish.ts';
 
 export interface ArtifactBundle {
@@ -13,7 +13,11 @@ export interface ArtifactBundle {
 export function assemblePublicArtifacts(repositoryRoot: string, revision: string): ArtifactBundle {
   const validated = readCommittedPublicContent(repositoryRoot, revision);
   if (!validated.ok || !validated.sources || validated.sourceRevision !== revision) throw new Error('SOURCE_INVALID');
-  const documents: SearchDocument[] = validated.sources.map((source) => {
+  return assembleValidatedArtifacts(validated.sources, revision);
+}
+// Pure assembly. Caller has already authenticated these exact immutable bytes.
+export function assembleValidatedArtifacts(input: CommittedSource[], revision: string): ArtifactBundle {
+  const documents: SearchDocument[] = input.map((source) => {
     const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(source.bytes);
     const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(text)!;
     const metadata = parse(match[1]!) as PublicMetadata;
@@ -36,7 +40,7 @@ export function assemblePublicArtifacts(repositoryRoot: string, revision: string
     documents: documents.map(({ documentId, sourcePath }) => ({ documentId, sourcePath })) });
   const catalogHash = sha256(jcs(payload));
   const catalog: PublicCatalog = { catalogHash, payload };
-  const sources = new Map(validated.sources.map((source) => [source.path, source.bytes]));
+  const sources = new Map(input.map((source) => [source.path, source.bytes]));
   const search: PublicSearchArtifacts = { version: 1, chunkingVersion: 1, catalogRevision: revision, catalogHash,
     documents, chunks: documents.flatMap((document) => chunkDocument(document,
       new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(sources.get(document.sourcePath)!))) };

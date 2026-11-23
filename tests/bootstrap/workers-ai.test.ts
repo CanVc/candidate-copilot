@@ -1,6 +1,6 @@
 import { isProxy } from 'node:util/types';
 import { describe, expect, it, vi } from 'vitest';
-import { selectProvider, WorkersAIRejected, WORKERS_AI_CANDIDATE, type FixtureInferenceBinding } from '../../src/adapters/llm/workers-ai.ts';
+import { selectProvider, workersAIReceiver, WorkersAIRejected, WORKERS_AI_CANDIDATE, type FixtureInferenceBinding } from '../../src/adapters/llm/workers-ai.ts';
 import { prepareProfessionalIntent } from '../../src/application/classify-professional-intent.ts';
 import { DEFAULT_INTENT_BOUNDS, INTENT_REASONS, type ClassifyTurnRequest } from '../../src/shared/professional-intent.ts';
 import { DEFAULT_MODEL_CONTEXT_BUDGET } from '../../src/shared/model-context-budget.ts';
@@ -16,6 +16,15 @@ function fixture() {
 }
 
 describe('offline Workers AI receiver boundary', () => {
+  it('validates and snapshots both pilot limits before preparing any call', () => {
+    for (const key of ['inputBytes','maxTokens']) for (const value of [0,-1,1.1,Infinity,NaN,Number.MAX_SAFE_INTEGER+1]) {
+      expect(() => workersAIReceiver('classifier',role,{inputBytes:12000,maxTokens:512,[key]:value})).toThrow('configuration');
+    }
+    const limits = {inputBytes:12000,maxTokens:512}, d = workersAIReceiver('classifier', role, limits);
+    limits.inputBytes = 1; limits.maxTokens = 1;
+    expect(d.capacity).toBe(12000 + role.budget.output);
+    expect(JSON.parse(prepareProfessionalIntent(d, request, DEFAULT_INTENT_BOUNDS).serializedInput).max_tokens).toBe(512);
+  });
   it('requires explicit complete config; neither bootstrapping nor rejected configuration infers', async () => {
     const { config, provider, run, call } = fixture();
     expect(await selectProvider().generate('bootstrap-ping')).toBe('Simulated LLM: bootstrap-pong');

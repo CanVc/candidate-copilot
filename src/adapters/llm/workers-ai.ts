@@ -59,14 +59,17 @@ const schemas = {
   generator: object({ status: { enum: ['answered', 'partial', 'refused', 'failed'] }, outputLanguage: string,
     blocks: { type: 'array', items: object({ kind: { enum: ['paragraph', 'summary', 'limitation', 'refusal', 'transition', 'error'] }, text: string, sourceIds: strings }) } }),
 };
-function receiver(role: Role, config: RoleConfig): ModelTokenAccounting {
+// Local admission units for the one-shot REST caller are UTF-8 bytes, not a live tokenizer.
+export function workersAIReceiver(role: Role, config: RoleConfig, pilot?: { maxTokens: number; inputBytes: number }): ModelTokenAccounting {
   if (config?.model !== WORKERS_AI_CANDIDATE || !config.budget) throw new WorkersAIRejected('configuration');
+  const limits = pilot === undefined ? undefined : Object.freeze({ inputBytes: pilot?.inputBytes, maxTokens: pilot?.maxTokens });
+  if (limits && Object.values(limits).some(n => !Number.isSafeInteger(n) || n <= 0)) throw new WorkersAIRejected('configuration');
   const budget = Object.freeze({ output: config.budget.output, components: Object.freeze({ ...config.budget.components }) });
-  const descriptor = Object.freeze({ model: config.model, modelVersion: 'offline-candidate', tokenizer: 'fixture-unicode-scalar', tokenizerVersion: '1',
-    capacity: 24000, maximumOutput: budget.output, serializationVersion: `workers-ai-${role}-schema-v1`, budget,
-    count: (text: string) => Array.from(text).length,
+  const descriptor = Object.freeze({ model: config.model, modelVersion: pilot ? 'direct-pilot' : 'offline-candidate', tokenizer: pilot ? 'local-utf8-bytes-not-tokens' : 'fixture-unicode-scalar', tokenizerVersion: '1',
+    capacity: limits ? limits.inputBytes + budget.output : 24000, maximumOutput: budget.output, serializationVersion: `workers-ai-${role}-schema-v1`, budget,
+    count: (text: string) => pilot ? new TextEncoder().encode(text).length : Array.from(text).length,
     serialize: ({ instructions, data }: ModelPrompt) => JSON.stringify({ messages: [{ role: 'system', content: instructions }, { role: 'user', content: data }],
-      stream: false, response_format: { type: 'json_schema', json_schema: schemas[role] }, max_tokens: budget.output } satisfies BindingInput),
+      stream: false, response_format: { type: 'json_schema', json_schema: schemas[role] }, max_tokens: limits?.maxTokens ?? budget.output } satisfies BindingInput),
   });
   try { receiverIdentity(descriptor); } catch { throw new WorkersAIRejected('configuration'); }
   return descriptor;
@@ -74,7 +77,7 @@ function receiver(role: Role, config: RoleConfig): ModelTokenAccounting {
 
 // Never stringify a provider object. Construct bounded JSON from data descriptors
 // and primitive spellings, and hand the core a detached ordinary JSON object.
-function decode(raw: unknown, descriptor: ModelTokenAccounting, reservation: number, isProxy: FixtureConfig['isProxy']): object {
+export function decodeWorkersAIResponse(raw: unknown, descriptor: ModelTokenAccounting, reservation: number, isProxy: FixtureConfig['isProxy']): object {
   const invalid = (): never => { throw new WorkersAIRejected('invalid_output'); };
   const plain = (value: object) => {
     if (isProxy(value)) return false;
@@ -92,7 +95,7 @@ function decode(raw: unknown, descriptor: ModelTokenAccounting, reservation: num
     const parts: string[] = [], seen = new WeakSet<object>();
     let remaining = reservation;
     function append(part: string) {
-      remaining -= descriptor.count(part); // Additive only for this offline scalar receiver.
+      remaining -= descriptor.count(part); // Both local accounting profiles are additive for these JSON segments.
       if (remaining < 0) invalid();
       parts.push(part);
     }
@@ -131,7 +134,7 @@ function decode(raw: unknown, descriptor: ModelTokenAccounting, reservation: num
 function workersAIFixture(config: FixtureConfig): LLMProvider & AnswerGenerator {
   if (config?.mode !== 'workers-ai-offline' || config.binding?.kind !== 'local-fixture' || typeof config.binding.run !== 'function' || typeof config.isProxy !== 'function') throw new WorkersAIRejected('configuration');
   const run = config.binding.run.bind(config.binding), isProxy = config.isProxy;
-  const classifier = receiver('classifier', config.classifier), generator = receiver('generator', config.generator);
+  const classifier = workersAIReceiver('classifier', config.classifier), generator = workersAIReceiver('generator', config.generator);
   async function invoke(descriptor: ModelTokenAccounting, call: PreparedModelCall, { signal, check }: ClassificationOptions = {}) {
     try { validateModelCallIntegrity(descriptor, call); } catch { throw new WorkersAIRejected('configuration'); }
     if (signal?.aborted) throw new WorkersAIRejected('aborted');
@@ -158,7 +161,7 @@ function workersAIFixture(config: FixtureConfig): LLMProvider & AnswerGenerator 
     check?.();
     // A completed but invalid response is not a transport outage. Both core
     // validators reject null as invalid_result without exposing provider data.
-    try { return decode(raw, descriptor, call.outputTokens, isProxy); }
+    try { return decodeWorkersAIResponse(raw, descriptor, call.outputTokens, isProxy); }
     catch { return null; }
   }
   return Object.freeze({ receiver: classifier, answerReceiver: generator,
