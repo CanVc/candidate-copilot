@@ -4,11 +4,15 @@ import { descriptorPath, pinDirectory } from '../public-content/validate.ts';
 import { authenticate } from './auth.mjs';
 import { authorizedRun } from './http.mjs';
 import { inputs, localPublication } from './publication.mjs';
-import { processQuestion } from './process.ts';
+import { PilotObservation, processQuestion } from './process.ts';
 
 const attempts = { classifier: 0, generator: 0 }, controller = new AbortController();
-let status = 'stopped', temp, home, raw = false, grace, keepTemp = false, cleanupFailed = false;
-function receipt() { writeSync(1, JSON.stringify({ pilot: '2.12/long-documented', status, attemptsThisInvocation: attempts, ...(cleanupFailed && { cleanup: 'incomplete' }) }) + '\n'); }
+const observation = new PilotObservation();
+let hasResult = false, status = 'stopped', temp, home, raw = false, grace, keepTemp = false, cleanupFailed = false;
+function receipt() {
+  const diagnostic = status === 'spent' || hasResult ? undefined : observation.diagnostic;
+  writeSync(1, JSON.stringify({ pilot: '2.12/long-documented', status, attemptsThisInvocation: attempts, ...(diagnostic && { diagnostic }), ...(cleanupFailed && { cleanup: 'incomplete' }) }) + '\n');
+}
 function cleanup() {
   controller.abort();
   if (raw) { process.stdin.setRawMode(false); raw = false; }
@@ -17,6 +21,7 @@ function cleanup() {
 }
 function interrupted() {
   if (controller.signal.aborted) return;
+  observation.note('unknown');
   if (status === 'stopped') status = 'interrupted';
   process.exitCode = 1;
   // If a dependency ignores cancellation, leave its private state alone rather than
@@ -25,7 +30,7 @@ function interrupted() {
   controller.abort();
 }
 for (const s of ['SIGHUP', 'SIGTERM', 'SIGINT']) process.on(s, interrupted);
-const watchdog = setTimeout(interrupted, 210000);
+const watchdog = setTimeout(() => { observation.note('local_deadline'); interrupted(); }, 210000);
 async function expectedID() {
   const input = process.stdin;
   input.setRawMode(true); raw = true;
@@ -64,32 +69,40 @@ try {
     try { fsyncSync(fd); } finally { closeSync(fd); }
     fsyncSync(home.fd); // Never unlink, even if a later step fails or dispatch never starts.
   }
+  observation.stage = 'preparation';
   const { bundle, message } = inputs();
+  observation.stage = 'authorization';
   const id = await expectedID();
   temp = mkdtempSync('/tmp/workers-ai-pilot-');
   process.chdir(temp); Object.assign(process.env, { HOME: temp, TMPDIR: temp, XDG_CONFIG_HOME: temp, XDG_CACHE_HOME: temp, XDG_DATA_HOME: temp, XDG_STATE_HOME: temp });
   const authDir = `${temp}/auth`; mkdirSync(authDir);
   let token;
-  try { token = await authenticate(authDir, controller.signal); } finally {
+  try { token = await authenticate(authDir, controller.signal, observation); }
+  catch (error) { observation.note('unknown'); throw error; }
+  finally {
+    observation.stage = 'teardown';
     try { rmSync(authDir, { recursive: true, force: true }); } catch { cleanupFailed = true; throw new Error(); }
   }
+  observation.stage = 'authorization';
   controller.signal.throwIfAborted();
-  const dispatch = await authorizedRun(id, token, controller.signal);
-  const outcome = await localPublication(temp, bundle, async db => {
+  const dispatch = await authorizedRun(id, token, controller.signal, observation);
+  observation.stage = 'preparation';
+  const outcome = await localPublication(temp, bundle, observation, async db => {
     let pending;
     const send = (...args) => (pending = dispatch(...args));
-    try { return await processQuestion(db, message, { attempts, consume, send, parent: controller.signal }); }
+    try { return await processQuestion(db, message, { attempts, consume, send, observation, parent: controller.signal }); }
     finally { await pending?.catch(() => {}); } // HTTP close, even if beforeCutoff abandoned observation
   }, () => { keepTemp = cleanupFailed = true; });
   if (controller.signal.aborted && !outcome.result) throw new Error();
   status = outcome.status;
   if (outcome.result) {
+    hasResult = true;
     const { blocks, sourceExcerpts } = outcome.result;
     // Local terminal only. Escape terminal-formatting and direction controls as well as JSON controls.
     const display = JSON.stringify({ blocks, sourceExcerpts }, null, 2).replace(/[\u007f-\u009f\p{Cf}\u2028\u2029]/gu, c => c.split('').map(unit => `\\u${unit.charCodeAt(0).toString(16).padStart(4, '0')}`).join(''));
     writeSync(2, `Private validated result (do not forward):\n${display}\n`);
   } else process.exitCode = 1;
-} catch { process.exitCode = 1; }
+} catch { observation.note('unknown'); process.exitCode = 1; }
 finally {
   clearTimeout(watchdog); clearTimeout(grace);
   try { cleanup(); } catch { cleanupFailed = true; }

@@ -4,7 +4,11 @@ import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { assembleValidatedArtifacts } from '../../tools/public-content/build.ts';
-import { reservePilotInput } from '../../tools/workers-ai-pilot/process.ts';
+import { PilotObservation, reservePilotInput } from '../../tools/workers-ai-pilot/process.ts';
+import { intentBounds, INTENT_REASONS } from '../../src/shared/professional-intent.ts';
+import { professionalIntentInstructions } from '../../src/application/classify-professional-intent.ts';
+import { answerGenerationInstructions } from '../../src/application/generate-answer.ts';
+import { answerGenerationBounds } from '../../src/shared/answer-generation.ts';
 import type { PublicSearchArtifacts } from '../../src/shared/public-evidence.ts';
 
 // Never use operator settings, services or state. The replacement executable injects
@@ -23,6 +27,21 @@ describe('operator command — disposable offline boundaries', () => {
     writeFileSync(join(dir, 'events'), '');
   });
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
+  const diagnosticCases: [string[], string, string, number?][] = [
+    [['wrong-scope','wrong-callback','duplicate','bad-browser','api-token','mismatch','pending','auth-interrupt'], 'authorization', 'unknown'],
+    [['auth-rm-fail'], 'teardown', 'unknown'], [['watchdog-dispose'], 'teardown', 'local_deadline'],
+    [['login-deadline','token-deadline','membership-deadline'], 'authorization', 'local_deadline'],
+    [['finalization-elapsed'], 'finalization', 'local_deadline'], [['generator-elapsed'], 'generator', 'local_deadline'],
+    [['case','source','inventory','late-inventory','artifact','catalog-bytes','search-bytes','file-fsync','dir-fsync','contend'], 'preparation', 'unknown'],
+    [['internal','interrupt'], 'classifier', 'unknown'], [['timeout','elapsed','direct-elapsed'], 'classifier', 'local_deadline'],
+    [['uncertain'], 'classifier', 'transport'], [['redirect-http'], 'classifier', 'http_rejection', 307],
+    [['quota'], 'classifier', 'http_rejection', 429], [['unsafe-status','missing-status','low-status','high-status','fractional-status'], 'classifier', 'unknown'],
+    [['missing-result','oversize','false-success','errors','malformed','utf8','encoding'], 'classifier', 'unusable_envelope'],
+    [['invalid','byte-limit-over','decoded-limit'], 'classifier', 'invalid_response'],
+    [['retrieval-failure'], 'continuation', 'unknown'], [['oversize-generator'], 'generator', 'unusable_envelope'],
+    [['invalid-cite','invalid-cite-elapsed','generator-decode'], 'generator', 'invalid_response'], [['generator-http','late-http'], 'generator', 'http_rejection', 503],
+    [['generator-stream','incomplete-end'], 'generator', 'transport'],
+  ];
   async function run(scenario: string, args: string[] = [], input = id, script = entry) {
     writeFileSync(join(dir, 'scenario'), scenario);
     const p = spawn('/bin/sh', [script, ...args], { env: { PATH: `${dir}:/usr/bin:/bin`, HOME: '/not-the-home', NODE_OPTIONS: '--invalid-before-sanitizing',
@@ -31,7 +50,15 @@ describe('operator command — disposable offline boundaries', () => {
     p.stdout.on('data', c => { stdout += c; }); p.stderr.on('data', c => { stderr += c; if (stderr.includes('https://dash.cloudflare.com/oauth2/auth?')) writeFileSync(join(dir, 'browser-handoff'), ''); }); p.stdin.on('error', () => {}); p.stdin.end(input + '\n');
     const code = await new Promise<number | null>((res, rej) => { p.once('error', rej); p.once('close', res); });
     const receipt = JSON.parse(stdout.trim());
-    expect(Object.keys(receipt).sort()).toEqual(['attemptsThisInvocation', ...(['dispose-fail','auth-rm-fail'].includes(scenario) ? ['cleanup'] : []), 'pilot','status']);
+    expect(stdout.trim().split('\n')).toHaveLength(1);
+    const failure = !['answered','clarification','refused','partial','spent'].includes(receipt.status);
+    const expected = diagnosticCases.find(([names]) => names.includes(scenario));
+    const stage = expected?.[1] ?? (input === '' ? 'authorization' : 'unknown');
+    const diagnostic = { stage, kind: expected?.[2] ?? 'unknown', ...(expected?.[3] && { httpStatus: expected[3] }) };
+    expect(receipt).toEqual({ pilot: '2.12/long-documented', status: receipt.status, attemptsThisInvocation: {
+      classifier: expect.any(Number), generator: expect.any(Number) }, ...(failure && { diagnostic }),
+      ...(['dispose-fail','auth-rm-fail','watchdog-dispose'].includes(scenario) && { cleanup: 'incomplete' }) });
+    expect(stdout).not.toMatch(/oauth|cloudflare|private|Résultat|sourceChunks|diagnostic.*3036/i);
     expect(stdout + stderr).not.toMatch(/PRIVATE_DIAGNOSTIC|fake-private-token|a{32}/);
     return { code, stderr, ...receipt };
   }
@@ -44,14 +71,29 @@ describe('operator command — disposable offline boundaries', () => {
     ['malformed','processing_unavailable',1,0], ['oversize','processing_unavailable',1,0], ['uncertain','processing_unavailable',1,0],
     ['file-fsync','processing_unavailable',0,0], ['dir-fsync','processing_unavailable',0,0],
     ['byte-limit-at','partial',1,0], ['byte-limit-over','invalid_result',1,0], ['false-success','processing_unavailable',1,0], ['errors','processing_unavailable',1,0],
+    ['login-deadline','stopped',0,0], ['token-deadline','stopped',0,0], ['membership-deadline','stopped',0,0],
+    ['watchdog-dispose','interrupted',1,1], ['direct-elapsed','stopped',1,0], ['finalization-elapsed','stopped',1,0],
+    ['generator-elapsed','stopped',1,1], ['invalid-cite-elapsed','stopped',1,1], ['missing-result','invalid_result',1,0],
+    ['late-http','processing_unavailable',1,1], ['incomplete-end','processing_unavailable',1,1],
+    ['missing-status','processing_unavailable',1,0], ['fractional-status','processing_unavailable',1,0],
+    ['low-status','processing_unavailable',1,0], ['high-status','processing_unavailable',1,0],
+    ['unsafe-status','processing_unavailable',1,0], ['encoding','processing_unavailable',1,0], ['utf8','processing_unavailable',1,0],
+    ['internal','processing_unavailable',1,0], ['elapsed','processing_unavailable',1,0], ['retrieval-failure','processing_unavailable',1,0],
+    ['generator-http','processing_unavailable',1,1], ['generator-stream','processing_unavailable',1,1], ['generator-decode','invalid_result',1,1],
     ['auth-rm-fail','stopped',0,0], ['dispose-fail','answered',1,1], ['timeout','processing_unavailable',1,0], ['interrupt','interrupted',1,0],
   ] as const)('%s → %s, %i/%i attempts', async (scenario, status, classifier, generator) => {
     const result = await run(scenario);
+    expect(result.code).toBe(['clarification','partial','refused'].includes(status) ? 0 : 1);
     expect(result.status).toBe(status); expect(result.attemptsThisInvocation).toEqual({ classifier, generator });
     const sent = events().filter(e => e.wire);
     expect(sent.length).toBe(classifier + generator); expect(sent.every(e => e.spent)).toBe(true);
     if (['wrong-scope','wrong-callback','bad-browser'].includes(scenario)) expect(result.stderr).not.toContain('https://');
-    if (scenario === 'auth-interrupt') {
+    expect(events().filter(e => e.rejectedBodyRead)).toHaveLength(0);
+    if (scenario === 'generator-stream') expect(events()).toContainEqual({ streamed: true });
+    if (scenario === 'watchdog-dispose') expect(result.stderr).not.toContain('Private validated result');
+    if (['auth-interrupt','login-deadline','token-deadline'].includes(scenario)) {
+      expect(events().filter(e => e.authClosed)).toHaveLength(scenario === 'token-deadline' ? 2 : 1);
+      expect(events().filter(e => e.hostname)).toHaveLength(0);
       expect(events()).toContainEqual({ authClosed:true }); expect(existsSync(events().find(e => e.auth).cwd)).toBe(false);
     }
     if (scenario === 'auth-rm-fail') { expect(result.cleanup).toBe('incomplete'); expect(events().filter(e => e.hostname)).toEqual([]); }
@@ -66,6 +108,15 @@ describe('operator command — disposable offline boundaries', () => {
     writeFileSync(join(dir,'scenario'),'pty');
     const probe = spawnSync('/usr/bin/python3', ['-I','tests/fixtures/workers-ai-pilot/hidden-input.py',entry,dir], { timeout:8000 });
     expect(probe.status, probe.stderr?.toString()).toBe(0); expect(events()).toEqual([]);
+  });
+  it('projects diagnostic fields from local literals even for untyped callers', () => {
+    const trap = { toJSON() { throw new Error('private'); }, toString() { throw new Error('private'); } };
+    for (const field of [trap, 'PRIVATE_DIAGNOSTIC']) {
+      const observed = new PilotObservation();
+      Object.assign(observed, { stage: field });
+      Reflect.apply(observed.note, observed, [field, trap]);
+      expect(JSON.parse(JSON.stringify(observed.diagnostic))).toEqual({ stage: 'unknown', kind: 'unknown' });
+    }
   });
   it('checks exact serialized aggregate input bytes independently of the role limits', () => {
     const first = reservePilotInput(0, 'classifier', JSON.stringify('é'.repeat(4999)));
@@ -126,9 +177,37 @@ describe('operator command — disposable offline boundaries', () => {
     for (const e of posts) {
       expect(e).toMatchObject({ spent: true, hostname: 'api.cloudflare.com', method: 'POST', agent: false,
         path: `/client/v4/accounts/${id}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast` });
+      expect(typeof e.body).toBe('string');
+      expect(e.body).toBe(JSON.stringify(e.wire));
+      expect(e.headers['content-length']).toBe(Buffer.byteLength(e.body));
+      expect(e.headers['content-type']).toBe('application/json');
+      expect(Object.keys(e.wire).sort()).toEqual(['max_tokens','messages','response_format','stream']);
+      expect(e.wire.stream).toBe(false);
+      expect(e.wire.response_format).toEqual({ type: 'json_schema', json_schema: expect.any(Object) });
       expect(e.wire.messages.map((m: {role:string}) => m.role)).toEqual(['system','user']);
     }
+    const [first, second] = posts;
+    const sizes = posts.map(e => Buffer.byteLength(e.body));
+    expect(sizes[0]).toBeLessThanOrEqual(12000); expect(sizes[1]).toBeLessThanOrEqual(20000);
+    expect(sizes.reduce((a,b) => a+b,0)).toBeLessThanOrEqual(28000);
+    expect(first.wire.messages[0].content).toBe(professionalIntentInstructions(intentBounds()));
+    expect(second.wire.messages[0].content).toBe(answerGenerationInstructions(answerGenerationBounds()));
+    const branches = first.wire.response_format.json_schema.oneOf;
+    expect(branches).toHaveLength(Object.keys(INTENT_REASONS).length);
+    for (const [decision,reasons] of Object.entries(INTENT_REASONS)) {
+      const branch = branches.find((b: {properties:{decision:{enum:string[]}}}) => b.properties.decision.enum[0] === decision);
+      const string = { type: 'string' };
+      const properties = { decision:{enum:[decision]}, reasonCode:{enum:reasons}, responseLanguage:string,
+        ...(decision === 'refuse' ? { refusalMessage:string } : decision === 'clarify' ? { clarificationQuestion:string } :
+          { professionalTopic:string, resolvedQuestion:string, searchTerms:{type:'array',items:string} }) };
+      expect(branch).toEqual({ type:'object', additionalProperties:false, required:Object.keys(properties), properties });
+    }
+    expect(second.wire.response_format.json_schema).toEqual({ type:'object', additionalProperties:false,
+      required:['status','outputLanguage','blocks'], properties:{ status:{enum:['answered','partial','refused','failed']}, outputLanguage:{type:'string'},
+        blocks:{type:'array', items:{type:'object', additionalProperties:false, required:['kind','text','sourceIds'], properties:{
+          kind:{enum:['paragraph','summary','limitation','refusal','transition','error']}, text:{type:'string'}, sourceIds:{type:'array',items:{type:'string'}} }}} } });
     const [classifier, generator] = posts.map(e => JSON.parse(e.wire.messages[1].content));
+    expect(generator.question).toBe(classifier.question); expect(classifier.conversationContext).toEqual([]);
     expect(classifier.question).toBe(cases.cases[0].turns[0].question); expect(classifier.publicCatalog.length).toBeGreaterThan(0);
     expect(classifier).not.toHaveProperty('sourceChunks'); expect(generator).not.toHaveProperty('publicCatalog');
     expect(generator.conversationContext).toEqual([]); expect(JSON.stringify(posts)).not.toContain(cases.cases[0].turns[0].review.probe);

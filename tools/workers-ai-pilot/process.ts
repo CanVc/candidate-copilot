@@ -6,7 +6,7 @@ import { ModelAwareIntentPreparation, ProfessionalIntentProcessor } from '../../
 import { EligibleEvidenceContinuation } from '../../src/application/generate-answer.ts';
 import type { AdmittedMessage } from '../../src/shared/conversation-admission.ts';
 import { completeResult } from '../../src/shared/conversation-result.ts';
-import { beforeCutoff, DEFAULT_ATTEMPT_TIMING, startAttemptTimer } from '../../src/shared/attempt-timing.ts';
+import { beforeCutoff, DEFAULT_ATTEMPT_TIMING, startAttemptTimer, type OperationControls } from '../../src/shared/attempt-timing.ts';
 import { DEFAULT_MODEL_CONTEXT_BUDGET, validateModelCallIntegrity } from '../../src/shared/model-context-budget.ts';
 import { validateClassifyTurnResult } from '../../src/shared/professional-intent.ts';
 import type { LLMProvider, AnswerGenerator, ClassificationOptions } from '../../src/ports/LLMProvider.ts';
@@ -17,18 +17,41 @@ const limits = {
   generator: { inputBytes: 20000, maxTokens: 1024, outputBytes: 4096, responseBytes: 16384 },
 };
 type Role = keyof typeof limits;
+const stages = ['unknown', 'preparation', 'authorization', 'continuation', 'finalization', 'classifier', 'generator', 'teardown'] as const;
+const failures = ['unknown', 'local_deadline', 'transport', 'http_rejection', 'unusable_envelope', 'invalid_response'] as const;
+type Stage = typeof stages[number];
+type Failure = typeof failures[number];
+
+export class PilotObservation {
+  stage: Stage = 'unknown';
+  #diagnostic?: Readonly<{ stage: Stage; kind: Failure; httpStatus?: number }>;
+  get diagnostic() { return this.#diagnostic; }
+  noteProcessingFailure(invalidResult: boolean) {
+    this.note(invalidResult && (this.stage === 'classifier' || this.stage === 'generator') ? 'invalid_response' : 'unknown');
+  }
+  note(kind: Failure, status?: number) {
+    // JS boundaries: compare by identity to local literals, never coerce caller data.
+    const stage = stages.find(s => s === this.stage) ?? 'unknown';
+    const safeStatus = typeof status === 'number' && Number.isInteger(status) && status >= 100 && status <= 599 && status !== 200;
+    this.#diagnostic ??= Object.freeze(kind === 'http_rejection' && safeStatus ? { stage, kind, httpStatus: status } :
+      { stage, kind: failures.find(k => k === kind && k !== 'http_rejection') ?? 'unknown' });
+  }
+}
 export function reservePilotInput(previous: number, role: Role, serialized: string): number {
   const bytes = Buffer.byteLength(serialized);
   if (bytes > limits[role].inputBytes || previous + bytes > 28000) throw new Error('dispatch denied');
   return previous + bytes;
 }
 interface Attempt {
+  observation: PilotObservation;
   parent: AbortSignal;
   consume(): void;
   attempts: Record<Role, number>;
   send(body: string, responseBytes: number, signal: AbortSignal): Promise<unknown>;
 }
 export async function processQuestion(db: D1Database, message: AdmittedMessage, attempt: Attempt) {
+  const { observation } = attempt;
+  observation.stage = 'preparation';
   const descriptor = (role: Role) => workersAIReceiver(role, { model: WORKERS_AI_CANDIDATE,
     budget: { ...DEFAULT_MODEL_CONTEXT_BUDGET, output: limits[role].outputBytes } }, limits[role]);
   const classifier = descriptor('classifier'), generator = descriptor('generator');
@@ -47,6 +70,7 @@ export async function processQuestion(db: D1Database, message: AdmittedMessage, 
     controls.check();
     if (role === 'classifier') attempt.consume(); // exclusive, directory-fsynced BEFORE either attempt
     controls.check(); attempt.attempts[role]++;
+    observation.stage = role;
     const raw = await attempt.send(call.serializedInput, bound.responseBytes, signal);
     controls.check();
     try {
@@ -56,21 +80,41 @@ export async function processQuestion(db: D1Database, message: AdmittedMessage, 
         mayGenerate = decision === 'answer' || decision === 'redirect';
       }
       return decoded;
-    } catch { return null; }
+    } catch { observation.note('invalid_response'); return null; }
   }
   const provider: LLMProvider & AnswerGenerator = { receiver: classifier, answerReceiver: generator,
     classify: (c, o) => invoke('classifier', c, o), generateAnswer: (c, o) => invoke('generator', c, o),
     generate: async () => { throw new Error('disabled'); } };
+  const continuation = new EligibleEvidenceContinuation(new D1Retriever(db), provider);
   const processor = new ProfessionalIntentProcessor(provider, new ModelAwareIntentPreparation(new D1ResourceCatalog(db), provider),
-    new EligibleEvidenceContinuation(new D1Retriever(db), provider));
+    { async continue(input) {
+      observation.stage = 'continuation';
+      const output = await continuation.continue(input);
+      if (typeof output !== 'symbol' && 'failure' in output) observation.noteProcessingFailure(output.failure === 'invalid_result');
+      return output;
+    } });
   const { classifierMs, attemptMs, finalizeReserveMs } = DEFAULT_ATTEMPT_TIMING;
   const clock = { now: () => new Date(performance.timeOrigin + performance.now()) }, start = clock.now().getTime();
-  const output = await beforeCutoff(clock, startAttemptTimer, start + attemptMs - finalizeReserveMs, controls => processor.process(message, {
+  // Observe only the clock checks and timer belonging to this particular cutoff.
+  // Parent interruption also aborts the child signal, but is not a deadline.
+  function bounded<T>(end: number, run: (controls: OperationControls) => Promise<T>, parent: AbortSignal) {
+    const deadline = () => { if (!parent.aborted) observation.note('local_deadline'); };
+    return beforeCutoff({ now() {
+      const now = clock.now();
+      if (now.getTime() >= end) deadline();
+      return now;
+    } }, (expire, ms) => startAttemptTimer(() => { deadline(); expire(); }, ms), end, run, parent);
+  }
+  const output = await bounded(start + attemptMs - finalizeReserveMs, controls => processor.process(message, {
     ...controls, precedingMessages: [], contextAvailable: true,
-    withinClassification: run => beforeCutoff(clock, startAttemptTimer, start + classifierMs, run, controls.signal),
+    withinClassification: run => bounded(start + classifierMs, run, controls.signal),
   }), attempt.parent);
-  if ('failure' in output) return { status: output.failure };
+  if ('failure' in output) {
+    observation.noteProcessingFailure(output.failure === 'invalid_result');
+    return { status: output.failure };
+  }
+  observation.stage = 'finalization';
   const result = completeResult(message, output.draft, output.sources);
-  if (clock.now().getTime() >= start + attemptMs) throw new Error('deadline');
+  if (clock.now().getTime() >= start + attemptMs) { observation.note('local_deadline'); throw new Error('deadline'); }
   return { status: result.status, result };
 }

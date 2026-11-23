@@ -1,19 +1,8 @@
 # One local Workers Free pilot (BC only)
 
-This is a separate Linux terminal tool, not a Worker, endpoint, evaluation suite or change to ordinary simulation. Use a clean trusted checkout with the pinned dependencies and Node **24.22.0** already installed. The launcher resolves `node` using the invoking shell's **trusted PATH** before clearing the environment. Use only trusted absolute PATH directories and the genuine installed Node executable (a symlink to it is fine), **not a wrapper**, function or shim. Use a local interactive terminal with no recording/`tee`, and a browser on the same machine with `localhost:8976` available. Disable terminal sharing. No API key, Wrangler profile, `.env`, project DB, dashboard audit or deployment is needed.
+The one authorized observation is complete. This document records the bounds of that Linux terminal tool, not instructions or permission for another invocation. The pilot was not a Worker, endpoint, evaluation suite or change to ordinary simulation.
 
-**Stop unless you independently know the exact account ID for your 2026-11-23 14:01 “Workers Free — Active”, no AI Gateway displayed observation recorded at `67006cb`. Stop if you know this has changed.** Do not infer the account from the login or a sole membership. Do not send the ID to an agent. This command checks membership, **not billing**. The Free assurance depends on that dated observation remaining true: the tool cannot lock a subscription, confirm remaining quota or prevent another administrator changing plans. Under the pricing reviewed on 2026-11-23, Workers Free had a hard account-wide 10,000-neuron daily allowance; when exhausted, a Free user must wait for reset rather than incur Paid overage. This is not a promise that quota remains today.
-
-From the project root run once:
-
-```sh
-sh tools/workers-ai-pilot/run.sh
-```
-
-1. At the hidden prompt enter the independently known 32-character lowercase hex ID and press Enter, or press Enter alone to stop. No ID in shell history, arguments, files or chat.
-2. Open the **private** `https://dash.cloudflare.com/oauth2/auth?...` URL printed in that terminal in your browser. Authenticate as the operator; inspect consent for `account:read`, `user:read`, `ai:write` (Wrangler adds `offline_access`). Do not grant unexpected permissions. Allow the local `http://localhost:8976/oauth/callback` redirect; return to the terminal. Do not paste a token or callback URL into the command. Browser login/callback, token exchange and authenticated membership lookup are preparatory network operations, not inference, plan checks or billing mutations.
-3. Wrangler 4.151.2 runs only `login --browser=false --scopes ...` and `auth token --json` in a new owner-only temporary directory, with an explicit minimal config, empty env-file, banner/update check disabled, and without inherited credentials, proxy/TLS settings or keyring. Only the validated login URL is shown. Auth state is deleted locally after token extraction; this is **not remote revocation**. A bounded direct GET of v4 `/memberships` must include exactly one accepted match for the supplied ID. An absent match (including outside the returned page) stops; no account selection or probing.
-4. Read the private validated blocks and reconstructed cited excerpts in the terminal. Valid references are not proof of entailment or answer quality. **Return only the final one-line JSON receipt**, not the preceding terminal output, browser URL, account, prompt, answer, source text, auth material or logs. `attemptsThisInvocation` counts local dispatch attempts, not confirmed provider completions. No transcript is saved by the tool.
+The historical gate relied on BC independently identifying the account from the 2026-11-23 14:01 “Workers Free — Active”, no AI Gateway displayed observation recorded at `67006cb`. The bounded membership lookup established an accepted match, **not billing**. The tool cannot lock a subscription, confirm remaining quota or prevent another administrator changing plans. A local dispatch count does not establish a remote execution or consumption.
 
 ## Limits and local state
 
@@ -34,6 +23,25 @@ Only direct HTTPS POST `https://api.cloudflare.com/client/v4/accounts/{matched-i
 The local byte/component checks and upstream response limits are **not a live tokenizer**, neuron estimate, guarantee of admission or billing cap. HTTP, malformed output and deadline failures stop; no diagnostic text or assumed completion is reported. No other invocation is authorized by a zero count.
 
 Official references: [Workers AI REST](https://developers.cloudflare.com/workers-ai/get-started/rest-api/), [model](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/), [JSON mode](https://developers.cloudflare.com/workers-ai/features/json-mode/), [pricing/Free daily allocation](https://developers.cloudflare.com/workers-ai/platform/pricing/), [memberships](https://developers.cloudflare.com/api/resources/memberships/methods/list/). See [dated operator observation and earlier offline evidence](workers-ai.md). Tests substitute synthetic browser/auth and HTTPS boundaries. They are distinct from the operator receipt below.
+
+## Offline contract and diagnostics
+
+At the substituted HTTPS boundary the pinned turn is a UTF-8 JSON POST: a system instruction string, a user message containing the role’s JSON data **as a string**, `stream: false`, the direct schema in `response_format.json_schema` (`type: "json_schema"`), and the role’s `max_tokens` above. The classifier schema separates four decisions; the generator schema describes status, language and cited blocks. Local admission counts the serialized body including escaping and framing. A bounded, identity-encoded v4 success envelope with an empty errors array supplies `result`; the role decoder accepts an object or JSON string in `result.response`, subject to the decoded limit and application validation. The installed model-specific types permit messages, both JSON mode selectors and an untyped schema. This is local contract evidence, **not** a demonstration of remote schema support or a reason to change the wrapper, schema or deadline.
+
+In offline failure receipts, `diagnostic.stage` names the observed phase: `authorization`, `preparation`, `classifier`, `continuation` (including evidence retrieval and generator preparation), `generator`, `finalization` (validated result reconstruction), `teardown`, or `unknown`. It is not inferred from attempt counts. `diagnostic.kind` reports only the first local observation:
+
+| Kind | Meaning |
+|---|---|
+| `local_deadline` | A local cutoff fired or a local elapsed-time check expired. External interruption by itself is not a deadline. |
+| `transport` | The socket or stream failed without a usable response. Remote completion is unknown. |
+| `http_rejection` | A non-200 integer HTTP status (100–599) was observed. Only that number appears as `httpStatus`; no rejection body is read. A missing or malformed status is `unknown`, not a refusal. |
+| `unusable_envelope` | Encoding, size, UTF-8, JSON, success/errors or the envelope’s own `result` field failed the check. Missing `result` keeps the original processing status. |
+| `invalid_response` | Completed data failed role decoding or application validation, including citations. |
+| `unknown` | No more specific cause was observed at this stage. |
+
+Disposable tests drive the login and token kill timers, membership cutoff, processing clock and command watchdog separately. Auth cleanup still waits for child close. If the watchdog fires during publication disposal and the grace period expires, the CLI reports `interrupted` with the actual dispatch counts and `cleanup: "incomplete"`. It does not promote a pending result to `answered` or display it. This is a limit on local teardown, not evidence about inference.
+
+No exception text, provider code, usage or billing conclusion belongs in the receipt. A controlled result or spent denial has no diagnostic. Private terminal display of validated blocks and reconstructed sources is not part of the receipt. These distinctions apply to the disposable tests; they add no information to the earlier observation.
 
 ## Operator receipt — first authorized pilot
 

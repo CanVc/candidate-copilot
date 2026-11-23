@@ -53,7 +53,7 @@ export function inputs() {
     return { bundle, message };
   } finally { content.close(); }
 }
-export async function localPublication(directory, bundle, use, onDisposeFailure) {
+export async function localPublication(directory, bundle, observation, use, onDisposeFailure) {
   const require = createRequire(new URL('node_modules/wrangler/package.json', root));
   const { Miniflare, Log, LogLevel } = require('miniflare');
   // Pinned Miniflare installs synchronous process.exit(128+signal) hooks in its
@@ -75,5 +75,9 @@ export async function localPublication(directory, bundle, use, onDisposeFailure)
     await db.batch(sql.split(';').map(s => s.trim()).filter(Boolean).map(s => db.prepare(s)));
     await installEvaluationPublication(db, bundle);
     return await use(db);
-  } finally { try { await mf.dispose(); } catch { onDisposeFailure(); } }
+  } catch (error) { observation.note('unknown'); throw error; }
+  finally {
+    observation.stage = 'teardown';
+    try { await mf.dispose(); } catch { onDisposeFailure(); }
+  }
 }
