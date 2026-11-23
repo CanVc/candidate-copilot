@@ -1,0 +1,18 @@
+# Supervisor evidence check — stories 2.12–2.14
+
+Scope: review of existing evidence; not a new live run, BC acceptance, release approval or permission to repeat the pilot. AC numbers follow the order in `epics.md`.
+
+| Story / criteria | Evidence supported | Outstanding / disposition |
+|---|---|---|
+| 2.12 AC1 | Dated Cloudflare pricing and candidate model evidence; BC observed Workers Free active on 2026-11-23 at 14:01 and no AI Gateway displayed (`67006cb`). The bounded direct pilot at `e393541` checks membership separately from plan and fixes the model/host. | The historical receipt (`292a93b`) reports 1 classifier attempt, 0 generator attempts, `processing_unavailable`. No HTTP status, remote completion, consumption or successful response was established. Do not diagnose quota or timeout from it. |
+| 2.12 AC2–AC4 | Credential-free simulation stays default. Offline tests inspect actual wire projections and fictional A05 sentinels; pre-admission and post-admission failure and replay behavior verified locally (`7c73311`). | The operator pilot is separate from normal application startup. These tests are not live generator proof; final disclosure placement/copy has its own UI criteria. |
+| 2.12 AC5 | Negative fixtures cover known vs unknown provider errors. Free/no-paid-path evidence combines official terms, operator observation and fixed direct configuration, not the presence of a software guard alone. | No measured live quota/exhaustion behavior, invoice or model success. Do not spend quota to manufacture a billing test. Keep the story open for actual integration evidence. |
+| 2.13 AC1–AC3 | Snapshot at `b1c0604`: deadline/lease/transport settings separate; cancellation and persisted controlled failure; lost/late receipt, ownership and replay exercised on disposable D1. | Local behavior validated; a locally expired attempt is not evidence that remote computation stopped. |
+| 2.13 AC4 | Logical counters remain unchanged, no new cooldown or execution cap adopted. | A08 usage evidence for interrupted/manual recovery and a BC/architecture decision are absent. One dispatch count is not cost evidence. |
+| 2.14 AC1 | Pinned cases, version and capture protocol (`0886d03`); one sanitized operator receipt exists. | No completed actual evaluation with outputs and independent human judgments. |
+| 2.14 AC2–AC3 | Inputs/probes cover missing evidence, professional boundaries, clarification, long questions, FR/EN and original-language excerpts. | Input validation is not an assessment of a model's meaning, citation support or answer language. |
+| 2.14 AC4 | Protocol distinguishes retrieval failures, generator failures, unknown observations and sharing blockers. | No quality verdict; the pilot is an unsuccessful observation, not a generated answer. |
+
+Disposition: these stories are not human-accepted. Continue independent local UI work sequentially using public fictional development data and the existing contracts. This does not close the evaluation gate before UI completion or authorize public sharing, a new live attempt, push or deployment.
+
+The offline diagnostics follow-up at `b29ee29` adds prospective stage/failure reporting. All 67 focused pilot tests passed; the broader isolated run passed 1,032/1,035 with three environment-related failures. It neither reclassifies the historical receipt nor authorizes a second attempt.
