@@ -235,7 +235,7 @@ Source: PRD §10, architecture Deferred and open acceptance register. Preserve o
 - OPEN-3 — Implementation/BC: evaluate FTS retrieval and actual model outputs; choose actual model/prompts and component budgets/reason codes through implementation tests, not invented planning constants. Use evaluation evidence before proposing semantic retrieval.
 - OPEN-4 — Implementation/operations: implement exact SQL/indexes/transaction proof, CLI/runbook, purge cadence/margin/cutoff/review/failure handling, deployment commands/credentials and current free-plan verification. Architecture provides constraints, not completed tools/evidence; choose domain/slug when ownership/DNS is known.
 - OPEN-5 — Frontend/UX: prove supported-browser lifecycle/storage denial, real geometry/focus/mobile keyboard/overflow, complete states and accessibility. No invented breakpoints, sizing tokens or durable session fallback.
-- A05 — BC/privacy, architecture/provider adapter: explicitly distinguish application-added unnecessary metadata from Visitor-entered personal/sensitive text; decide appropriate detectable-secret handling/disclosure and inspect actual prompts/tests before provider/privacy acceptance. No comprehensive redaction or detection mechanism is approved.
+- A05 — [BC's V1 input-handling decision](reviews/open-acceptance-items.md#a05--visitor-entered-sensitive-content): warn in the usage guide; do not automatically scan, block or mask visitor-entered sensitive text. App-added data minimization and verification of actual provider payloads/disclosures remain required.
 - A06 — Operations/privacy/retention: assess actual host/provider backup retention/restore and prove expired/already-deleted data cannot be served/retained contrary to policy; assess before launch and verify restoration before relying on recovery. No indefinite content-bearing tombstone or expanded audit exception is approved.
 - A07 — Architecture/security/HTTP adapter: define allowed browser origins/content types and any non-browser creation policy; test accepted/rejected cross-site creation and quota effects before anonymous-entry sign-off. CORS alone is not that policy; no header mechanism/new client capability is selected.
 - A08 — BC/architecture/usage/provider: measure interrupted/manual recovery computations and document whether separate execution controls are needed before launch, preserving same-id logical-turn accounting, manual-only recovery and read/replay/deletion access. No numeric attempt cap/cooldown/global budget is selected.
@@ -1137,7 +1137,7 @@ So that real-model quality can be measured without coupling policy to provider S
 **And** replacing the adapter does not move grounding, safety, usage or retention policy out of core (AR5, AR21).
 
 **Given** the app's prompt-minimization rule and Visitor-entered sensitive or secret-like text,
-**When** BC/privacy and architecture resolve A05,
+**When** the adapter implements the [recorded A05 decision](reviews/open-acceptance-items.md#a05--visitor-entered-sensitive-content),
 **Then** the distinction between app-added metadata and user text, chosen handling and truthful disclosure is documented and tested against actual prompt payloads,
 **And** credentials/private sources/unnecessary identifiers stay excluded without claiming comprehensive semantic redaction (A05).
 
@@ -1228,7 +1228,7 @@ So that I can ask freely without accounts, mandatory context or a project showca
 **Given** either entry route,
 **When** Conversation opens,
 **Then** the compact badge/name/function/location stays visible on desktop/mobile and scrolls with the page,
-**And** the short guide outside the transcript starts open and can be manually collapsed/reopened under Quelques repères without answer-driven hiding (UX-DR5, UX-DR6).
+**And** the short guide outside the transcript starts open, includes the [A05 sensitive-input reminder](reviews/open-acceptance-items.md#a05--visitor-entered-sensitive-content) before free-text entry, and can be manually collapsed/reopened under Quelques repères without answer-driven hiding (UX-DR5, UX-DR6).
 
 **Given** the visual foundation,
 **When** components render,

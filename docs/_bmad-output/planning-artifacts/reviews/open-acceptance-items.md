@@ -2,12 +2,12 @@
 title: Candidate Copilot — Open acceptance questions
 status: open
 created: 2026-10-19
-updated: 2026-11-18
+updated: 2026-11-23
 ---
 
 # Open acceptance questions
 
-This register retains unresolved questions from the [2026-10-19 alignment audit](alignment-review-2026-10-19.md#adversarial-finding-dispositions), findings A05–A10. It is a follow-up index, **not a new product policy, runtime contract or readiness approval**. Launch acceptance remains open for all six items. BC selected the A07/A09 development policies on 2026-11-18, recorded below and implemented in Story 2.5; other reviewer suggestions remain proposals. No numeric budget, recovery endpoint, durable credential mechanism, deletion SLA or palette change is selected here.
+This register retains unresolved questions from the [2026-10-19 alignment audit](alignment-review-2026-10-19.md#adversarial-finding-dispositions), findings A05–A10. It is a follow-up index, **not a new product policy, runtime contract or readiness approval**. Launch acceptance remains open for all six items. BC selected the A07/A09 development policies on 2026-11-18 (implemented in Story 2.5) and the A05 V1 input-handling policy on 2026-11-23 (recorded below; implementation and verification pending). Other reviewer suggestions remain proposals. No numeric budget, recovery endpoint, durable credential mechanism, deletion SLA or palette change is selected here.
 
 The audit report and [original findings JSON](alignment-review-2026-10-19.json) are immutable snapshots; this register may track subsequent decisions/evidence. IDs identify provenance, not importance. Conditional findings do not establish a demonstrated runtime defect or exploit.
 
@@ -24,11 +24,11 @@ The audit report and [original findings JSON](alignment-review-2026-10-19.json) 
 
 ## A05 — Visitor-entered sensitive content
 
-**Open question:** How does the prompt-minimization rule distinguish unnecessary metadata added by the application from personal or sensitive information inside the Visitor's submitted question? What detectable-secret handling and disclosure are appropriate before provider processing?
+**Owner decision (BC, 2026-11-23, V1):** Warn visitors rather than automatically scanning, blocking or masking their input for secrets or sensitive personal data. The short “Quelques repères” usage guide should remind visitors before free-text entry not to paste passwords, API keys, confidential logs or sensitive personal data. The notice must describe the actual processing path: distinguish local simulation from a configured provider that receives the question and relevant conversation context. Do not imply that unsafe input is automatically made safe. This decision concerns visitor-entered text only; it does not relax the application's own prompt-minimization or professional-refusal rules.
 
 **Existing boundary:** [PRD FR-16](../prds/prd-candidate-copilot-2026-09-11/prd.md#fr-16-disclose-conversation-retention-review-and-processing) states: “The app must not intentionally include private source material, secrets, unnecessary Visitor identifiers, or unrelated personal data in model prompts.” The [classifier/generator contracts](../architecture/architecture-candidate-copilot-2026-09-11/ARCHITECTURE-SPINE.md#classifier-input-and-output) process user text but exclude session credentials and unnecessary application metadata. The brief already deferred visitor-sensitive-input handling. This is not evidence that comprehensive semantic redaction exists or that a leak occurred.
 
-**Evidence to close:** An explicit policy boundary, actual prompt/disclosure inspection and representative tests of the chosen handling, without claiming complete sensitive-data detection. No redaction mechanism is approved by this register.
+**Evidence still needed:** Story 2.12 inspects representative classifier and generator payloads using fictional test inputs: distinguish visitor text from app-added fields and verify that credentials, private sources and unnecessary identifiers are not attached. Story 2.15 places the reminder in the guide; Story 2.22 verifies the final French copy against the configured processing path. The policy decision is recorded, not evidence of implementation, permission for live calls or launch approval.
 
 ## A06 — Backup restore and deletion
 
