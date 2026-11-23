@@ -1,3 +1,4 @@
+import type { ProcessingAvailability } from '../ports/ProcessingAvailability.ts';
 import { assertContextResetResult } from '../shared/professional-intent.ts';
 import { contextFallbackLanguage, resolveConversationContext } from './conversation-context.ts';
 import type { Clock } from '../ports/Clock.ts';
@@ -13,6 +14,7 @@ import { authenticateConversation, CONVERSATION_RETENTION_MS } from './conversat
 export async function submitConversationQuestion(
   store: ConversationStore, catalog: ResourceCatalog, clock: Clock, processor: ConversationProcessor | undefined,
   conversationId: string, authorization: string | undefined, body: unknown, limits: Partial<AdmissionLimits> = {},
+  availability?: ProcessingAvailability,
 ): Promise<ConversationResult> {
   const tokenHash = await authenticateConversation(store, clock, conversationId, authorization);
   try {
@@ -25,7 +27,7 @@ export async function submitConversationQuestion(
     if (saved?.result) return saved.result;
     if (state.lease && state.lease.until > clock.now().getTime()) throw new AdmissionRejected(state.lease.requestId === requestId ? 'request_in_progress' : 'conversation_busy');
     if (!processor) throw new AdmissionRejected('result_unavailable');
-    const admission = await admitConversationQuestion(store, catalog, clock, conversationId, authorization, body, 'submit', limits);
+    const admission = await admitConversationQuestion(store, catalog, clock, conversationId, authorization, body, 'submit', limits, availability);
     if (admission.status === 'completed' && admission.message.result) return admission.message.result;
     // Recovery execution is explicit and belongs to a later story. Never turn a
     // repeated interrupted POST into an automatic processing restart.

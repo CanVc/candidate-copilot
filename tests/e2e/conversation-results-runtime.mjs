@@ -56,10 +56,10 @@ try {
     assert.equal(response.status, 201); return response.json();
   }
   const body = (requestId = randomUUID(), question = '  Épreuve 😀\r\ne\u0301  ', p = A) => ({ requestId, question, selection: { resourceIds: [], catalogRevision: p.catalog.catalogRevision, catalogHash: p.hash } });
-  const send = async (c, input, { worker = one, time = 0, status = 'answered', language = 'fr', disabled = false, race, distinctBlocks = false } = {}) => {
+  const send = async (c, input, { worker = one, time = 0, status = 'answered', language = 'fr', disabled = false, race, outage, distinctBlocks = false } = {}) => {
     const response = await worker.fetch(`http://local/api/conversations/${c.conversationId}/messages`, { method: 'POST',
       headers: { Authorization: `Bearer ${c.sessionToken}`, 'Content-Type': 'application/json', 'X-Fixture-Now': at(time),
-        'X-Fixture-Status': status, 'X-Fixture-Language': language, ...(disabled ? { 'X-Fixture-Disabled': '1' } : {}), ...(race ? { 'X-Fixture-Admission-Race': race } : {}), ...(distinctBlocks ? { 'X-Fixture-Distinct-Blocks': '1' } : {}) }, body: JSON.stringify(input) });
+        'X-Fixture-Status': status, 'X-Fixture-Language': language, ...(outage ? { 'X-Fixture-Outage': outage } : {}), ...(disabled ? { 'X-Fixture-Disabled': '1' } : {}), ...(race ? { 'X-Fixture-Admission-Race': race } : {}), ...(distinctBlocks ? { 'X-Fixture-Distinct-Blocks': '1' } : {}) }, body: JSON.stringify(input) });
     assert.equal(response.headers.get('cache-control'), 'no-store');
     return { status: response.status, body: await response.json() };
   };
@@ -68,8 +68,8 @@ try {
     assert.match(response.body.error.message, guidance);
     assert.equal(response.body.error.retryable, false); assert.equal(response.body.error.retryMode, 'none');
   };
-  const read = async (c, time = 0, disabled = false) => {
-    const response = await two.fetch(`http://local/api/conversations/${c.conversationId}`, { headers: { Authorization: `Bearer ${c.sessionToken}`, 'X-Fixture-Now': at(time), ...(disabled ? { 'X-Fixture-Disabled': '1' } : {}) } });
+  const read = async (c, time = 0, disabled = false, outage) => {
+    const response = await two.fetch(`http://local/api/conversations/${c.conversationId}`, { headers: { Authorization: `Bearer ${c.sessionToken}`, 'X-Fixture-Now': at(time), ...(outage ? { 'X-Fixture-Outage': outage } : {}), ...(disabled ? { 'X-Fixture-Disabled': '1' } : {}) } });
     assert.equal(response.headers.get('cache-control'), 'no-store');
     return { status: response.status, body: await response.json() };
   };
@@ -115,6 +115,17 @@ try {
   assert.deepEqual((await send(upgrade, upgradeInput)).body, upgradedResult);
   console.log('PASS: populated 0005-to-0006 upgrade preserves admitted rows and guarded completion');
   // HTTP readiness and stale identities use the same public route and deciding snapshot.
+  const suspended = await create(), preserved = body('preserved-draft'), beforeSuspended = await calls();
+  for (const outage of ['timed', 'unknown']) {
+    const rejected = await send(suspended, preserved, { outage });
+    assert.equal(rejected.status, 503); assertGuidance(rejected, 'provider_unavailable', /Conservez votre question/);
+    const expectedTime = outage === 'timed' ? { resumeAt: at(3600000) } : {};
+    assert.equal(Object.hasOwn(rejected.body.error, 'resumeAt'), outage === 'timed'); assert.equal(rejected.body.error.resumeAt, expectedTime.resumeAt);
+    const view = await read(suspended, 0, false, outage); assert.equal(view.status, 200); assert.deepEqual(view.body.transcript, []);
+    assert.deepEqual(view.body.admission, { available: false, reason: 'processing_unavailable', ...expectedTime });
+    assert.equal(await lease(suspended), null); assert.deepEqual(await messages(suspended), []); assert.equal(await calls(), beforeSuspended);
+  }
+  assert.equal((await send(suspended, preserved)).body.status, 'answered'); assert.equal((await messages(suspended)).length, 1);
   const idle = await create();
   assert.deepEqual((await read(idle, 0, true)).body.admission, { available: false, reason: 'processing_unavailable' });
   assert.deepEqual((await read(idle)).body.admission, { available: true });

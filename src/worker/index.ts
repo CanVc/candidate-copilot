@@ -1,3 +1,6 @@
+import type { GenerationRetriever } from '../ports/Retriever.ts';
+import { D1Retriever } from '../adapters/d1/retriever.ts';
+import type { ProcessingAvailability } from '../ports/ProcessingAvailability.ts';
 import type { ConversationProcessor } from '../ports/ConversationProcessor.ts';
 import type { ResourceCatalog } from '../ports/ResourceCatalog.ts';
 import { admissionLimits, AdmissionRejected, type AdmissionLimits, type AdmissionErrorCode } from '../shared/conversation-admission.ts';
@@ -26,11 +29,14 @@ const admissionMessages: Record<AdmissionErrorCode, string> = {
   request_in_progress: 'Cette question est en cours de traitement. Consultez son état sans la renvoyer.',
   conversation_busy: 'Une autre question est en cours. Attendez sa fin avant d’envoyer une nouvelle question.',
   turn_limit_reached: 'La limite de questions de cette conversation est atteinte. Les résultats enregistrés restent consultables.',
+  provider_unavailable: 'Le traitement est actuellement indisponible. Conservez votre question.',
   result_unavailable: 'Impossible de récupérer le résultat pour le moment.',
 };
 
 export function createWorker(clockOverride?: Clock, addressAdapter = trustedCreationAddress, options: {
-  limits?: Partial<AdmissionLimits>; processor?: (catalog: ResourceCatalog) => ConversationProcessor;
+  availability?: ProcessingAvailability;
+  limits?: Partial<AdmissionLimits>;
+  processor?: (catalog: ResourceCatalog, retriever: GenerationRetriever) => ConversationProcessor;
 } = {}) {
   const limits = admissionLimits(options.limits);
   const clock = clockOverride ?? { now: () => new Date() };
@@ -107,18 +113,22 @@ export function createWorker(clockOverride?: Clock, addressAdapter = trustedCrea
       try { body = await context.req.json(); } catch { throw new AdmissionRejected('invalid_request'); }
       if (body && typeof body === 'object' && 'requestId' in body && typeof body.requestId === 'string') requestId = body.requestId;
       const catalog = new D1ResourceCatalog(context.env?.DB);
-      return context.json(await submitConversationQuestion(store, catalog, clock, options.processor ? { process: (message, processingContext) => options.processor!(catalog).process(message, processingContext) } : undefined, id, authorization, body, limits), 200);
+      const compose = options.processor;
+      const processor: ConversationProcessor | undefined = compose && { process: (message, processingContext) =>
+        compose(catalog, new D1Retriever(context.env.DB)).process(message, processingContext) };
+      return context.json(await submitConversationQuestion(store, catalog, clock, processor, id, authorization, body, limits, options.availability), 200);
     } catch (error) {
       if (error instanceof ConversationUnavailable) {
         context.header('WWW-Authenticate', 'Bearer');
         return context.json({ error: 'conversation_unavailable' }, 401);
       }
       const code = error instanceof AdmissionRejected ? error.code : 'result_unavailable';
-      const status = code === 'result_unavailable' ? 503 : code === 'turn_limit_reached' ? 429
+      const status = code === 'result_unavailable' || code === 'provider_unavailable' ? 503 : code === 'turn_limit_reached' ? 429
         : ['invalid_request', 'invalid_scope', 'invalid_retry'].includes(code) ? 400 : 409;
       return context.json({ ...(requestId === undefined ? {} : { requestId }),
         ...(error instanceof AdmissionRejected && error.currentCatalog ? error.currentCatalog : {}), error: {
         code, message: admissionMessages[code],
+        ...(code === 'provider_unavailable' && error instanceof AdmissionRejected && error.resumeAt ? { resumeAt: error.resumeAt } : {}),
         retryable: code === 'result_unavailable', retryMode: code === 'result_unavailable' ? 'same_request' : 'none',
       } }, status);
     }
@@ -127,7 +137,7 @@ export function createWorker(clockOverride?: Clock, addressAdapter = trustedCrea
   app.get('/api/conversations/:id', async (context) => {
     try {
       return context.json(await readConversation(new D1ConversationStore(context.env?.DB, clockOverride), clock,
-        context.req.param('id'), context.req.header('Authorization'), new D1ResourceCatalog(context.env?.DB), limits, !!options.processor));
+        context.req.param('id'), context.req.header('Authorization'), new D1ResourceCatalog(context.env?.DB), limits, !!options.processor, options.availability));
     } catch (error) {
       if (error instanceof ConversationUnavailable) {
         context.header('WWW-Authenticate', 'Bearer');

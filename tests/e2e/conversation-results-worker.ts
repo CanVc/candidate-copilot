@@ -97,6 +97,9 @@ export default {
     } }) : env.DB;
     return createWorker(clock, () => '127.0.0.1', {
       limits: { maxMessages: 5, maxQuestionCharacters: 1000, leaseMilliseconds: 40_000 },
+      // Synthetic availability control on this disposable test Worker only.
+      availability: () => request.headers.has('X-Fixture-Outage') ? { confirmedUnavailable: true,
+        ...(request.headers.get('X-Fixture-Outage') === 'timed' ? { resumeAt: Date.parse('2026-01-01T01:00:00Z') } : {}) } : null,
       ...(request.headers.has('X-Fixture-Disabled') ? {} : { processor }),
     }).fetch(request, { ...env, DB: database }, context);
   },

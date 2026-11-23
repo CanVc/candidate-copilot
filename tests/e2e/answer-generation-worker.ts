@@ -1,3 +1,4 @@
+import type { GenerationRetriever } from '../../src/ports/Retriever.ts';
 import { createWorker } from '../../src/worker/index.ts';
 import { D1ConversationStore } from '../../src/adapters/d1/conversations.ts';
 import { D1ResourceCatalog } from '../../src/adapters/d1/publication.ts';
@@ -55,7 +56,7 @@ export default {
     } });
     const retrievalDb = faultDatabase(fault, false);
     const preparationCatalog = new D1ResourceCatalog(faultDatabase(preparationFault, true));
-    const processor = () => {
+    const processor = (_catalog?: unknown, suppliedRetriever?: GenerationRetriever) => {
       const classifier = new ScriptedLLMProvider((prompt) => {
         classifications.push(prompt as PreparedModelCall);
         if (branch === 'clarify') return { decision: 'clarify', reasonCode: 'material_ambiguity', responseLanguage: language, clarificationQuestion: 'Which architecture decision?' };
@@ -90,7 +91,8 @@ export default {
             { kind: 'limitation', text: language === 'fr' ? 'Les éléments retrouvés ne permettent pas de donner davantage de détails.' : language === 'de-CH' ? 'Die gefundenen Belege stützen keine weiteren Einzelheiten.' : 'Further details are not supported by the retrieved evidence.', sourceIds: [] },
           ] };
       }, receiver);
-      const retriever = new D1Retriever(retrievalDb, { topK: 5, textBudget: Number(request.headers.get('X-Fixture-Text-Budget') ?? 12000) });
+      const retriever = branch === 'injected-retriever' && suppliedRetriever ? suppliedRetriever : new D1Retriever(retrievalDb, { topK: 5, textBudget: Number(request.headers.get('X-Fixture-Text-Budget') ?? 12000) });
+      if (branch === 'injected-retriever' && !suppliedRetriever) throw new Error('Missing composed retriever');
       return new ProfessionalIntentProcessor(classifier, new ModelAwareIntentPreparation(preparationCatalog, classifier), new EligibleEvidenceContinuation({
         retrieveForGeneration: async (input) => { retrievals++; return retriever.retrieveForGeneration(input); },
       }, generator, answerGenerationBounds({ sources: Number(request.headers.get('X-Fixture-Sources') ?? 100) })));

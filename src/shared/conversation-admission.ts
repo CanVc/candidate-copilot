@@ -39,11 +39,11 @@ export interface AdmittedMessage {
 }
 export interface ProcessingLease { requestId: string; attemptId: string; until: number }
 export interface AdmissionState { messages: AdmittedMessage[]; lease: ProcessingLease | null }
-export type AdmissionErrorCode = 'invalid_request' | 'invalid_scope' | 'invalid_retry' | 'request_conflict' | 'request_in_progress' | 'conversation_busy' | 'catalog_stale' | 'scope_unavailable' | 'turn_limit_reached' | 'result_unavailable';
+export type AdmissionErrorCode = 'invalid_request' | 'invalid_scope' | 'invalid_retry' | 'request_conflict' | 'request_in_progress' | 'conversation_busy' | 'catalog_stale' | 'scope_unavailable' | 'turn_limit_reached' | 'result_unavailable' | 'provider_unavailable';
 export interface CatalogIdentity { catalogRevision: string; catalogHash: string }
 export class AdmissionRejected extends Error {
   readonly code: AdmissionErrorCode;
-  constructor(code: AdmissionErrorCode, readonly currentCatalog?: CatalogIdentity) { super(code); this.name = 'AdmissionRejected'; this.code = code; }
+  constructor(code: AdmissionErrorCode, readonly currentCatalog?: CatalogIdentity, readonly resumeAt?: string) { super(code); this.name = 'AdmissionRejected'; this.code = code; }
 }
 export function normalizeSubmission(value: unknown): { requestId: string; identity: SubmissionIdentity } {
   try {

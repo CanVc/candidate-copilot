@@ -1,3 +1,8 @@
+import { isProxy } from 'node:util/types';
+import { selectProvider, WORKERS_AI_CANDIDATE, type FixtureInferenceBinding } from '../../src/adapters/llm/workers-ai.ts';
+import { EligibleEvidenceContinuation } from '../../src/application/generate-answer.ts';
+import { ModelAwareIntentPreparation, ProfessionalIntentProcessor } from '../../src/application/professional-intent-processor.ts';
+import { DEFAULT_MODEL_CONTEXT_BUDGET } from '../../src/shared/model-context-budget.ts';
 import { describe, expect, it, vi } from 'vitest';
 import { completeResult, controlledFailure, validateConversationResult, type ResultDraft, type LoadedSource } from '../../src/shared/conversation-result.ts';
 import { AdmissionRejected, type AdmissionState, type AdmittedMessage } from '../../src/shared/conversation-admission.ts';
@@ -34,7 +39,8 @@ async function fixture() {
     findAuthenticated: vi.fn(async (conversationId, hash) => conversationId === id && hash === tokenHash ? { conversationId: id } : null),
     readAdmissionState: vi.fn(async () => structuredClone(state)),
     admit: vi.fn(async (command) => {
-      const admitted = { ...structuredClone(message), messageId: command.messageId, contextAnchorMessageId: command.messageId, requestId: command.requestId };
+      const admitted = { ...structuredClone(message), submissionIdentity: command.identity,
+        question: command.identity.kind === 'direct' ? command.identity.question : message.question, messageId: command.messageId, contextAnchorMessageId: command.messageId, requestId: command.requestId };
       state.messages.push(admitted); state.lease = { attemptId: command.attemptId, requestId: command.requestId, until: clock.now().getTime() + command.limits.leaseMilliseconds };
       return { status: 'admitted' as const, message: admitted, lease: state.lease };
     }),
@@ -356,5 +362,106 @@ describe('conversation-results portable service', () => {
       const output = await new SyntheticConversationProcessor(f.catalog, status).process(message);
       expect(JSON.stringify(output)).toContain('aucune attribution à BC'); expect(f.catalog.readSnapshot).not.toHaveBeenCalled();
     }
+  });
+});
+
+describe('offline provider with authenticated admission and finalization', () => {
+  const question = '  Fictional API key DEMO-123 and visitor@example.invalid: what is documented?\r\n';
+  const input = { ...body, requestId: 'APP_REQUEST_ID', question };
+  async function pipeline() {
+    const f = await fixture(), run = vi.fn<FixtureInferenceBinding['run']>();
+    const classifier = { model: WORKERS_AI_CANDIDATE, budget: DEFAULT_MODEL_CONTEXT_BUDGET } as const;
+    const provider = selectProvider({ mode: 'workers-ai-offline', isProxy, binding: { kind: 'local-fixture', run }, classifier,
+      generator: { ...classifier, budget: { ...classifier.budget, output: 1000 } } });
+    const retrieve = vi.fn(async () => ({ chunks: [source.chunk] }));
+    const processor = new ProfessionalIntentProcessor(provider, new ModelAwareIntentPreparation(f.catalog, provider), new EligibleEvidenceContinuation({ retrieveForGeneration: retrieve }, provider));
+    const snapshot = vi.fn<() => { confirmedUnavailable: true; resumeAt?: number } | null>(() => null);
+    const submit = (value = input) => submitConversationQuestion(f.store, f.catalog, f.clock, processor, id, `Bearer ${token}`, value, {}, snapshot);
+    return { ...f, run, snapshot, submit, retrieve };
+  }
+  it.each(['object', 'text'])('preserves visitor text without application sentinels in both wire payloads (%s responses)', async (format) => {
+    const response = (value: object) => ({ response: format === 'text' ? JSON.stringify(value) : value });
+    const f = await pipeline();
+    f.catalog.readSnapshot.mockResolvedValue({ ...publication, documents: [{ documentId: 'doc', sourceTitle: 'Public topic', sourceRevision: revision, sourcePath: 'content/public/doc.md', metadata: { document_id: 'doc', visibility: 'public', title: 'Public topic', aliases: ['Public alias'], created_at: message.createdAt, modified_at: message.createdAt, reviewed_at: message.createdAt, reviewed_by: 'EXCLUDED_REVIEWER' } }] });
+    const prior = { ...structuredClone(message), question: 'A fictional prior question', requestId: 'APP_PRIOR_ID' };
+    const result = completeResult(prior, draft, [source]);
+    result.sourceExcerpts[0]!.excerpt = 'PRIVATE_SOURCE_FIXTURE_NOT_FOR_PROMPT';
+    f.state.messages.push({ ...prior, result });
+    f.run.mockResolvedValueOnce(response({ decision: 'answer', reasonCode: 'professional_question', responseLanguage: 'en', professionalTopic: 'Fiction', resolvedQuestion: 'Which example?', searchTerms: ['fiction'] }))
+      .mockResolvedValueOnce(response({ status: 'answered', outputLanguage: 'en', blocks: draft.blocks }));
+    const saved = await f.submit(); expect(saved.status).toBe('answered'); expect(saved.sourceExcerpts[0]?.excerpt).toBe(source.chunk.text);
+    expect(f.run).toHaveBeenCalledTimes(2); expect(f.retrieve).toHaveBeenCalledOnce();
+    for (const [index, [model, wire, options]] of f.run.mock.calls.entries()) {
+      expect(model).toBe(WORKERS_AI_CANDIDATE); expect(options).toBeUndefined();
+      expect(Object.keys(wire).sort()).toEqual(['max_tokens', 'messages', 'response_format', 'stream']);
+      expect(wire.stream).toBe(false); expect(wire.max_tokens).toBe(index === 0 ? 2000 : 1000);
+      expect(wire.messages.map((m) => m.role)).toEqual(['system', 'user']); expect(wire.messages[0].content).not.toContain('DEMO-123');
+      const data = JSON.parse(wire.messages[1].content); expect(data.question).toBe(question);
+      expect(data.conversationContext).toEqual([{ role: 'user', text: prior.question }, { role: 'assistant', text: draft.blocks.map((b) => b.text).join('\n') }]);
+      if (index === 0) {
+        expect(Object.keys(data).sort()).toEqual(['conversationContext', 'documentaryScope', 'languagePolicy', 'publicCatalog', 'question']);
+        expect(data.publicCatalog).toEqual([{ topic: 'Public topic', aliases: ['Public alias'] }]);
+        expect(data.documentaryScope).toEqual({ mode: 'global_public', resourceNames: [] });
+      } else {
+        expect(Object.keys(data).sort()).toEqual(['answerPolicy', 'conversationContext', 'question', 'reasonCode', 'resolvedQuestion', 'responseLanguage', 'scopeDecision', 'sourceChunks']);
+        expect(wire.response_format.json_schema).toMatchObject({ additionalProperties: false, required: ['status', 'outputLanguage', 'blocks'] });
+        expect(data.sourceChunks).toEqual([{ responseLocalId: 'S1', documentId: 'doc', sourcePath: source.chunk.sourcePath, sourceTitle: source.chunk.sourceTitle,
+          sectionTitle: null, location: source.chunk.location, text: source.chunk.text }]);
+      }
+      for (const sentinel of [id, token, await hashSessionToken(token), input.requestId, prior.requestId, saved.messageId, revision, hash,
+        'PRIVATE_SOURCE_FIXTURE_NOT_FOR_PROMPT', 'EXCLUDED_REVIEWER', 'chunkId']) expect(JSON.stringify(wire)).not.toContain(sentinel);
+    }
+  });
+  it.each([true, false])('blocks only new affected admissions, confirmed time present: %s', async (known) => {
+    const f = await pipeline(), resumeAt = f.clock.now().getTime() + 86400000;
+    f.snapshot.mockReturnValue({ confirmedUnavailable: true, ...(known ? { resumeAt } : {}) });
+    const original = structuredClone(input);
+    await expect(f.submit()).rejects.toMatchObject({ code: 'provider_unavailable', resumeAt: known ? new Date(resumeAt).toISOString() : undefined });
+    expect(input).toEqual(original); expect(f.state).toEqual({ messages: [], lease: null }); expect(f.store.admit).not.toHaveBeenCalled(); expect(f.run).not.toHaveBeenCalled();
+    expect((await readConversation(f.store, f.clock, id, `Bearer ${token}`, f.catalog, undefined, true, f.snapshot)).admission)
+      .toEqual({ available: false, reason: 'processing_unavailable', ...(known ? { resumeAt: new Date(resumeAt).toISOString() } : {}) });
+    f.snapshot.mockReturnValue({ confirmedUnavailable: true, resumeAt: f.clock.now().getTime() });
+    f.run.mockRejectedValue({ status: 429, code: 3036, message: 'RAW_DIAGNOSTIC' });
+    const saved = await f.submit(); expect(saved.error?.code).toBe('processing_unavailable'); expect(JSON.stringify(saved)).not.toContain('RAW_DIAGNOSTIC');
+    f.snapshot.mockClear(); f.snapshot.mockReturnValue({ confirmedUnavailable: true });
+    expect(await f.submit()).toEqual(saved); await expect(f.submit({ ...input, question: 'changed' })).rejects.toMatchObject({ code: 'request_conflict' });
+    expect(f.snapshot).not.toHaveBeenCalled(); expect(f.run).toHaveBeenCalledOnce(); expect(f.retrieve).not.toHaveBeenCalled(); expect(f.state.messages).toHaveLength(1);
+  });
+  const answer = { response: { decision: 'answer', reasonCode: 'professional_question', responseLanguage: 'en', professionalTopic: 'Fiction', resolvedQuestion: 'Which example?', searchTerms: ['fiction'] } };
+  it.each(['classifier', 'generator'])('saves invalid_result for malformed %s JSON, without repair', async (role) => {
+    const f = await pipeline(); if (role === 'generator') f.run.mockResolvedValueOnce(answer);
+    f.run.mockResolvedValueOnce({ response: 'RAW_MALFORMED' });
+    const saved = await f.submit(); expect(saved.error?.code).toBe('invalid_result'); expect(JSON.stringify(saved)).not.toContain('RAW_MALFORMED');
+    expect(await f.submit()).toEqual(saved); expect(f.run).toHaveBeenCalledTimes(role === 'generator' ? 2 : 1);
+  });
+  it('saves generator-only refusal, replays it, and permits classifier-only work', async () => {
+    const f = await pipeline(); f.run.mockResolvedValueOnce(answer).mockRejectedValueOnce({ status: 429, code: 3040 });
+    const saved = await f.submit(); expect(saved.error?.code).toBe('processing_unavailable'); expect(await f.submit()).toEqual(saved); expect(f.run).toHaveBeenCalledTimes(2);
+    f.run.mockResolvedValueOnce({ response: { decision: 'clarify', reasonCode: 'material_ambiguity', responseLanguage: 'en', clarificationQuestion: 'Which example?' } });
+    expect((await f.submit({ ...input, requestId: 'new', question: 'Which one?' })).status).toBe('clarification'); expect(f.run).toHaveBeenCalledTimes(3); expect(f.retrieve).toHaveBeenCalledOnce();
+  });
+  it('preserves authenticated history when readiness or its fields throw; never shows expired time after I/O', async () => {
+    const f = await fixture(); const saved = await f.submit(); let now = f.clock.now().getTime(); f.clock.now = () => new Date(now);
+    const fail = (): never => { throw new Error('Fixture observation failed'); };
+    const view = (snapshot: () => { confirmedUnavailable: true; resumeAt?: number } | null) => readConversation(f.store, f.clock, id, `Bearer ${token}`, f.catalog, undefined, true, snapshot);
+    for (const snapshot of [fail, () => ({ get confirmedUnavailable(): true { return fail(); } })]) {
+      const result = await view(snapshot); expect(result.transcript[0]?.result).toEqual(saved); expect(result.admission).toEqual({ available: true });
+    }
+    expect((await view(() => ({ confirmedUnavailable: true, get resumeAt(): number { return fail(); } }))).admission).toEqual({ available: false, reason: 'processing_unavailable' });
+    const resumeAt = now + 100; f.catalog.readSnapshot.mockImplementationOnce(async () => { now = resumeAt; return publication; });
+    expect((await view(() => ({ confirmedUnavailable: true, resumeAt }))).admission).toEqual({ available: true });
+  });
+  it.each([true, false])('rechecks replay and last-slot races before outage rejection (same request: %s)', async (same) => {
+    const f = await fixture(), saved = completeResult(message, draft, [source]);
+    f.catalog.readSnapshot.mockImplementationOnce(async () => { f.state.messages.push({ ...message, requestId: same ? body.requestId : 'other', result: saved }); return publication; });
+    const pending = submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body, { maxMessages: 1 }, () => ({ confirmedUnavailable: true }));
+    if (same) await expect(pending).resolves.toEqual(saved); else await expect(pending).rejects.toMatchObject({ code: 'turn_limit_reached' });
+    expect(f.store.admit).not.toHaveBeenCalled(); expect(f.processor.process).not.toHaveBeenCalled();
+  });
+  it('does not retry a rejected admitted call when saving its failure is uncertain', async () => {
+    const f = await pipeline(); f.run.mockRejectedValue({ status: 408, code: 3007 }); vi.mocked(f.store.finalize).mockRejectedValue(new Error('Injected failure'));
+    await expect(f.submit()).rejects.toMatchObject({ code: 'result_unavailable' }); f.snapshot.mockReturnValue({ confirmedUnavailable: true });
+    await expect(f.submit()).rejects.toMatchObject({ code: 'request_in_progress' }); expect(f.run).toHaveBeenCalledOnce();
+    expect(f.state.messages).toHaveLength(1); expect(f.state.messages[0]?.result).toBeUndefined(); expect(f.store.finalize).toHaveBeenCalledOnce();
   });
 });

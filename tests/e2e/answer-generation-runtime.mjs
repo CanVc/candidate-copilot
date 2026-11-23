@@ -81,6 +81,11 @@ try {
   assert.equal(excerpt.sourceTitle, 'Original fictional source'); assert.equal(excerpt.sectionTitle, 'Décision fictive'); assert.equal(excerpt.location, 'lines:2-3;context:1-1');
   assert.deepEqual(firstResult.body.blocks.map((b) => b.sourceIds), [['S1'], []]);
 
+  const wired = await create(), wiredInput = body(), wiredResult = await send(wired, wiredInput, 'injected-retriever');
+  await parity(wired, wiredInput, wiredResult); assert.equal(wiredResult.body.status, 'answered');
+  assert.equal(wiredResult.body.sourceExcerpts[0].sourceChunkId, excerpt.sourceChunkId);
+  assert.equal(wiredResult.body.sourceExcerpts[0].excerpt, excerpt.excerpt);
+
   for (const [branch, expected, generatorCalls] of [['redirect', 'answered', 1], ['redirect-empty', 'partial', 0], ['partial', 'partial', 1], ['empty', 'partial', 0], ['clarify', 'clarification', 0], ['refuse', 'refused', 0],
     ['citation', 'invalid_result', 1], ['language-conflict', 'invalid_result', 1], ['pattern', 'invalid_result', 1], ['reset', 'invalid_result', 1], ['redirect-unsourced', 'invalid_result', 1], ['failed', 'processing_unavailable', 1], ['throw', 'processing_unavailable', 1]]) {
     const c = await create(), input = body(), before = await stats(), result = await send(c, input, branch);

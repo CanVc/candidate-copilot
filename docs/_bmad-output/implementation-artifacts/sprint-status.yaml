@@ -133,7 +133,7 @@
 # - Tracking closure only: no new tests run. Prior verification limits and deferred risks still stand.
 # - This acceptance does not cover later stories, provider activation, billing or launch.
 generated: 10-19-2026 21:56
-last_updated: 11-23-2026 10:43
+last_updated: 11-23-2026 10:53
 project: candidate-copilot
 project_key: NOKEY
 tracking_system: file-system
@@ -179,7 +179,7 @@ development_status:
   # Structured generation/validation implemented; two review passes complete.
   # Production unconfigured; no 2.12 provider, 2.13 deadlines or public recovery/retry delivery.
   2-11-generate-and-validate-answers-against-eligible-evidence: done
-  2-12-integrate-a-replaceable-real-provider-with-safe-free-quota-b: backlog
+  2-12-integrate-a-replaceable-real-provider-with-safe-free-quota-b: in-progress
   2-13-bound-processing-and-expose-honest-failure-outcomes: backlog
   2-14-evaluate-actual-global-scope-answers-before-ui-completion: backlog
   2-15-enter-a-french-portfolio-conversation-with-optional-guidance: backlog

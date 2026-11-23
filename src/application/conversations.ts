@@ -1,3 +1,4 @@
+import { confirmedProcessingOutage, type ProcessingAvailability } from '../ports/ProcessingAvailability.ts';
 import type { ResourceCatalog } from '../ports/ResourceCatalog.ts';
 import { DEFAULT_ADMISSION_LIMITS } from '../shared/conversation-admission.ts';
 import { creationPseudonym, creationWindow } from './conversation-creation-limits.ts';
@@ -46,14 +47,20 @@ export async function authenticateConversation(store: ConversationStore, clock: 
   }
 }
 
-export async function readConversation(store: ConversationStore, clock: Clock, conversationId: string, authorization: string | undefined, catalog?: ResourceCatalog, limits = DEFAULT_ADMISSION_LIMITS, processingAvailable = true): Promise<ConversationView> {
+export async function readConversation(store: ConversationStore, clock: Clock, conversationId: string, authorization: string | undefined, catalog?: ResourceCatalog, limits = DEFAULT_ADMISSION_LIMITS, processingAvailable = true, availability?: ProcessingAvailability): Promise<ConversationView> {
   const tokenHash = await authenticateConversation(store, clock, conversationId, authorization);
   try {
     const now = clock.now().getTime();
     const state = await store.readAdmissionState(conversationId, tokenHash, new Date(now - CONVERSATION_RETENTION_MS).toISOString());
     if (!state) throw new ConversationUnavailable();
     const publication = await catalog?.readSnapshot().catch(() => null);
-    const active = state.lease && state.lease.until > clock.now().getTime() ? state.lease : null;
+    const observedAt = clock.now().getTime();
+    const active = state.lease && state.lease.until > observedAt ? state.lease : null;
+    const readiness = (): ConversationView['admission'] => {
+      if (!processingAvailable) return { available: false, reason: 'processing_unavailable' };
+      const outage = confirmedProcessingOutage(availability, observedAt);
+      return outage ? { available: false, reason: 'processing_unavailable', ...outage } : { available: true };
+    };
     return {
       conversationId,
       transcript: state.messages.map(({ submissionIdentity: _identity, contextAnchorMessageId: _anchor, contextReset: _reset, ...message }) => ({
@@ -62,8 +69,7 @@ export async function readConversation(store: ConversationStore, clock: Clock, c
       processing: active ? { status: 'in_progress', requestId: active.requestId } : { status: 'idle' },
       admission: active ? { available: false, reason: 'conversation_busy' } : state.messages.length >= limits.maxMessages
         ? { available: false, reason: 'turn_limit_reached' } : !publication?.catalog.documents.length
-          ? { available: false, reason: 'scope_unavailable' } : !processingAvailable
-            ? { available: false, reason: 'processing_unavailable' } : { available: true },
+          ? { available: false, reason: 'scope_unavailable' } : readiness(),
     };
   } catch (error) {
     if (error instanceof ConversationUnavailable) throw error;
