@@ -1,12 +1,12 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import App from '../../frontend/src/App';
+import Diagnostic from '../../frontend/src/Diagnostic';
 import worker from '../../src/worker/index';
 
 describe('credential-free foundation', () => {
   it('renders a French technical shell in its initial checking state', () => {
-    const html = renderToStaticMarkup(createElement(App));
+    const html = renderToStaticMarkup(createElement(Diagnostic));
     expect(html).toContain('<h1>Socle technique local</h1>');
     expect(html).toContain('Vérification du Worker…');
     expect(html).toContain('ne signifie pas que le produit est prêt');

@@ -13,7 +13,7 @@ test('real Chromium honestly reports uninitialized and stopped Worker through th
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const health = page.waitForResponse((response) => response.url() === 'http://127.0.0.1:5173/api/health' && response.status() === 503);
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto('http://127.0.0.1:5173/?diagnostic');
   expect((await health).status()).toBe(503);
   // The mounted helper intentionally aborts unread non-OK bodies. Probe the
   // minimal body independently rather than depending on a cancelled response.
@@ -56,7 +56,7 @@ test('activated actual Worker reaches the ready shell in Chromium', async ({ loc
   await local.ready(frontend, 'http://127.0.0.1:5173/');
   await local.completed(local.startCommand(process.execPath, ['scripts/activate-public-content.mjs', '--revision', revision]));
   const health = page.waitForResponse((response) => response.url() === 'http://127.0.0.1:5173/api/health' && response.status() === 200);
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto('http://127.0.0.1:5173/?diagnostic');
   const response = await health;
   expect(response.headers()['cache-control']).toBe('no-store');
   expect(await response.json()).toEqual({ status: 'ok', catalogRevision: revision,
@@ -72,7 +72,7 @@ test('browser bounds stalled/malformed health and cleans up StrictMode requests'
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.route('**/api/health', (route) => route.fulfill({ contentType: 'application/json', body: '{"status":"wrong"}' }));
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto('http://127.0.0.1:5173/?diagnostic');
   await expect(page.getByRole('status')).toContainText('Worker indisponible.');
   await page.unroute('**/api/health');
   await page.route('**/api/health', () => { /* deliberately stall; browser must abort */ });
@@ -133,7 +133,7 @@ test('StrictMode cancels the obsolete request and ignores its completion after t
         return result;
       }`,
   }));
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto('http://127.0.0.1:5173/?diagnostic');
   await expect.poll(() => page.evaluate(() => {
     const { requests } = (globalThis as typeof globalThis & { healthProbe: Probe }).healthProbe;
     return requests.map(({ aborted }) => aborted);
@@ -185,7 +185,7 @@ test('dev HTTP denies disposable private/env/preparation files and serves no can
       return Buffer.alloc(0);
     }).then((body) => local.assertNoLeaks(body.toString())));
   });
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto('http://127.0.0.1:5173/?diagnostic');
   await expect(page.getByRole('status')).toHaveText('Worker indisponible. Rechargez la page pour réessayer.');
   for (const { path } of local.canaries.filter(({ path }) => path !== '(shell)')) {
     const paths = [`/@fs${join(local.project, path)}`, `/${path}`];

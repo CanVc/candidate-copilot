@@ -150,7 +150,7 @@ bash "$HOME/dev/candidate-copilot/scripts/dev.sh" frontend
 
 Each invocation initializes its own toolchain. Do not run combined and separate modes together: they use the same fixed ports. The [application guide](application.md#daily-development-launcher) describes shutdown limits and retains the explicit manual initialization commands for diagnosis/fresh-clone setup.
 
-Open the proven IPv4 URL **http://127.0.0.1:5173/** in the Windows browser. `http://localhost:5173/` is an alternative hostname, but hostname/address-family behavior was not separately verified. Expect the technical bootstrap page and `Worker disponible.`, not a completed recruiter-facing product. **In separate mode**, stop Worker with Ctrl+C, reload and verify the unavailable message; restart Worker and reload to verify recovery. Stop both separate launchers when finished. **In combined mode**, one Ctrl+C stops both. Then check from WSL:
+Open the proven IPv4 URL **http://127.0.0.1:5173/** in the Windows browser. `http://localhost:5173/` is an alternative hostname, but hostname/address-family behavior was not separately verified. The root now opens the local portfolio entry. Follow **Diagnostic technique local** (`/?diagnostic`) for the technical bootstrap page and `Worker disponible.`, not a completed recruiter-facing product. **In separate mode**, stop Worker with Ctrl+C, reload and verify the unavailable message; restart Worker and reload to verify recovery. Stop both separate launchers when finished. **In combined mode**, one Ctrl+C stops both. Then check from WSL:
 
 ```bash
 ss -ltnp '( sport = :5173 or sport = :8787 )'

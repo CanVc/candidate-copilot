@@ -1,17 +1,32 @@
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: var(--color-background);
-  color: var(--color-text);
-  font-family: var(--font-body);
-  line-height: 1.5;
-}
-
-main {
-  max-width: var(--width-content);
-  margin-inline: auto;
-  padding: var(--space-page);
-}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 1rem/1.5 var(--font-body); }
+main { max-width: 48rem; margin-inline: auto; padding: clamp(1rem, 5vw, 3rem); overflow-wrap: anywhere; }
+h1, h2 { font-family: var(--font-editorial); font-weight: 500; line-height: 1.15; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); margin: .3em 0; }
+h2 { margin: 0 0 .6em; }
+a, summary { color: var(--green); }
+button, textarea { font: inherit; }
+button { background: var(--green); color: var(--white); border: 1px solid transparent; border-radius: .6rem; cursor: pointer; padding: .7rem 1rem; }
+button:not(:disabled):hover { background: var(--green-dark); }
+button:disabled { cursor: default; color: var(--muted); background: var(--warm-white); border-color: var(--card-border); }
+:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+.meta { font-family: var(--font-meta); font-size: .9rem; }
+.trust { border-inline-start: 2px solid var(--line); padding-inline-start: 1rem; }
+.card, .guide { background: var(--warm-white); border: 1px solid var(--card-border); padding: clamp(1rem, 3vw, 1.5rem); border-radius: 1rem; }
+.card { margin-top: 2rem; box-shadow: 0 3px 12px #19211d0a; }
+.suggestion { display: block; width: 100%; background: transparent; color: var(--green); text-align: start; font: 1.25rem/1.4 var(--font-editorial); border-radius: 0; border-top: 1px solid var(--line); padding-inline: .25rem; }
+.suggestion:not(:disabled):hover { background: var(--mint); }
+.free { margin-top: .8rem; }
+.conversation { min-height: 100svh; display: flex; flex-direction: column; }
+.identity { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1rem; }
+.identity p, .identity h1 { margin: 0; }
+.identity h1 { font-size: 1.65rem; }
+.badge { display: grid; place-items: center; width: 3rem; aspect-ratio: 1; border-radius: 50%; background: var(--ink); color: var(--warm-white); }
+summary { cursor: pointer; font-weight: 600; }
+.guide p { margin-bottom: 0; }
+.receipt { flex: 1; }
+.composer { background: var(--white); border: 1px solid var(--composer-border); border-radius: 1rem; padding: .8rem; }
+.composer textarea { display: block; width: 100%; margin-block: .4rem; resize: vertical; max-height: 35vh; color: var(--ink); background: var(--white); border: 1px solid var(--composer-border); }
+.composer:focus-within { border-color: var(--focus-border); }
+.composer div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+footer { margin-top: 1.5rem; }

@@ -1,7 +1,20 @@
 :root {
-  --color-background: #f7f7f8;
-  --color-text: #202124;
-  --font-body: system-ui, sans-serif;
-  --space-page: 2rem;
-  --width-content: 48rem;
+  --paper: #f3f0e8;
+  --ink: #19211d;
+  --muted: #68716c;
+  --line: #d4d2c9;
+  --green: #1d5b44;
+  --green-dark: #174a38;
+  --mint: #c9f2dc;
+  --warm-white: #fbfaf6;
+  --white: #ffffff;
+  --assistant-surface: #edf3ee;
+  --card-border: #cbc9bf;
+  --resource-border: #9ec7b3;
+  --source-border: #d3dfd6;
+  --composer-border: #d6d3ca;
+  --focus-border: #7fa792;
+  --font-body: Manrope, system-ui, sans-serif;
+  --font-editorial: Newsreader, Georgia, serif;
+  --font-meta: 'DM Mono', ui-monospace, monospace;
 }

@@ -1318,7 +1318,7 @@ Terminal 2 (separately):
 
 Both services bind IPv4 loopback with fixed ports; neither reuses an occupied port or selects a hosted fallback. Worker uses `--local`, explicit `.wrangler/state`, empty env-file input, CI, disabled metrics and a loopback inspector. Internal loopback runtime/inspector ports are not application URLs.
 
-Open **http://127.0.0.1:5173/**. The French technical shell should show “Worker disponible.” Check both endpoints from another terminal:
+Open **http://127.0.0.1:5173/?diagnostic** (or follow **Diagnostic technique local** on the local portfolio landing). The French technical shell should show “Worker disponible.” Check both endpoints from another terminal:
 
 ```bash
 curl --fail --show-error --connect-timeout 2 --max-time 5 http://127.0.0.1:8787/api/health
@@ -1459,7 +1459,7 @@ npm run dev:worker
 npm run dev:frontend
 ```
 
-- Open **http://127.0.0.1:5173/**. The French technical shell initially displays “Vérification du Worker…”, then “Worker disponible.” only after validated JSON from a relative `GET /api/health`. Vite proxies `/api` to **http://127.0.0.1:8787**.
+- Open **http://127.0.0.1:5173/?diagnostic**. The French technical shell initially displays “Vérification du Worker…”, then “Worker disponible.” only after validated JSON from a relative `GET /api/health`. Vite proxies `/api` to **http://127.0.0.1:8787**.
 - The Worker endpoint **http://127.0.0.1:8787/api/health** returns exactly `{"status":"ok"}`. It never invokes a model or database and exposes no configuration/diagnostics. Unrelated routes remain 404. Availability is explicitly not product readiness.
 - An absent Worker, HTTP error, invalid body or stalled request becomes “Worker indisponible. Rechargez la page pour réessayer.” within five seconds of the check (4.5-second deadline covering headers and body). Reload retries. Unmount/React StrictMode cleanup cancels old requests and prevents stale updates.
 - Both services bind IPv4 loopback, not public interfaces. Vite uses strict port 5173; Wrangler's explicit port 8787 also rejects occupancy rather than falling back. Worker execution is forced `--local`, noninteractive (`CI=true`), metrics disabled, with empty env-file input and loopback inspector. Wrangler may use additional loopback-only internal/inspector ports; they are not application URLs.
