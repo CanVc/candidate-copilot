@@ -1,3 +1,5 @@
+import { beforeCutoff } from '../../src/shared/attempt-timing.ts';
+import { deferred, manualTime } from './attempt-time.fixture.ts';
 import { describe, expect, it, vi } from 'vitest';
 import { classifyProfessionalIntent, PROFESSIONAL_INTENT_POLICY, professionalIntentInstructions } from '../../src/application/classify-professional-intent.ts';
 import { BoundedSimulationIntentPreparation, ProfessionalIntentProcessor } from '../../src/application/professional-intent-processor.ts';
@@ -176,6 +178,37 @@ describe('classify-professional-intent routing and data isolation', () => {
     f.script.mockImplementation(async () => { late.abort(); return answer; });
     expect(await f.processor.process(message, { ...emptyContext, signal: late.signal })).toEqual({ failure: 'processing_unavailable' });
     expect(f.script).toHaveBeenCalledTimes(1); expect(f.continuation.continue).not.toHaveBeenCalled();
+  });
+  it('propagates a shorter outer cutoff through classification and drops the late answer', async () => {
+    const f = fixture(), time = manualTime(), entered = deferred<void>(), settle = deferred<void>();
+    f.script.mockImplementation(async () => { entered.resolve(); await settle.promise; return answer; });
+    const post = beforeCutoff(time.clock, time.timer, 350, outer => f.processor.process(message, { ...emptyContext, ...outer,
+      withinClassification: run => beforeCutoff(time.clock, time.timer, 5000, run, outer.signal) }));
+    await entered.promise; time.advance(350); await expect(post).rejects.toThrow();
+    expect(f.script.mock.calls[0]?.[1]?.signal?.aborted).toBe(true); settle.resolve();
+    await Promise.resolve(); expect(f.continuation.continue).not.toHaveBeenCalled(); expect(time.timers.size).toBe(0);
+  });
+  it('does not account another metadata candidate after the ceiling', async () => {
+    const f = fixture(), time = manualTime(), accounted = vi.fn();
+    class Metered extends BoundedSimulationIntentPreparation {
+      protected override accept(candidate: ClassifyTurnRequest) {
+        if (candidate.publicCatalog.length) { accounted(); time.advance(5000, false); }
+        super.accept(candidate);
+      }
+    }
+    const processor = new ProfessionalIntentProcessor(f.provider, new Metered(f.catalog), f.continuation);
+    const result = await processor.process(message, { ...emptyContext, withinClassification: run => beforeCutoff(time.clock, time.timer, 5000, run) });
+    expect(result).toEqual({ failure: 'processing_unavailable' }); expect(accounted).toHaveBeenCalledOnce(); expect(f.script).not.toHaveBeenCalled();
+  });
+  it('charges classifier preparation even when synchronous work delays timer delivery', async () => {
+    const f = fixture(), time = manualTime(), prepare = f.preparation.prepare.bind(f.preparation);
+    vi.spyOn(f.preparation, 'prepare').mockImplementation(async (...args) => {
+      const ready = await prepare(...args); time.advance(5000, false); return ready;
+    });
+    const output = await f.processor.process(message, { ...emptyContext,
+      withinClassification: run => beforeCutoff(time.clock, time.timer, 5000, run) });
+    expect(output).toEqual({ failure: 'processing_unavailable' }); expect(f.script).not.toHaveBeenCalled();
+    expect(f.continuation.continue).not.toHaveBeenCalled(); expect(time.timers.size).toBe(0);
   });
   it('bootstrap remains compatible and unconfigured classification fails honestly', async () => {
     const provider = new SimulatedLLMProvider();

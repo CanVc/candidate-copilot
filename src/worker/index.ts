@@ -1,3 +1,4 @@
+import { attemptTiming, type AttemptTimer, type AttemptTiming } from '../shared/attempt-timing.ts';
 import type { GenerationRetriever } from '../ports/Retriever.ts';
 import { D1Retriever } from '../adapters/d1/retriever.ts';
 import type { ProcessingAvailability } from '../ports/ProcessingAvailability.ts';
@@ -36,9 +37,13 @@ const admissionMessages: Record<AdmissionErrorCode, string> = {
 export function createWorker(clockOverride?: Clock, addressAdapter = trustedCreationAddress, options: {
   availability?: ProcessingAvailability;
   limits?: Partial<AdmissionLimits>;
+  timing?: Partial<AttemptTiming>;
+  timer?: AttemptTimer;
   processor?: (catalog: ResourceCatalog, retriever: GenerationRetriever) => ConversationProcessor;
 } = {}) {
   const limits = admissionLimits(options.limits);
+  const timing = attemptTiming(options.timing);
+  const compose = limits.leaseMilliseconds > timing.finalizeReserveMs ? options.processor : undefined;
   const clock = clockOverride ?? { now: () => new Date() };
   const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
@@ -113,10 +118,9 @@ export function createWorker(clockOverride?: Clock, addressAdapter = trustedCrea
       try { body = await context.req.json(); } catch { throw new AdmissionRejected('invalid_request'); }
       if (body && typeof body === 'object' && 'requestId' in body && typeof body.requestId === 'string') requestId = body.requestId;
       const catalog = new D1ResourceCatalog(context.env?.DB);
-      const compose = options.processor;
       const processor: ConversationProcessor | undefined = compose && { process: (message, processingContext) =>
         compose(catalog, new D1Retriever(context.env.DB)).process(message, processingContext) };
-      return context.json(await submitConversationQuestion(store, catalog, clock, processor, id, authorization, body, limits, options.availability), 200);
+      return context.json(await submitConversationQuestion(store, catalog, clock, processor, id, authorization, body, limits, options.availability, timing, options.timer), 200);
     } catch (error) {
       if (error instanceof ConversationUnavailable) {
         context.header('WWW-Authenticate', 'Bearer');
@@ -137,7 +141,7 @@ export function createWorker(clockOverride?: Clock, addressAdapter = trustedCrea
   app.get('/api/conversations/:id', async (context) => {
     try {
       return context.json(await readConversation(new D1ConversationStore(context.env?.DB, clockOverride), clock,
-        context.req.param('id'), context.req.header('Authorization'), new D1ResourceCatalog(context.env?.DB), limits, !!options.processor, options.availability));
+        context.req.param('id'), context.req.header('Authorization'), new D1ResourceCatalog(context.env?.DB), limits, !!compose, options.availability));
     } catch (error) {
       if (error instanceof ConversationUnavailable) {
         context.header('WWW-Authenticate', 'Bearer');

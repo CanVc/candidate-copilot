@@ -10,7 +10,9 @@ export class ScriptedLLMProvider extends SimulatedLLMProvider {
     override readonly receiver: ModelTokenAccounting = deterministicReceiver()) { super(); }
   override async classify(input: PreparedModelCall, options?: ClassificationOptions): Promise<unknown> {
     validateModelCallIntegrity(this.receiver, input);
+    options?.check?.();
     const output = await this.script(input, options);
+    options?.check?.();
     try {
       const serialized = JSON.stringify(output);
       if (typeof serialized !== 'string') return null;

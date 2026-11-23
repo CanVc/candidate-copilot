@@ -1,3 +1,4 @@
+import type { OperationControls } from '../../shared/attempt-timing.ts';
 import { validateRetrievalRequest } from '../../application/retrieve-evidence.ts';
 import { RetrievalUnavailable, RetrievalScopeUnavailable, RetrievalDependencyUnavailable, RetrievalLimitExceeded, type RetrievalRequest, type RetrievalResult, type Retriever, type GenerationRetriever } from '../../ports/Retriever.ts';
 import { D1ResourceCatalog } from './publication.ts';
@@ -27,11 +28,15 @@ export class D1Retriever implements Retriever, GenerationRetriever {
   async retrieve(request: RetrievalRequest): Promise<RetrievalResult> {
     try { return await this.read(request, false); } catch { throw new RetrievalUnavailable(); }
   }
-  async retrieveForGeneration(request: RetrievalRequest): Promise<RetrievalResult> {
-    return this.read(request, true);
+  async retrieveForGeneration(request: RetrievalRequest, controls?: Partial<OperationControls>): Promise<RetrievalResult> {
+    return this.read(request, true, () => {
+      controls?.check?.();
+      if (controls?.signal?.aborted) throw new RetrievalDependencyUnavailable();
+    });
   }
-  private async read(request: RetrievalRequest, generation: boolean): Promise<RetrievalResult> {
+  private async read(request: RetrievalRequest, generation: boolean, check?: () => void): Promise<RetrievalResult> {
     try {
+      check?.();
       const trusted = validateRetrievalRequest(request);
       const expression = encodeLexicalTerms(trusted.searchTerms);
       const membership = new Set(trusted.eligibleDocumentIds);
@@ -43,7 +48,8 @@ export class D1Retriever implements Retriever, GenerationRetriever {
         WHERE c.document_id IN (SELECT value FROM json_each(?)) AND public_chunks_fts MATCH ?
         ORDER BY bm25(public_chunks_fts), c.document_id COLLATE BINARY, c.ordinal, c.chunk_id COLLATE BINARY
       `).bind(JSON.stringify(trusted.eligibleDocumentIds), expression);
-      const snapshot = await new D1ResourceCatalog(this.db).readSearchSnapshot(statement, true);
+      const snapshot = await new D1ResourceCatalog(this.db).readSearchSnapshot(statement, true, check);
+      check?.();
       if (!snapshot || trusted.eligibleDocumentIds.some((id) => !snapshot.publication.documents.some((d) => d.documentId === id))) throw new RetrievalScopeUnavailable();
       const evidence = new Map(snapshot.publication.chunks.map((c) => [c.chunkId, c]));
       const seen = new Set<string>();

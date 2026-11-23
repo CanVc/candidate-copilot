@@ -54,6 +54,12 @@ describe('retrieve-evidence trusted input and membership guard', () => {
 });
 
 describe('D1Retriever encoding, transactional selection and limits', () => {
+  it('honors a signal-only abort during search preparation before issuing a D1 batch', async () => {
+    const controller = new AbortController(), batch = vi.fn();
+    const db = { prepare() { controller.abort(); return { bind() { return this; } }; }, batch } as unknown as D1Database;
+    await expect(new D1Retriever(db).retrieveForGeneration(request, { signal: controller.signal })).rejects.toBeInstanceOf(RetrievalDependencyUnavailable);
+    expect(batch).not.toHaveBeenCalled();
+  });
   it('encodes operators/quotes/SQL as bounded literal lexical data', () => {
     expect(encodeLexicalTerms(['alpha" OR text:beta*; DROP TABLE x --', 'alpha', 'été 日本 123'])).toBe('"alpha" OR "OR" OR "text" OR "beta" OR "DROP" OR "TABLE" OR "x" OR "été" OR "日本" OR "123"');
     expect(encodeLexicalTerms(['" * - : ; 😀'])).toBeNull();

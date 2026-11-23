@@ -1,3 +1,5 @@
+import { beforeCutoff } from '../../src/shared/attempt-timing.ts';
+import { manualTime } from './attempt-time.fixture.ts';
 import { describe, expect, it, vi } from 'vitest';
 import { EligibleEvidenceContinuation, GENERATION_CONTEXT_LIMIT, answerGenerationInput, generateAnswer, prepareAnswerGeneration } from '../../src/application/generate-answer.ts';
 import { ModelAwareIntentPreparation, ProfessionalIntentProcessor } from '../../src/application/professional-intent-processor.ts';
@@ -245,6 +247,27 @@ describe('answer-generation no-match, failures, cancellation and local language'
   it('retriever whole-chunk overflow takes core limit, not no-match', async () => {
     const f = fixture(); f.retrieve.mockRejectedValue(new RetrievalLimitExceeded());
     expect(await f.processor.process(message(), context())).toMatchObject({ contextReset: true, draft: { status: 'clarification' } }); expect(f.script).not.toHaveBeenCalled();
+  });
+  it('returns processing_unavailable from generateAnswer when counting output reaches cutoff', async () => {
+    const base = deterministicReceiver(); let expired = false;
+    const receiver = { ...base, count: (text: string) => { if (text === JSON.stringify(draft)) expired = true; return base.count(text); } };
+    const generate = vi.fn(async () => draft);
+    const output = await generateAnswer({ answerReceiver: receiver, generateAnswer: generate }, request, sources, ['doc'], bounds, undefined,
+      { check: () => { if (expired) throw new Error('deadline'); } });
+    expect(generate).toHaveBeenCalledOnce(); expect(expired).toBe(true); expect(output).toEqual({ failure: 'processing_unavailable' });
+  });
+  it('rechecks wall time at actual generation dispatch after receiver-specific accounting', async () => {
+    const time = manualTime(), base = deterministicReceiver(), script = vi.fn(async () => draft);
+    let serializations = 0;
+    const receiver = { ...base, serialize: (value: Parameters<typeof base.serialize>[0]) => {
+      // The last integrity check happens inside the receiver, after core validation.
+      if (++serializations === 3) time.advance(100, false);
+      return base.serialize(value);
+    } };
+    const provider = new ScriptedAnswerGenerator(script, receiver);
+    await expect(beforeCutoff(time.clock, time.timer, 100, controls =>
+      generateAnswer(provider, request, sources, ['doc'], bounds, undefined, controls))).rejects.toThrow();
+    expect(serializations).toBe(3); expect(script).not.toHaveBeenCalled(); expect(time.timers.size).toBe(0);
   });
   it('provider exception and late cancellation retain validated classifier language with no retry', async () => {
     const f = fixture(); f.script.mockRejectedValue(new Error('RAW_DIAGNOSTICS'));

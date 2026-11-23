@@ -3,7 +3,7 @@ import { answerTemplateLanguage } from '../shared/answer-generation.ts';
 import type { PreparedModelCall } from '../ports/ModelTokenAccounting.ts';
 import { contextFallbackLanguage, selectConversationExchanges } from './conversation-context.ts';
 import type { ConversationProcessor, ConversationProcessingContext } from '../ports/ConversationProcessor.ts';
-import type { LLMProvider } from '../ports/LLMProvider.ts';
+import type { ClassificationOptions, LLMProvider } from '../ports/LLMProvider.ts';
 import type { ResourceCatalog } from '../ports/ResourceCatalog.ts';
 import type { AdmittedMessage, SubmittedScope } from '../shared/conversation-admission.ts';
 import { CONTEXT_RESTATEMENT, DEFAULT_INTENT_FORBIDDEN, directIntentDraft, intentBounds, intentBytes, intentText, validateClassifyTurnRequest,
@@ -25,6 +25,7 @@ export interface ProfessionalIntentContinuation {
     selectConversationContext: (fits: (history: ClassifyTurnRequest['conversationContext']) => boolean) => ClassifyTurnRequest['conversationContext'] | null;
     fallbackLanguage?: 'en' | 'fr';
     signal?: AbortSignal;
+    check?: () => void;
   }): Promise<Awaited<ReturnType<ConversationProcessor['process']>> | typeof GENERATION_CONTEXT_LIMIT>;
 }
 
@@ -62,20 +63,23 @@ export class BoundedSimulationIntentPreparation implements IntentPreparation {
     const history = this.selectHistory(request, context);
     if (history === null) return { kind: 'missing_context' };
     request.conversationContext = history;
+    context.check?.();
     let publication;
     try {
       if (this.catalog.readProcessingSnapshot) {
-        const read = await this.catalog.readProcessingSnapshot();
+        const read = await this.catalog.readProcessingSnapshot(context.check);
         if (read.kind === 'dependency_failure') return { kind: 'processing_unavailable' };
         publication = read.kind === 'available' ? read.publication : null;
       } else publication = await this.catalog.readSnapshot();
     } catch { return { kind: 'processing_unavailable' }; }
+    context.check?.();
     const scope = message.submittedScope, eligible = new Set(scope.eligibleDocumentIds);
     if (!publication || !eligible.size || [...eligible].some((id) => !publication.catalog.documents.some((doc) => doc.documentId === id))) return { kind: 'scope_unavailable' };
     const usable = (text: unknown): text is string => {
       try { intentText(text, this.bounds.metadataText); return true; } catch { return false; }
     };
     const fits = (entry: ClassifyTurnRequest['publicCatalog'][number], replaceLast = false) => {
+      context.check?.();
       const entries = replaceLast ? request.publicCatalog.slice(0, -1) : request.publicCatalog;
       if (entries.length >= this.bounds.catalogEntries || intentBytes([...entries, entry]) > this.bounds.catalogBytes ||
         intentBytes({ ...request, publicCatalog: [...entries, entry] }) > this.bounds.requestBytes) return false;
@@ -121,6 +125,7 @@ export class ModelAwareIntentPreparation extends BoundedSimulationIntentPreparat
   }
   override async prepare(message: AdmittedMessage, context: ConversationProcessingContext): Promise<PreparedIntent> {
     const prepared = await super.prepare(message, context);
+    context.check?.();
     if (prepared.kind === 'missing_context') return { kind: 'missing_context', contextReset: true };
     if (prepared.kind !== 'ready') return prepared;
     try { return { ...prepared, call: prepareProfessionalIntent(this.provider.receiver, prepared.request, this.bounds) }; }
@@ -140,24 +145,39 @@ export class ProfessionalIntentProcessor implements ConversationProcessor {
     private readonly forbidden: readonly RegExp[] = DEFAULT_INTENT_FORBIDDEN) {}
   async process(message: AdmittedMessage, context: ConversationProcessingContext): ReturnType<ConversationProcessor['process']> {
     if (context.signal?.aborted) return { failure: 'processing_unavailable' };
-    let prepared: PreparedIntent;
-    try { prepared = await this.preparation.prepare(message, context); }
-    catch { return { failure: 'invalid_result' }; }
-    if (context.signal?.aborted) return { failure: 'processing_unavailable' };
-    if (prepared.kind === 'scope_unavailable' || prepared.kind === 'processing_unavailable') return { failure: prepared.kind };
-    if (prepared.kind === 'missing_context') return missingContext(context, prepared.contextReset);
-    const options = context.signal ? { signal: context.signal } : {};
-    const outcome = await classifyProfessionalIntent(this.provider, prepared.request, this.bounds, this.forbidden, options, prepared.call);
+    const options: ClassificationOptions = { ...(context.signal && { signal: context.signal }), ...(context.check && { check: context.check }) };
+    const classify = async (controls: ClassificationOptions) => {
+      let prepared: PreparedIntent;
+      try { prepared = await this.preparation.prepare(message, { ...context, ...controls }); }
+      catch { return { kind: 'invalid_result' } as const; }
+      controls.check?.();
+      if (controls.signal?.aborted) return { kind: 'processing_unavailable' } as const;
+      if (prepared.kind !== 'ready') return prepared;
+      const outcome = await classifyProfessionalIntent(this.provider, prepared.request, this.bounds, this.forbidden, controls, prepared.call);
+      return { kind: 'classified', outcome, request: prepared.request } as const;
+    };
+    let classified: Awaited<ReturnType<typeof classify>>;
+    try { classified = await (context.withinClassification ? context.withinClassification(classify) : classify(options)); }
+    catch { return { failure: 'processing_unavailable' }; }
+    if (classified.kind === 'missing_context') return missingContext(context, classified.contextReset);
+    if (classified.kind !== 'classified') return { failure: classified.kind };
+    const { outcome, request } = classified;
     if (outcome.kind === 'limit') return missingContext(context, true);
     if (outcome.kind === 'failure') return { failure: outcome.failure };
-    if (outcome.kind === 'direct') return { draft: outcome.draft, sources: [] };
+    if (outcome.kind === 'direct') {
+      context.classifiedLanguage?.(outcome.draft.language);
+      return { draft: outcome.draft, sources: [] };
+    }
+    context.classifiedLanguage?.(outcome.classification.responseLanguage);
     // Separate copies ensure no downstream adapter can alter admitted authority.
     const submittedScope = structuredClone(message.submittedScope);
     Object.freeze(submittedScope.eligibleDocumentIds); Object.freeze(submittedScope.resources); Object.freeze(submittedScope);
     try {
+      context.check?.();
       const output = await this.continuation.continue({ question: message.question, classification: outcome.classification,
-        submittedScope, conversationContext: prepared.request.conversationContext, fallbackLanguage: contextFallbackLanguage(context),
+        submittedScope, conversationContext: request.conversationContext, fallbackLanguage: contextFallbackLanguage(context),
         selectConversationContext: (fits) => selectConversationExchanges(context, this.bounds.historyBytes, fits), ...options });
+      context.check?.();
       if (context.signal?.aborted) return { failure: 'processing_unavailable', language: outcome.classification.responseLanguage };
       if (output === GENERATION_CONTEXT_LIMIT) return missingContext(context, true, outcome.classification.responseLanguage);
       if ('draft' in output) {

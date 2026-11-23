@@ -59,13 +59,18 @@ export async function generateAnswer(provider: AnswerGenerator, request: Generat
   try { validatePreparedModelCall(provider.answerReceiver, call, expected); }
   catch { return { failure: 'invalid_result' }; }
   let raw: unknown;
-  try { raw = await provider.generateAnswer(call, options); }
+  try { options.check?.(); raw = await provider.generateAnswer(call, options); options.check?.(); }
   catch { return { failure: 'processing_unavailable' }; }
   if (options.signal?.aborted) return { failure: 'processing_unavailable' };
+  let outputTokens: number;
   try {
     const serialized = JSON.stringify(raw);
     if (typeof serialized !== 'string') return { failure: 'invalid_result' };
-    const outputTokens = provider.answerReceiver.count(serialized);
+    outputTokens = provider.answerReceiver.count(serialized);
+  } catch { return { failure: 'invalid_result' }; }
+  try { options.check?.(); } catch { return { failure: 'processing_unavailable' }; }
+  if (options.signal?.aborted) return { failure: 'processing_unavailable' };
+  try {
     if (!Number.isSafeInteger(outputTokens) || outputTokens < 1 || outputTokens > call.outputTokens) return { failure: 'invalid_result' };
     const draft = validateGenerateAnswerDraft(raw, request, sources, eligibleDocumentIds, bounds, forbidden);
     if (draft.status === 'failed') return { failure: 'processing_unavailable' };
@@ -101,15 +106,17 @@ export class EligibleEvidenceContinuation implements ProfessionalIntentContinuat
   async continue(input: Parameters<ProfessionalIntentContinuation['continue']>[0]): ReturnType<ProfessionalIntentContinuation['continue']> {
     if (input.signal?.aborted) return { failure: 'processing_unavailable' };
     const { classification, submittedScope } = input;
+    const controls = { ...(input.signal && { signal: input.signal }), ...(input.check && { check: input.check }) };
     let retrieved;
     try {
       retrieved = await retrieveGenerationEvidence(this.retriever, { resolvedQuestion: classification.resolvedQuestion,
-        searchTerms: [...classification.searchTerms], eligibleDocumentIds: [...submittedScope.eligibleDocumentIds] });
+        searchTerms: [...classification.searchTerms], eligibleDocumentIds: [...submittedScope.eligibleDocumentIds] }, controls);
     } catch (error) {
       if (error instanceof RetrievalLimitExceeded) return GENERATION_CONTEXT_LIMIT;
       return { failure: error instanceof RetrievalScopeUnavailable ? 'scope_unavailable' : 'processing_unavailable' };
     }
     if (input.signal?.aborted) return { failure: 'processing_unavailable' };
+    input.check?.();
     let pool: LoadedSource[];
     try { pool = copyEligibleSources(retrieved.chunks, submittedScope.eligibleDocumentIds, this.forbidden); }
     catch { return { failure: 'invalid_result' }; }
@@ -129,6 +136,7 @@ export class EligibleEvidenceContinuation implements ProfessionalIntentContinuat
     });
     let selected: LoadedSource[] = [], request: GenerateAnswerRequest | undefined;
     for (const source of pool) {
+      input.check?.();
       if (selected.length === this.bounds.sources) break;
       const candidate = [...selected, source];
       // Real 2.10 canonical selector: required complete dependencies precede
@@ -139,8 +147,9 @@ export class EligibleEvidenceContinuation implements ProfessionalIntentContinuat
       if (history !== null) { selected = candidate; request = project(selected, history); }
     }
     if (!request) return GENERATION_CONTEXT_LIMIT;
+    input.check?.();
     const call = prepareAnswerGeneration(this.provider.answerReceiver, request, this.bounds);
     return generateAnswer(this.provider, request, selected, submittedScope.eligibleDocumentIds, this.bounds, this.forbidden,
-      input.signal ? { signal: input.signal } : {}, call);
+      controls, call);
   }
 }

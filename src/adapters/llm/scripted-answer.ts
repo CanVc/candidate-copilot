@@ -10,7 +10,9 @@ export class ScriptedAnswerGenerator implements AnswerGenerator {
   async generateAnswer(input: PreparedModelCall, options?: ClassificationOptions): Promise<unknown> {
     validateModelCallIntegrity(this.answerReceiver, input);
     if (options?.signal?.aborted) throw new Error('Generation cancelled');
+    options?.check?.();
     const output = await this.script(input, options);
+    options?.check?.();
     try {
       const serialized = JSON.stringify(output);
       if (typeof serialized !== 'string') return null;

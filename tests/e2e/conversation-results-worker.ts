@@ -19,13 +19,15 @@ let calls = 0;
 export default {
   async fetch(request: Request, env: Cloudflare.Env, context: ExecutionContext) {
     const path = new URL(request.url).pathname;
-    const clock = { now: () => new Date(request.headers.get('X-Fixture-Now') ?? '2026-01-01T00:00:00.000Z') };
+    let now = Date.parse(request.headers.get('X-Fixture-Now') ?? '2026-01-01T00:00:00.000Z');
+    const clock = { now: () => new Date(now) };
     const status = (request.headers.get('X-Fixture-Status') ?? 'answered') as AnswerStatus;
     const language = request.headers.get('X-Fixture-Language') === 'en' ? 'en' : 'fr';
     const catalog = new D1ResourceCatalog(env.DB), store = new D1ConversationStore(env.DB, clock);
     const processor = () => {
-      const synthetic = new SyntheticConversationProcessor(catalog, ['cited-refused', 'nul-text'].includes(String(status)) ? 'answered' : status, language);
-      return { process: async (message: Parameters<typeof synthetic.process>[0]) => { calls++; if (String(status) === 'throw') throw new Error('Synthetic raw dependency failure'); const output = await synthetic.process(message);
+      const synthetic = new SyntheticConversationProcessor(catalog, ['cited-refused', 'nul-text', 'work-cutoff'].includes(String(status)) ? 'answered' : status, language);
+      return { process: async (message: Parameters<typeof synthetic.process>[0]) => { calls++; if (String(status) === 'throw') throw new Error('Synthetic raw dependency failure'); if (String(status) === 'stall') return new Promise<never>(() => {});
+        const output = await synthetic.process(message);
         if ('draft' in output) {
           const draft = output.draft as import('../../src/shared/conversation-result.ts').ResultDraft;
           if (request.headers.get('X-Fixture-Language') === 'de') draft.language = 'de';
@@ -39,6 +41,7 @@ export default {
           const draft = output.draft as import('../../src/shared/conversation-result.ts').ResultDraft;
           draft.status = 'refused'; draft.blocks.unshift({ kind: 'refusal', text: 'Synthetic refusal, not BC.', sourceIds: [] });
         }
+        if (String(status) === 'work-cutoff') now += 28_000;
         return output; } };
     };
     try {
@@ -84,23 +87,57 @@ export default {
       return Response.json({ error: error instanceof AdmissionRejected || error instanceof ConversationUnavailable ? error.code : 'result_unavailable' });
     }
     const race = publicationRaces.get(request.headers.get('X-Fixture-Admission-Race') ?? '');
-    let admissionBatch = false;
-    const database = race ? new Proxy(env.DB, { get(target, key) {
-      if (key === 'prepare') return (sql: string) => { if (sql.includes(' AS recovering,')) admissionBatch = true; return target.prepare(sql); };
+    const fault = request.headers.get('X-Fixture-Deadline');
+    const successorInput = fault === 'successor' ? await request.clone().json() : undefined;
+    const id = path.split('/')[3]!;
+    let successorAttempt: string | undefined;
+    let admissionBatch = false, finalizationBatch = false, finalizationsIssued = 0;
+    const database = race || fault ? new Proxy(env.DB, { get(target, key) {
+      if (key === 'prepare') return (sql: string) => {
+        if (sql.includes(' AS recovering,')) {
+          admissionBatch = true;
+          if (fault === 'admission-preparation') now += 30_000;
+        }
+        if (sql.startsWith('INSERT INTO answers')) {
+          finalizationBatch = true;
+          if (fault === 'finalizer-preparation') now += 30_000;
+        }
+        return target.prepare(sql);
+      };
       if (key === 'batch') return async (statements: D1PreparedStatement[]) => {
-        if (!admissionBatch) return target.batch(statements);
+        if (fault && finalizationBatch) {
+          finalizationBatch = false; finalizationsIssued++;
+          if (fault === 'lost-access' || fault === 'late-lost-access') {
+            await target.prepare('DELETE FROM conversations WHERE id = ?').bind(id).run();
+          } else if (fault === 'successor') {
+            // The stale batch has reached storage. Hold execution until an explicit
+            // same-ID successor acquires in D1; then execute the original statements.
+            now += 40_000;
+            const acquired = await admitConversationQuestion(store, catalog, clock, id, request.headers.get('Authorization') ?? undefined, successorInput, 'recover');
+            if (acquired.status !== 'recovered' || !('lease' in acquired)) throw new Error('Expected successor');
+            successorAttempt = acquired.lease.attemptId;
+          }
+          const receipt = await target.batch(statements);
+          if (fault === 'late-receipt' || fault === 'late-lost-access') now += 30_000;
+          return receipt;
+        }
+        if (!race || !admissionBatch) return target.batch(statements);
         admissionBatch = false;
         const activation = race.map(({ sql, bindings }) => target.prepare(sql).bind(...bindings));
         return (await target.batch([...activation, ...statements])).slice(activation.length);
       };
       const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value;
     } }) : env.DB;
-    return createWorker(clock, () => '127.0.0.1', {
-      limits: { maxMessages: 5, maxQuestionCharacters: 1000, leaseMilliseconds: 40_000 },
+    const response = await createWorker(clock, () => '127.0.0.1', {
+      limits: { maxMessages: 5, maxQuestionCharacters: 1000, leaseMilliseconds: fault === 'invalid-reserve' ? 2_000 : 40_000 },
+      ...(String(status) === 'stall' ? { timing: { attemptMs: 500, classifierMs: 50, finalizeReserveMs: 200 } } : {}),
       // Synthetic availability control on this disposable test Worker only.
       availability: () => request.headers.has('X-Fixture-Outage') ? { confirmedUnavailable: true,
         ...(request.headers.get('X-Fixture-Outage') === 'timed' ? { resumeAt: Date.parse('2026-01-01T01:00:00Z') } : {}) } : null,
       ...(request.headers.has('X-Fixture-Disabled') ? {} : { processor }),
     }).fetch(request, { ...env, DB: database }, context);
+    if (successorAttempt) response.headers.set('X-Fixture-Successor', successorAttempt);
+    if (fault) response.headers.set('X-Fixture-Finalizations', String(finalizationsIssued));
+    return response;
   },
 };

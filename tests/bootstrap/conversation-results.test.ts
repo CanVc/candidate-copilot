@@ -1,3 +1,10 @@
+import { D1ConversationStore } from '../../src/adapters/d1/conversations.ts';
+import type { GenerationRetriever } from '../../src/ports/Retriever.ts';
+import { ScriptedAnswerGenerator } from '../../src/adapters/llm/scripted-answer.ts';
+import { ScriptedLLMProvider } from '../../src/adapters/llm/scripted.ts';
+import { manualTime, deferred } from './attempt-time.fixture.ts';
+import { attemptTiming, type AttemptTiming } from '../../src/shared/attempt-timing.ts';
+import { messageTransportWaitMs } from '../../frontend/src/message-transport.ts';
 import { isProxy } from 'node:util/types';
 import { selectProvider, WORKERS_AI_CANDIDATE, type FixtureInferenceBinding } from '../../src/adapters/llm/workers-ai.ts';
 import { EligibleEvidenceContinuation } from '../../src/application/generate-answer.ts';
@@ -221,7 +228,7 @@ describe('conversation-results portable service', () => {
     });
     f.processor.process.mockResolvedValue({ failure: 'processing_unavailable' });
     const result = await f.submit();
-    expect(f.processor.process).toHaveBeenCalledWith(expect.any(Object), { precedingMessages: [prior], contextAvailable: true });
+    expect(f.processor.process).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ precedingMessages: [prior], contextAvailable: true }));
     expect(result.language).toBe('en');
     expect(vi.mocked(f.store.finalize).mock.calls[0]?.[0].previousLanguage).toBe('en');
   });
@@ -233,7 +240,7 @@ describe('conversation-results portable service', () => {
       return state;
     });
     await f.submit();
-    expect(f.processor.process).toHaveBeenCalledWith(expect.any(Object), { precedingMessages: [], contextAvailable: false });
+    expect(f.processor.process).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ precedingMessages: [], contextAvailable: false }));
   });
 
   it.each(['en', 'fr', 'wrong-text', 'wrong-language', 'wrong-status'])('validates reset provenance inside canonical handling: %s', async (kind) => {
@@ -245,7 +252,7 @@ describe('conversation-results portable service', () => {
     const result = await f.submit();
     expect(result.status).toBe(valid ? 'clarification' : 'failed');
     if (!valid) expect(result.error?.code).toBe('invalid_result');
-    expect(f.store.finalize).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ contextReset: valid }));
+    expect(f.store.finalize).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ contextReset: valid }), expect.any(Function));
     expect(f.state.lease).toBeNull(); expect(await f.submit()).toEqual(result); expect(f.processor.process).toHaveBeenCalledTimes(1);
   });
   it('retains authenticated initial English fallback only for a new direct admission when reread throws', async () => {
@@ -310,7 +317,7 @@ describe('conversation-results portable service', () => {
     f.state.messages.push({ ...message, requestId: 'prior', result: completeResult(message, draft, [source]) });
     f.processor.process.mockResolvedValue({ draft: { ...draft, language: 'de' }, sources: [source] });
     await submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body, { maxMessages: 2 });
-    expect(f.store.finalize).toHaveBeenCalledWith(expect.objectContaining({ previousLanguage: 'en', result: expect.objectContaining({ language: 'de' }) }));
+    expect(f.store.finalize).toHaveBeenCalledWith(expect.objectContaining({ previousLanguage: 'en', result: expect.objectContaining({ language: 'de' }) }), expect.any(Function));
   });
   it('normalizes processor exceptions without publishing raw diagnostics or another call', async () => {
     const f = await fixture(); f.processor.process.mockRejectedValue(new Error('PRIVATE raw stack provider SQL'));
@@ -365,6 +372,166 @@ describe('conversation-results portable service', () => {
   });
 });
 
+describe('acquisition-to-confirmation deadlines', () => {
+  async function bounded() {
+    const f = await fixture(), time = manualTime(f.clock.now().getTime());
+    f.clock.now = time.clock.now;
+    const submit = (timing: Partial<AttemptTiming> = {}, processor: ConversationProcessor = f.processor) =>
+      submitConversationQuestion(f.store, f.catalog, f.clock, processor, id, `Bearer ${token}`, body, {}, undefined, timing, time.timer);
+    return { ...f, ...time, submit };
+  }
+  it('keeps the message transport wait separate and rejects invalid intervals before mutation', async () => {
+    expect(messageTransportWaitMs()).toBe(45_000); expect(messageTransportWaitMs(60_000)).toBe(60_000);
+    const f = await bounded();
+    for (const overrides of [{ attemptMs: 0 }, { classifierMs: 29_000 }, { finalizeReserveMs: 30_000 },
+      { browserWaitMs: Infinity }, { classifierMs: 0.1 }]) {
+      expect(() => attemptTiming(overrides)).toThrow();
+      await expect(f.submit(overrides)).rejects.toMatchObject({ code: 'result_unavailable' });
+    }
+    expect(f.store.admit).not.toHaveBeenCalled(); expect(f.timers.size).toBe(0);
+  });
+  it.each([27_999, 28_000, 30_000])('charges %i ms spent waiting for the acquisition receipt', async delay => {
+    const f = await bounded(), admit = vi.mocked(f.store.admit).getMockImplementation()!;
+    vi.mocked(f.store.admit).mockImplementation(async command => {
+      const receipt = await admit(command); f.advance(delay, false); return receipt;
+    });
+    if (delay < 30_000) {
+      const saved = await f.submit(); expect(saved.status).toBe(delay < 28_000 ? 'answered' : 'failed');
+      if (saved.status === 'failed') expect(saved.error?.code).toBe('processing_unavailable');
+      expect(f.store.finalize).toHaveBeenCalledOnce();
+    } else {
+      await expect(f.submit()).rejects.toMatchObject({ code: 'result_unavailable' });
+      expect(f.store.finalize).not.toHaveBeenCalled(); expect(f.state.lease).not.toBeNull();
+    }
+    expect(f.processor.process).toHaveBeenCalledTimes(delay < 28_000 ? 1 : 0); expect(f.timers.size).toBe(0);
+  });
+  it.each([[40_000, 28_000, false], [3_000, 999, true], [3_000, 1_000, false]] as const)(
+    'never borrows time from a future storage clock (lease %i, delay %i)', async (leaseMilliseconds, delay, canProcess) => {
+      const f = await bounded(), admit = vi.mocked(f.store.admit).getMockImplementation()!;
+      vi.mocked(f.store.admit).mockImplementation(async command => {
+        const receipt = await admit(command);
+        if ('lease' in receipt) receipt.lease.until += 60_000; // D1 clock independent of local clock
+        f.advance(delay, false); return receipt;
+      });
+      const result = await submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body, { leaseMilliseconds }, undefined, {}, f.timer);
+      expect(result.status).toBe(canProcess ? 'answered' : 'failed'); expect(f.processor.process).toHaveBeenCalledTimes(Number(canProcess));
+    });
+  it.each([1_999, 2_000])('rejects an unusable lease %i without a processing mutation', async leaseMilliseconds => {
+    const f = await bounded();
+    await expect(submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body, { leaseMilliseconds }))
+      .rejects.toMatchObject({ code: 'result_unavailable' }); expect(f.store.admit).not.toHaveBeenCalled();
+  });
+  it('rechecks the last millisecond of outer work during classifier preparation without timer delivery', async () => {
+    const f = await bounded(), admit = vi.mocked(f.store.admit).getMockImplementation()!;
+    vi.mocked(f.store.admit).mockImplementation(async command => { const receipt = await admit(command); f.advance(27_999, false); return receipt; });
+    const script = vi.fn(), continuation = { continue: vi.fn() }, provider = new ScriptedLLMProvider(script);
+    const prepare = new ModelAwareIntentPreparation({ readSnapshot: async () => { f.advance(1, false); return publication; } }, provider);
+    const saved = await f.submit({}, new ProfessionalIntentProcessor(provider, prepare, continuation));
+    expect(saved.error?.code).toBe('processing_unavailable'); expect(script).not.toHaveBeenCalled(); expect(continuation.continue).not.toHaveBeenCalled();
+  });
+  it('retains validated direct English classification for timeout after classification despite French history', async () => {
+    const f = await bounded(), prior = { ...message, messageId: 'prior', requestId: 'prior' };
+    f.state.messages.push({ ...prior, result: controlledFailure(prior, 'processing_unavailable', 'fr') });
+    const provider = new ScriptedLLMProvider(() => ({ decision: 'clarify', reasonCode: 'material_ambiguity', responseLanguage: 'en', clarificationQuestion: 'Which project?' }));
+    const professional = new ProfessionalIntentProcessor(provider, new ModelAwareIntentPreparation(f.catalog, provider), { continue: vi.fn() });
+    const saved = await f.submit({}, { process: async (...args) => { const direct = await professional.process(...args); expect(direct).toHaveProperty('draft'); f.advance(28_000, false); return direct; } });
+    expect(saved.error?.code).toBe('processing_unavailable'); expect(saved.language).toBe('en');
+  });
+  it('default timer wakes a stalled attempt at its configured cutoff, not before, and cleans up', async () => {
+    const f = await fixture(), started = deferred<void>();
+    f.processor.process.mockImplementation(async () => { started.resolve(); return new Promise<never>(() => {}); });
+    vi.useFakeTimers();
+    try {
+      let settled = false;
+      const post = submitConversationQuestion(f.store, f.catalog, f.clock, f.processor, id, `Bearer ${token}`, body,
+        {}, undefined, { attemptMs: 100, classifierMs: 5, finalizeReserveMs: 20 }).then(result => { settled = true; return result; });
+      await started.promise; await vi.advanceTimersByTimeAsync(79);
+      expect(settled).toBe(false); expect(f.store.finalize).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1); expect((await post).error?.code).toBe('processing_unavailable');
+      expect(f.store.finalize).toHaveBeenCalledOnce(); expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it.each(['batch', 'between messages'])('stops historical graph reconstruction after cutoff at %s', async when => {
+    let expired = false;
+    const decode = vi.fn(), row = { id: 'first', submission_identity: '{}', get submitted_scope() { if (when === 'between messages') expired = true; return '{}'; } };
+    const late = { get id() { decode(); return 'late'; } };
+    const db = { prepare: () => ({ bind() { return this; } }), batch: async () => {
+      if (when === 'batch') expired = true;
+      return [[{}], when === 'batch' ? [late] : [row, late], [], [], [], [], []].map(results => ({ success: true, results }));
+    } } as unknown as D1Database;
+    await expect(new D1ConversationStore(db).readAdmissionState(id, hash, message.createdAt, () => { if (expired) throw new Error('deadline'); })).rejects.toThrow('deadline');
+    expect(decode).not.toHaveBeenCalled();
+  });
+  it.each([19, 20])('bounds confirmation of the timeout failure itself (receipt after %i ms)', async delay => {
+    const f = await bounded(), finalize = vi.mocked(f.store.finalize).getMockImplementation()!;
+    f.processor.process.mockImplementation(async () => { f.advance(80, false); return { draft, sources: [source] }; });
+    vi.mocked(f.store.finalize).mockImplementation(async command => {
+      const canonical = await finalize(command); f.advance(delay, false); return canonical;
+    });
+    const post = f.submit({ attemptMs: 100, classifierMs: 15, finalizeReserveMs: 20 });
+    if (delay === 20) await expect(post).rejects.toMatchObject({ code: 'result_unavailable' });
+    else expect((await post).error?.code).toBe('processing_unavailable');
+    expect((await f.submit()).error?.code).toBe('processing_unavailable'); expect(f.state.messages).toHaveLength(1);
+    expect(f.store.finalize).toHaveBeenCalledOnce(); expect(f.processor.process).toHaveBeenCalledOnce(); expect(f.timers.size).toBe(0);
+  });
+  it('abandons a hanging acquisition without starting work when its receipt eventually arrives', async () => {
+    const f = await bounded(), admit = vi.mocked(f.store.admit).getMockImplementation()!;
+    const entered = deferred<void>(), release = deferred<void>();
+    vi.mocked(f.store.admit).mockImplementation(async command => {
+      const receipt = await admit(command); entered.resolve(); await release.promise; return receipt;
+    });
+    const post = f.submit(); await entered.promise; f.advance(30_000);
+    await expect(post).rejects.toMatchObject({ code: 'result_unavailable' }); release.resolve();
+    f.advance(10_000); await expect(f.submit()).rejects.toMatchObject({ code: 'result_unavailable' });
+    expect(f.state.messages).toHaveLength(1); expect(f.store.admit).toHaveBeenCalledOnce();
+    expect(f.processor.process).not.toHaveBeenCalled(); expect(f.store.finalize).not.toHaveBeenCalled(); expect(f.timers.size).toBe(0);
+  });
+  it('bounds a hung post-acquisition read; a late snapshot cannot start processing', async () => {
+    const f = await bounded(), read = vi.mocked(f.store.readAdmissionState).getMockImplementation()!;
+    const entered = deferred<void>(), release = deferred<void>();
+    vi.mocked(f.store.readAdmissionState).mockImplementation(async (...args) => {
+      const state = await read(...args); if (state?.lease) { entered.resolve(); await release.promise; } return state;
+    });
+    const post = f.submit(); await entered.promise; f.advance(28_000); const saved = await post;
+    expect(saved.error).toMatchObject({ code: 'processing_unavailable', retryMode: 'new_request', retryable: true });
+    release.resolve(); expect(await f.submit()).toEqual(saved); expect(f.processor.process).not.toHaveBeenCalled();
+    expect(f.store.finalize).toHaveBeenCalledOnce(); expect(f.state.lease).toBeNull(); expect(f.timers.size).toBe(0);
+  });
+  it.each(['classifier', 'retrieval', 'generator'])('bounds ignoring %s and never continues or overwrites its failure', async stage => {
+    const f = await bounded(), entered = deferred<void>(), release = deferred<void>();
+    async function hang() { entered.resolve(); await release.promise; }
+    const classifier = new ScriptedLLMProvider(vi.fn(async () => {
+      if (stage === 'classifier') await hang();
+      return { decision: 'answer', reasonCode: 'professional_question', responseLanguage: 'en', professionalTopic: 'Fiction', resolvedQuestion: 'Which example?', searchTerms: ['fiction'] };
+    }));
+    const generate = new ScriptedAnswerGenerator(async () => {
+      if (stage === 'generator') await hang(); return { status: 'answered', outputLanguage: 'en', blocks: draft.blocks };
+    });
+    const classify = vi.spyOn(classifier, 'classify'), generation = vi.spyOn(generate, 'generateAnswer');
+    const retrieve = vi.fn<GenerationRetriever['retrieveForGeneration']>(async () => { if (stage === 'retrieval') await hang(); return { chunks: [source.chunk] }; });
+    const processor = new ProfessionalIntentProcessor(classifier, new ModelAwareIntentPreparation(f.catalog, classifier), new EligibleEvidenceContinuation({ retrieveForGeneration: retrieve }, generate));
+    const post = f.submit({}, processor); await entered.promise;
+    f.advance(stage === 'classifier' ? 5_000 : 28_000);
+    const saved = await post; expect(saved.error?.code).toBe('processing_unavailable');
+    expect(saved.sourceExcerpts).toEqual([]);
+    expect(saved.language).toBe(stage === 'classifier' ? 'fr' : 'en');
+    if (stage === 'retrieval') expect(retrieve.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    else expect((stage === 'classifier' ? classify : generation).mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    release.reject(new Error('Late synthetic rejection')); expect(await f.submit()).toEqual(saved);
+    expect(classify).toHaveBeenCalledOnce(); expect(retrieve).toHaveBeenCalledTimes(stage === 'classifier' ? 0 : 1);
+    expect(generation).toHaveBeenCalledTimes(stage === 'generator' ? 1 : 0); expect(f.store.finalize).toHaveBeenCalledOnce();
+    expect(f.state.messages).toHaveLength(1); expect(f.timers.size).toBe(0);
+  });
+  it('bounds a never-confirmed finalization and leaves its lease and logical message intact', async () => {
+    const f = await bounded(), entered = deferred<void>(), release = deferred<never>();
+    vi.mocked(f.store.finalize).mockImplementation(async () => { entered.resolve(); return release.promise; });
+    const post = f.submit(); await entered.promise; f.advance(30_000);
+    await expect(post).rejects.toMatchObject({ code: 'result_unavailable' }); release.reject(new Error('Late failure'));
+    expect(f.state.lease).not.toBeNull(); expect(f.state.messages[0]?.result).toBeUndefined(); expect(f.state.messages).toHaveLength(1);
+    expect(f.store.finalize).toHaveBeenCalledOnce(); expect(f.timers.size).toBe(0);
+  });
+});
+
 describe('offline provider with authenticated admission and finalization', () => {
   const question = '  Fictional API key DEMO-123 and visitor@example.invalid: what is documented?\r\n';
   const input = { ...body, requestId: 'APP_REQUEST_ID', question };
@@ -392,7 +559,7 @@ describe('offline provider with authenticated admission and finalization', () =>
     const saved = await f.submit(); expect(saved.status).toBe('answered'); expect(saved.sourceExcerpts[0]?.excerpt).toBe(source.chunk.text);
     expect(f.run).toHaveBeenCalledTimes(2); expect(f.retrieve).toHaveBeenCalledOnce();
     for (const [index, [model, wire, options]] of f.run.mock.calls.entries()) {
-      expect(model).toBe(WORKERS_AI_CANDIDATE); expect(options).toBeUndefined();
+      expect(model).toBe(WORKERS_AI_CANDIDATE); expect(options).toEqual({ signal: expect.any(AbortSignal) });
       expect(Object.keys(wire).sort()).toEqual(['max_tokens', 'messages', 'response_format', 'stream']);
       expect(wire.stream).toBe(false); expect(wire.max_tokens).toBe(index === 0 ? 2000 : 1000);
       expect(wire.messages.map((m) => m.role)).toEqual(['system', 'user']); expect(wire.messages[0].content).not.toContain('DEMO-123');

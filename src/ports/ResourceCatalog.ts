@@ -18,5 +18,5 @@ export type ProcessingPublicationRead = { kind: 'available'; publication: Public
 export interface ResourceCatalog {
   readSnapshot(): Promise<PublicPublication | null>;
   // Processing must distinguish a failed read from confirmed publication loss.
-  readProcessingSnapshot?(): Promise<ProcessingPublicationRead>;
+  readProcessingSnapshot?(check?: () => void): Promise<ProcessingPublicationRead>;
 }

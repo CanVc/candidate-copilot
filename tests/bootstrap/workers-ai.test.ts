@@ -102,6 +102,13 @@ describe('offline Workers AI receiver boundary', () => {
     response.x += 'a'; await expect(provider.classify(call)).resolves.toBeNull();
     expect(run).toHaveBeenCalledTimes(2);
   });
+  it.each(['classify', 'generateAnswer'] as const)('honors elapsed check at %s dispatch even with a live signal', async role => {
+    const { provider, run } = fixture(), signal = new AbortController().signal;
+    const call = prepareProfessionalIntent(role === 'classify' ? provider.receiver : provider.answerReceiver, request, DEFAULT_INTENT_BOUNDS);
+    const check = vi.fn(() => { throw new Error('deadline'); });
+    await expect(provider[role](call, { signal, check })).rejects.toBeInstanceOf(WorkersAIRejected);
+    expect(signal.aborted).toBe(false); expect(check).toHaveBeenCalledOnce(); expect(run).not.toHaveBeenCalled();
+  });
   it('cancels before dispatch or while a binding ignores cancellation without a second call', async () => {
     const { provider, run, call } = fixture();
     const controller = new AbortController(); controller.abort();

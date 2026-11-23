@@ -135,14 +135,14 @@ try {
     await parity(c, input, result); assert.equal(result.body.status, 'clarification'); assert.deepEqual(await marks(c), [1]); assert.equal((await stats()).generations.length, before.generations.length);
   }
   // One coherent retrieval read distinguishes a real D1 query fault from absence.
-  for (const fault of ['dependency', 'authority-corrupt', 'chunk-corrupt', 'registry-corrupt', 'publication', 'member']) {
+  for (const fault of ['deadline', 'dependency', 'authority-corrupt', 'chunk-corrupt', 'registry-corrupt', 'publication', 'member']) {
     const c = await create(), input = body(), before = await stats(), result = await send(c, input, 'answer', { 'X-Fixture-Retrieval': fault });
     const withdrawn = ['publication', 'member'].includes(fault);
     await parity(c, input, result); assert.equal(result.body.error.code, withdrawn ? 'scope_unavailable' : 'processing_unavailable');
     assert.equal(result.body.error.retryable, !withdrawn); assert.equal(result.body.error.retryMode, withdrawn ? 'none' : 'new_request');
     assert.deepEqual(result.body.sourceExcerpts, []);
     assert.deepEqual(result.body.submittedScope.eligibleDocumentIds, ['doc', 'uncited']);
-    const after = await stats(); assert.equal(after.retrievalReads, before.retrievalReads + 1); assert.equal(after.generations.length, before.generations.length);
+    const after = await stats(); assert.equal(after.retrievalReads, before.retrievalReads + Number(fault !== 'deadline')); assert.equal(after.generations.length, before.generations.length);
     assert.equal(after.classifications.length, before.classifications.length + 1); assert.equal(after.retrievals, before.retrievals + 1);
     await activate(); await parity(c, input, result); // Owner decision A: restoration does not reprocess or revise metadata.
   }

@@ -11,9 +11,9 @@ export interface StoredConversation {
 }
 
 export interface ConversationStore {
-  readAdmissionState(conversationId: string, sessionTokenHash: string, createdAfter: string): Promise<AdmissionState | null>;
-  finalize(command: AtomicFinalization): Promise<ConversationResult>;
-  admit(command: AtomicAdmission): Promise<AdmissionOutcome>;
+  readAdmissionState(conversationId: string, sessionTokenHash: string, createdAfter: string, check?: () => void): Promise<AdmissionState | null>;
+  finalize(command: AtomicFinalization, check?: () => void): Promise<ConversationResult>;
+  admit(command: AtomicAdmission, check?: () => void): Promise<AdmissionOutcome>;
   dailyCreationKey(window: CreationWindow): Promise<string>;
   create(conversation: StoredConversation, allowance: CreationAllowance): Promise<'created' | 'rate_limited'>;
   cleanupCreationLimits(): Promise<void>;

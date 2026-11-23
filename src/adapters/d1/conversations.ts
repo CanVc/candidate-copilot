@@ -19,17 +19,21 @@ export class D1ConversationStore implements ConversationStore {
     if (!Number.isSafeInteger(now)) throw new Error('Creation clock unavailable');
     return String(now);
   }
-  async readAdmissionState(conversationId: string, sessionTokenHash: string, createdAfter: string): Promise<AdmissionState | null> {
-    const results = await this.db.batch<Record<string, unknown>>([
+  async readAdmissionState(conversationId: string, sessionTokenHash: string, createdAfter: string, check?: () => void): Promise<AdmissionState | null> {
+    const statements = [
       this.db.prepare('SELECT id FROM conversations WHERE id = ? AND session_token_hash = ? AND created_at > ?').bind(conversationId, sessionTokenHash, createdAfter),
       this.db.prepare('SELECT * FROM messages WHERE conversation_id = ? ORDER BY ordinal').bind(conversationId),
       this.db.prepare('SELECT * FROM conversation_processing_leases WHERE conversation_id = ?').bind(conversationId),
       ...resultReads(this.db, conversationId),
-    ]);
+    ];
+    check?.();
+    const results = await this.db.batch<Record<string, unknown>>(statements);
+    check?.();
     if (results.some((r) => !r.success)) throw new Error('Admission read unavailable');
     if (!results[0]?.results.length) return null;
     const lease = results[2]?.results[0];
     return { messages: results[1]!.results.map((row) => {
+      check?.();
       const message = readMessage(row);
       const result = readResult(message, results.slice(3).map((r) => r.results));
       const answer = results[3]!.results.find((a) => a.message_id === message.messageId);
@@ -38,7 +42,7 @@ export class D1ConversationStore implements ConversationStore {
       requestId: String(lease.request_id), attemptId: String(lease.attempt_id), until: Number(lease.processing_until),
     } : null };
   }
-  async admit(command: AtomicAdmission): Promise<AdmissionOutcome> {
+  async admit(command: AtomicAdmission, check?: () => void): Promise<AdmissionOutcome> {
     const { conversationId, sessionTokenHash, requestId, identity, messageId, attemptId, limits, publication, recover } = command;
     const now = this.nowSql();
     const guard = publicationGuard(publication);
@@ -68,7 +72,7 @@ export class D1ConversationStore implements ConversationStore {
     const bindings = [conversationId, sessionTokenHash, conversationId, requestId, identityJson, conversationId, requestId, conversationId, requestId,
       conversationId, conversationId, requestId, Number(recover), conversationId, requestId, Number(recover),
       conversationId, requestId, conversationId, limits.maxMessages, conversationId, requestId, publication.catalogRevision, publication.catalogHash, ...guard.bindings, conversationId, requestId];
-    const results = await this.db.batch<Record<string, unknown>>([
+    const statements = [
       this.db.prepare(`SELECT ${decision} AS outcome, EXISTS (SELECT 1 FROM messages WHERE conversation_id = ? AND request_id = ?) AS recovering,
         (SELECT catalog_revision FROM active_publication WHERE id = 1) AS catalog_revision,
         (SELECT catalog_hash FROM active_publication WHERE id = 1) AS catalog_hash`).bind(...bindings, conversationId, requestId),
@@ -88,7 +92,10 @@ export class D1ConversationStore implements ConversationStore {
         ON l.conversation_id = m.conversation_id AND l.request_id = m.request_id AND l.attempt_id = ?
         WHERE m.conversation_id = ? AND m.request_id = ?`).bind(attemptId, conversationId, requestId),
       ...resultReads(this.db, conversationId),
-    ]);
+    ];
+    check?.();
+    const results = await this.db.batch<Record<string, unknown>>(statements);
+    check?.();
     if (results.some((r) => !r.success)) throw new Error('Admission persistence unavailable');
     const row = results[4]?.results[0];
     if (row?.attempt_id === attemptId) return { status: results[0]?.results[0]?.recovering ? 'recovered' : 'admitted', message: readMessage(row), lease: { requestId, attemptId, until: Number(row.processing_until) } };
@@ -108,7 +115,7 @@ export class D1ConversationStore implements ConversationStore {
     if (typeof outcome === 'string' && outcome !== 'acquire' && outcome !== 'interrupted') throw new AdmissionRejected(outcome as import('../../shared/conversation-admission.ts').AdmissionErrorCode);
     throw new AdmissionRejected('result_unavailable');
   }
-  async finalize(command: AtomicFinalization): Promise<ConversationResult> {
+  async finalize(command: AtomicFinalization, check?: () => void): Promise<ConversationResult> {
     const { conversationId, sessionTokenHash, requestId, attemptId, result } = command;
     validateConversationResult(result);
     if (command.contextReset) assertContextResetResult(result);
@@ -145,7 +152,7 @@ export class D1ConversationStore implements ConversationStore {
     const childBindings = [result.answerId, conversationId, requestId, attemptId];
     const blocks = JSON.stringify(result.blocks), excerpts = JSON.stringify(result.sourceExcerpts);
     const failureBlocks = JSON.stringify(failure.blocks);
-    const results = await this.db.batch<Record<string, unknown>>([
+    const statements = [
       this.db.prepare(`INSERT INTO answers (id, message_id, status, language, error_json, created_at, context_reset)
         SELECT ?, m.id, json_extract(${chosen}, '$.status'), json_extract(${chosen}, '$.language'),
           json_extract(${chosen}, '$.error'), strftime('%Y-%m-%dT%H:%M:%fZ', ${now} / 1000.0, 'unixepoch'), ?
@@ -180,7 +187,10 @@ export class D1ConversationStore implements ConversationStore {
         WHERE m.conversation_id = ? AND m.request_id = ? AND c.session_token_hash = ?
         AND julianday(c.created_at) > 2440587.5 + (${now} - ${CONVERSATION_RETENTION_MS}) / 86400000.0`).bind(conversationId, requestId, sessionTokenHash),
       ...resultReads(this.db, conversationId),
-    ]);
+    ];
+    check?.();
+    const results = await this.db.batch<Record<string, unknown>>(statements);
+    check?.();
     if (results.some((r) => !r.success)) throw new AdmissionRejected('result_unavailable');
     const row = results[6]?.results[0];
     if (!row) throw new ConversationUnavailable();

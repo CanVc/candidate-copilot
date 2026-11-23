@@ -2,8 +2,10 @@ import { catalogAssetPath, exactObject, fullRevision, jcs, normalizeCatalog, pub
 import { chunkIdPreimage, contentHashPreimage, type PublicChunk, type SearchDocument } from '../../shared/public-evidence.ts';
 import type { ProcessingPublicationRead, PublicPublication, ResourceCatalog } from '../../ports/ResourceCatalog.ts';
 
-async function hash(text: string): Promise<string> {
+async function hash(text: string, check?: () => void): Promise<string> {
+  check?.();
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  check?.();
   return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -13,20 +15,20 @@ export class D1ResourceCatalog implements ResourceCatalog {
   async readSnapshot(): Promise<PublicPublication | null> {
     return (await this.readBatch())?.publication ?? null;
   }
-  async readProcessingSnapshot(): Promise<ProcessingPublicationRead> {
+  async readProcessingSnapshot(check?: () => void): Promise<ProcessingPublicationRead> {
     try {
-      const snapshot = await this.readBatch(undefined, true);
+      const snapshot = await this.readBatch(undefined, true, check);
       return snapshot ? { kind: 'available', publication: snapshot.publication } : { kind: 'unavailable' };
     } catch { return { kind: 'dependency_failure' }; }
   }
   // Search rows and all validation reads belong to the same D1 transaction.
   // Callers must resolve match IDs only against this returned publication.
-  async readSearchSnapshot(statement: D1PreparedStatement, reportDependency = false): Promise<{
+  async readSearchSnapshot(statement: D1PreparedStatement, reportDependency = false, check?: () => void): Promise<{
     publication: PublicPublication; matches: Record<string, unknown>[];
   } | null> {
-    return this.readBatch(statement, reportDependency);
+    return this.readBatch(statement, reportDependency, check);
   }
-  private async readBatch(statement?: D1PreparedStatement, reportDependency = false): Promise<{
+  private async readBatch(statement?: D1PreparedStatement, reportDependency = false, check?: () => void): Promise<{
     publication: PublicPublication; matches: Record<string, unknown>[];
   } | null> {
     let results: D1Result<Record<string, unknown>>[];
@@ -42,7 +44,9 @@ export class D1ResourceCatalog implements ResourceCatalog {
         'SELECT chunk_id, text FROM public_chunks_fts',
       ].map((sql) => this.db.prepare(sql));
       if (statement) reads.push(statement);
+      check?.();
       results = await this.db.batch<Record<string, unknown>>(reads);
+      check?.();
       if (results.length !== reads.length || results.some((r) => !r.success)) throw new Error();
     } catch {
       if (reportDependency) throw new Error('Publication dependency unavailable');
@@ -62,7 +66,8 @@ export class D1ResourceCatalog implements ResourceCatalog {
           documentIds: maps!.filter((m) => m.resource_id === r.resource_id).map((m) => m.document_id) })),
         documents: registry!.map((d) => ({ documentId: d.document_id, sourcePath: d.source_path })),
       });
-      if (await hash(jcs(catalog)) !== catalogHash || maps!.length !== catalog.resources.reduce((n, r) => n + r.documentIds.length, 0)) throw new Error();
+      if (await hash(jcs(catalog), check) !== catalogHash || maps!.length !== catalog.resources.reduce((n, r) => n + r.documentIds.length, 0)) throw new Error();
+      check?.();
       const documents = registry!.map((d) => {
         const value = JSON.parse(d.document_json as string);
         exactObject(value, ['documentId', 'sourcePath', 'sourceRevision', 'sourceTitle', 'metadata']);
@@ -75,6 +80,7 @@ export class D1ResourceCatalog implements ResourceCatalog {
       });
       if (fts!.length !== evidence.length) throw new Error();
       for (const [index, d] of documents.entries()) {
+        check?.();
         const registered = registry![index]!;
         if (d.documentId !== registered.document_id || d.sourcePath !== registered.source_path ||
             d.sourceRevision !== catalogRevision || d.metadata?.document_id !== d.documentId || d.metadata.visibility !== 'public') throw new Error();
@@ -103,8 +109,8 @@ export class D1ResourceCatalog implements ResourceCatalog {
           const stored = chunks!.find((r) => r.chunk_id === c.chunkId);
           if (!stored || stored.document_id !== c.documentId || stored.ordinal !== ordinal || c.ordinal !== ordinal ||
               c.sourceRevision !== catalogRevision || c.sourcePath !== d.sourcePath || c.sourceTitle !== d.sourceTitle ||
-              jcs(c.metadata) !== jcs(d.metadata) || await hash(chunkIdPreimage(d.documentId, ordinal)) !== c.chunkId ||
-              await hash(contentHashPreimage(c)) !== c.contentHash ||
+              jcs(c.metadata) !== jcs(d.metadata) || await hash(chunkIdPreimage(d.documentId, ordinal), check) !== c.chunkId ||
+              await hash(contentHashPreimage(c), check) !== c.contentHash ||
               fts!.filter((r) => r.chunk_id === c.chunkId && r.text === c.text).length !== 1) throw new Error();
           const ranges = [c.passage, ...c.context];
           for (const range of ranges) exactObject(range, ['start', 'end']);

@@ -56,11 +56,16 @@ try {
     assert.equal(response.status, 201); return response.json();
   }
   const body = (requestId = randomUUID(), question = '  Épreuve 😀\r\ne\u0301  ', p = A) => ({ requestId, question, selection: { resourceIds: [], catalogRevision: p.catalog.catalogRevision, catalogHash: p.hash } });
-  const send = async (c, input, { worker = one, time = 0, status = 'answered', language = 'fr', disabled = false, race, outage, distinctBlocks = false } = {}) => {
+  const send = async (c, input, { worker = one, time = 0, status = 'answered', language = 'fr', disabled = false, race, outage, distinctBlocks = false, fault } = {}) => {
     const response = await worker.fetch(`http://local/api/conversations/${c.conversationId}/messages`, { method: 'POST',
       headers: { Authorization: `Bearer ${c.sessionToken}`, 'Content-Type': 'application/json', 'X-Fixture-Now': at(time),
-        'X-Fixture-Status': status, 'X-Fixture-Language': language, ...(outage ? { 'X-Fixture-Outage': outage } : {}), ...(disabled ? { 'X-Fixture-Disabled': '1' } : {}), ...(race ? { 'X-Fixture-Admission-Race': race } : {}), ...(distinctBlocks ? { 'X-Fixture-Distinct-Blocks': '1' } : {}) }, body: JSON.stringify(input) });
+        'X-Fixture-Status': status, 'X-Fixture-Language': language, ...(fault ? { 'X-Fixture-Deadline': fault } : {}), ...(outage ? { 'X-Fixture-Outage': outage } : {}), ...(disabled ? { 'X-Fixture-Disabled': '1' } : {}), ...(race ? { 'X-Fixture-Admission-Race': race } : {}), ...(distinctBlocks ? { 'X-Fixture-Distinct-Blocks': '1' } : {}) }, body: JSON.stringify(input) });
     assert.equal(response.headers.get('cache-control'), 'no-store');
+    if (fault) assert.equal(response.headers.get('X-Fixture-Finalizations'), ['admission-preparation', 'finalizer-preparation', 'invalid-reserve'].includes(fault) ? '0' : '1');
+    if (fault === 'successor') {
+      const attempt = response.headers.get('X-Fixture-Successor'); assert.ok(attempt); assert.equal((await lease(c)).attempt_id, attempt);
+    }
+    if (response.status === 401) assert.equal(response.headers.get('www-authenticate'), 'Bearer');
     return { status: response.status, body: await response.json() };
   };
   const assertGuidance = (response, code, guidance) => {
@@ -216,6 +221,43 @@ try {
   assert.deepEqual((await read(c)).body.transcript.find((m) => m.requestId === historical.input.requestId).result, historical.result);
   assert.equal(await calls(), beforeCalls);
   await activate(A);
+  for (const lateReceipt of [true, false]) {
+    const bounded = await create(), input = body(), before = await calls();
+    const post = await send(bounded, input, { fault: lateReceipt ? 'late-receipt' : undefined, status: lateReceipt ? 'partial' : 'work-cutoff', distinctBlocks: lateReceipt });
+    const canonical = (await read(bounded, 30_000)).body.transcript[0].result;
+    if (lateReceipt) {
+      assert.equal(post.status, 503); assert.equal(post.body.error.code, 'result_unavailable');
+      assert.equal(canonical.status, 'partial');
+      assert.deepEqual(canonical.blocks.map(({ kind, text, sourceIds }) => [kind, text, sourceIds]),
+        [['paragraph', exactTexts[0], ['S2', 'S1']], ['summary', exactTexts[1], ['S1', 'S2']]]);
+      assert.deepEqual(canonical.sourceExcerpts.map(({ responseLocalId, documentId, excerpt, sectionTitle }) => [responseLocalId, documentId, excerpt, sectionTitle]),
+        [['S2', 'doc-b'], ['S1', 'doc-a']].map(([localId, id]) => [localId, id, 'Fictional development evidence, not BC: épreuve 😀.', 'Original synthetic heading é']));
+    } else {
+      assert.equal(post.status, 200); assert.deepEqual(post.body, canonical);
+      assert.equal(canonical.error.code, 'processing_unavailable'); assert.deepEqual(canonical.sourceExcerpts, []);
+    }
+    assert.deepEqual((await send(bounded, input, { time: 30_000, disabled: true })).body, canonical);
+    assert.equal(await lease(bounded), null); assert.equal((await messages(bounded)).length, 1);
+    assert.equal(await calls(), before + 1);
+  }
+  for (const fault of ['admission-preparation', 'finalizer-preparation', 'successor', 'lost-access', 'late-lost-access']) {
+    const c = await create(), input = body(), before = await calls(), post = await send(c, input, { fault });
+    if (fault === 'lost-access') assert.deepEqual(post, { status: 401, body: { error: 'conversation_unavailable' } });
+    else { assert.equal(post.status, 503); assert.equal(post.body.error.code, 'result_unavailable'); }
+    assert.equal(await calls(), before + Number(fault !== 'admission-preparation'));
+    if (fault.includes('lost-access')) { assert.equal((await read(c)).status, 401); continue; }
+    const view = (await read(c)).body.transcript;
+    if (fault === 'admission-preparation') { assert.deepEqual(view, []); assert.equal(await lease(c), null); }
+    else { assert.equal(view.length, 1); assert.equal(view[0].result, undefined); assert.equal((await lease(c)).request_id, input.requestId); }
+  }
+  {
+    const c = await create(), input = body();
+    const saved = await send(c, input, { status: 'stall' });
+    assert.equal(saved.status, 200); assert.equal(saved.body.error.code, 'processing_unavailable');
+    assert.deepEqual(await send(c, input, { fault: 'invalid-reserve' }), saved);
+    assert.equal((await send(c, body(), { fault: 'invalid-reserve' })).status, 503);
+    assert.equal((await messages(c)).length, 1); assert.equal(await lease(c), null);
+  }
   // Lost committed response: the caller discards the first body; GET and POST
   // subsequently return the exact persisted graph, without another processor call.
   const lost = await create(), lostInput = body();
@@ -291,7 +333,7 @@ try {
   }
   const recovered = await create(), recoveredInput = body(); await prepare(recovered, recoveredInput, 'old-owner');
   const recovery = await prepare(recovered, recoveredInput, undefined, { path: 'admit', action: 'recover', time: 40_000 });
-  assert.equal(recovery.status, 'recovered'); const recoveredSnapshot = await snapshot();
+  assert.equal(recovery.status, 'recovered'); assert.equal((await messages(recovered)).length, 1); const recoveredSnapshot = await snapshot();
   assert.deepEqual(await finalize('old-owner', 40_000), { error: 'result_unavailable' }); assert.equal(await snapshot(), recoveredSnapshot);
 
   // All original members are checked, including an uncited, zero-chunk document.

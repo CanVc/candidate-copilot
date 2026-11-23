@@ -420,10 +420,8 @@ component/total-capacity accounting with reserved output.
 The processor/provider/continuation accept an optional orchestration-owned
 `AbortSignal`, kept outside model data. Already-cancelled attempts and late
 classifier completions do not start a continuation; a continuation finishing after
-cancellation is also discarded. **No timing engine is
-implemented or operational timing claim made**: Story 2.13 owns the mandatory
-30-second total budget including the 5-second classifier ceiling and finalization
-reserve. Cancellation does not establish that remote work stopped. Existing
+cancellation is also discarded. For the subsequent 2.13 local deadline implementation, see
+[bounded local message attempts](#bounded-local-message-attempts-story-213-in-progress). Cancellation does not establish that remote work stopped. Existing
 40-second lease/finalization fencing remains active; no automatic retry/failover
 or new usage policy is introduced.
 
@@ -1708,3 +1706,18 @@ Initial **pre-review** verification on **2026-10-19**, Ubuntu **24.04.5 LTS / x8
 **Final parent verification after review:** on the same supported Ubuntu host and selected Node/npm, repeated syntax, workstation gate, `npm ci` with unchanged lockfile, all typechecks, all 45 Bash + 10 Vitest cases, both builds, 22-canary isolation, both real PTY builds and all eight synthetic controls. Every check passed. Full and production-only audits still returned zero; `npm ls --all` and whitespace checks passed. A second fresh-HOME/cache credential-free clean copy repeated the complete installation/check/build/audit journey after corrections with the same lockfile hash. The 1,449-entry real global-skill hash/symlink inventory remained identical, the historical Story 1.2 specification and latest human-approved frozen intent were unchanged, and no terminal fixture directories remained.
 
 The synthetic controls do not prove that Wrangler will prompt or that every possible future prompt wording is detected. The two real PTY builds prove the currently pinned build journey with fresh and accepted synthetic settings without a prompt; command inspection separately enforces local CI protection. The prior limits still apply: no startup orchestration, browser journey, D1 readiness, live provider, hosted runtime or full Epic 1 acceptance is claimed.
+
+### Bounded local message attempts (Story 2.13, in progress)
+
+Worker composition accepts `timing` overrides (integer milliseconds) and an injectable timer alongside its clock. The public Worker still has no configured message processor. On submission, authentication and saved replay precede admission. While the atomic admission is outstanding, a local receipt watchdog bounds the wait: if the receipt never arrives, the caller does not acquire authority to process, finalize or release. This is not a timeout on all pre-admission reads.
+
+For a confirmed acquisition, subtract the configured lease duration from the database's `processing_until` to recover acquisition time, **not** receipt time or original message creation time. The earlier of database acquisition and local admission dispatch starts the budget; a future database timestamp cannot extend it. The default is 30 s, capped by lease duration, with the finalization reserve inside that cap. Context, classification, evidence retrieval, generation and result validation have the first 28 s. Classifier preparation through validated classification gets at most 5 s within that interval. Cutoffs are exclusive: a draft arriving at 28 s is too late. If total time remains, submit one guarded `processing_unavailable` failure using the existing retry policy. Only the atomic result write releases its lease; there is no timeout cleanup write. The finalizer, including canonical readback, must be confirmed before 30 s. Timely confirmation of lost access returns the neutral 401. An indeterminate, stalled or late receipt means `result_unavailable`, even if the write succeeded. An authenticated read or saved same-ID replay can then show what was actually recorded. Neither starts a recovery execution.
+
+The 40 s lease fences ownership; it is not extra compute time. The separately configurable browser message transport wait (initially 45 s) is for a future POST client, not health polling or a server-side deadline. Its expiry means the browser did not observe confirmation, **not** that processing failed. No UI or automatic resubmission is part of this change. The application stops waiting or starting later stages when the runtime delivers its timer or its clock shows the cutoff. A Worker clock need not advance during synchronous JavaScript. These checks neither preempt it nor retract an issued storage/provider operation; the fixtures do not establish live wall-clock timing.
+
+**Offline walkthrough** (inside a private, source-only changed-tree snapshot with isolated PID/proc/network namespaces, loopback only, installed dependencies, disposable storage and no operator credentials):
+
+1. Run `npm run typecheck` and `./node_modules/.bin/vitest run tests/bootstrap/{conversation-results,professional-intent,answer-generation}.test.ts`. The manual clock can advance without delivering timers: check the 27,999/28,000/30,000 ms acquisition receipts and synchronous receiver accounting. Stalled operations ignore cancellation; the tests inspect calls, saved failure vs unknown, timer cleanup and logical-turn count.
+2. Run `./node_modules/.bin/playwright test conversations.spec.ts -g 'real D1 (global admission|complete results)'` in that isolated snapshot. The disposable workers exercise interrupted acquisition, same-ID manual recovery, expired-owner writes, completion at the work cutoff, and D1 commit followed by a receipt at the total cutoff. Compare the original POST with authenticated GET and same-ID replay, including the saved answer graph and remaining lease.
+
+These are local timing and persistence fixtures, not remote usage measurements. An interrupted or manually recovered execution can consume provider capacity even though it is not another logical turn. A08 remains open: actual admitted, interrupted and manually recovered usage and a BC/architecture decision are required before changing controls. No execution cap, cooldown, global budget, telemetry or paid fallback is introduced.

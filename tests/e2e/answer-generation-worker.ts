@@ -22,12 +22,17 @@ let retrievals = 0, retrievalReads = 0, preparationReads = 0;
 export default {
   async fetch(request: Request, env: Cloudflare.Env, context: ExecutionContext) {
     const path = new URL(request.url).pathname;
-    const clock = { now: () => new Date(request.headers.get('X-Fixture-Now') ?? '2026-01-01T00:00:00Z') };
+    let now = Date.parse(request.headers.get('X-Fixture-Now') ?? '2026-01-01T00:00:00Z');
+    const clock = { now: () => new Date(now) };
     const catalog = new D1ResourceCatalog(env.DB), store = new D1ConversationStore(env.DB, clock);
     const branch = request.headers.get('X-Fixture-Branch') ?? 'answer', language = request.headers.get('X-Fixture-Language') ?? 'en';
     const fault = request.headers.get('X-Fixture-Retrieval');
     const preparationFault = request.headers.get('X-Fixture-Preparation');
     const faultDatabase = (fault: string | null, preparation: boolean) => new Proxy(env.DB, { get(target, property) {
+      if (!preparation && fault === 'deadline' && property === 'prepare') return (sql: string) => {
+        if (sql.includes('ORDER BY bm25')) now += 28_000;
+        return target.prepare(sql);
+      };
       if (property === 'batch') return async (statements: D1PreparedStatement[]) => {
         if (preparation) preparationReads++; else retrievalReads++;
         if (fault === 'dependency') return target.batch([...statements, target.prepare('SELECT * FROM nonexistent_generation_fixture')]);
@@ -94,7 +99,7 @@ export default {
       const retriever = branch === 'injected-retriever' && suppliedRetriever ? suppliedRetriever : new D1Retriever(retrievalDb, { topK: 5, textBudget: Number(request.headers.get('X-Fixture-Text-Budget') ?? 12000) });
       if (branch === 'injected-retriever' && !suppliedRetriever) throw new Error('Missing composed retriever');
       return new ProfessionalIntentProcessor(classifier, new ModelAwareIntentPreparation(preparationCatalog, classifier), new EligibleEvidenceContinuation({
-        retrieveForGeneration: async (input) => { retrievals++; return retriever.retrieveForGeneration(input); },
+        retrieveForGeneration: async (input, controls) => { retrievals++; return retriever.retrieveForGeneration(input, controls); },
       }, generator, answerGenerationBounds({ sources: Number(request.headers.get('X-Fixture-Sources') ?? 100) })));
     };
     if (path === '/__fixture/stats') return Response.json({ classifications, generations, retrievals, retrievalReads, preparationReads });

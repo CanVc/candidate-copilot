@@ -1,3 +1,4 @@
+import type { OperationControls } from '../shared/attempt-timing.ts';
 import type { RetrievedChunk } from '../shared/public-evidence.ts';
 
 export interface RetrievalRequest {
@@ -14,7 +15,7 @@ export interface Retriever {
 // Required for generation: successful empty results must mean no matches, not
 // nonempty budget exhaustion. Legacy readers retain their original contract.
 export interface GenerationRetriever {
-  retrieveForGeneration(request: RetrievalRequest): Promise<RetrievalResult>;
+  retrieveForGeneration(request: RetrievalRequest, controls?: Partial<OperationControls>): Promise<RetrievalResult>;
 }
 
 // Empty evidence is success; technical failure or unusable scope is not.

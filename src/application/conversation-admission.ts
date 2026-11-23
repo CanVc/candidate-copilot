@@ -13,6 +13,7 @@ export async function admitConversationQuestion(
   conversationId: string, authorization: string | undefined, body: unknown,
   action: 'submit' | 'recover', configuration: Partial<AdmissionLimits> = {},
   availability?: ProcessingAvailability,
+  observeReceipt: (admit: (check?: () => void) => Promise<AdmissionOutcome>) => Promise<AdmissionOutcome> = admit => admit(),
 ): Promise<AdmissionOutcome> {
   const tokenHash = await authenticateConversation(store, clock, conversationId, authorization);
   try {
@@ -55,8 +56,8 @@ export async function admitConversationQuestion(
     }
     const outage = confirmedProcessingOutage(availability, clock.now().getTime());
     if (outage) return await rejectAfterLookup(new AdmissionRejected('provider_unavailable', undefined, outage.resumeAt));
-    return await store.admit({ conversationId, sessionTokenHash: tokenHash, requestId, identity,
-      messageId: crypto.randomUUID(), attemptId: crypto.randomUUID(), recover: action === 'recover', limits, publication });
+    return await observeReceipt(check => store.admit({ conversationId, sessionTokenHash: tokenHash, requestId, identity,
+      messageId: crypto.randomUUID(), attemptId: crypto.randomUUID(), recover: action === 'recover', limits, publication }, check));
   } catch (error) {
     if (error instanceof ConversationUnavailable || error instanceof AdmissionRejected) throw error;
     throw new AdmissionRejected('result_unavailable');

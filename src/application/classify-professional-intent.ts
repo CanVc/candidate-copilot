@@ -55,7 +55,7 @@ export async function classifyProfessionalIntent(provider: LLMProvider, request:
     validatePreparedModelCall(provider.receiver, call, expected);
   } catch { return { kind: 'limit' }; }
   let raw: unknown;
-  try { raw = await provider.classify(call, options); }
+  try { options.check?.(); raw = await provider.classify(call, options); options.check?.(); }
   catch { return { kind: 'failure', failure: 'processing_unavailable' }; }
   if (options.signal?.aborted) return { kind: 'failure', failure: 'processing_unavailable' };
   try {

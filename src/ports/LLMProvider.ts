@@ -1,8 +1,9 @@
+import type { OperationControls } from '../shared/attempt-timing.ts';
 import type { ModelTokenAccounting, PreparedModelCall } from './ModelTokenAccounting.ts';
 // Adapters must keep trusted instructions separate from serialized untrusted data.
 export interface ClassificationPrompt { instructions: string; data: string }
 // The attempt orchestrator owns deadlines; cancellation does not prove remote work stopped.
-export interface ClassificationOptions { signal?: AbortSignal }
+export type ClassificationOptions = Partial<OperationControls>;
 export interface LLMProvider {
   readonly receiver: ModelTokenAccounting;
   generate(input: string): Promise<string>;

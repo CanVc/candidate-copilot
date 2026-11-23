@@ -132,7 +132,7 @@ function workersAIFixture(config: FixtureConfig): LLMProvider & AnswerGenerator 
   if (config?.mode !== 'workers-ai-offline' || config.binding?.kind !== 'local-fixture' || typeof config.binding.run !== 'function' || typeof config.isProxy !== 'function') throw new WorkersAIRejected('configuration');
   const run = config.binding.run.bind(config.binding), isProxy = config.isProxy;
   const classifier = receiver('classifier', config.classifier), generator = receiver('generator', config.generator);
-  async function invoke(descriptor: ModelTokenAccounting, call: PreparedModelCall, { signal }: ClassificationOptions = {}) {
+  async function invoke(descriptor: ModelTokenAccounting, call: PreparedModelCall, { signal, check }: ClassificationOptions = {}) {
     try { validateModelCallIntegrity(descriptor, call); } catch { throw new WorkersAIRejected('configuration'); }
     if (signal?.aborted) throw new WorkersAIRejected('aborted');
     // Consume the same bytes the role receiver accounted. Nothing from the
@@ -141,6 +141,7 @@ function workersAIFixture(config: FixtureConfig): LLMProvider & AnswerGenerator 
     let abort: (() => void) | undefined;
     let raw: unknown;
     try {
+      check?.();
       const pending = run(descriptor.model, payload, signal ? { signal } : undefined);
       if (!signal) raw = await pending;
       else {
@@ -154,6 +155,7 @@ function workersAIFixture(config: FixtureConfig): LLMProvider & AnswerGenerator 
     } catch (error) { throw signal?.aborted ? new WorkersAIRejected('aborted') : bindingFailure(error, isProxy); }
     finally { if (abort) signal?.removeEventListener('abort', abort); }
     if (signal?.aborted) throw new WorkersAIRejected('aborted');
+    check?.();
     // A completed but invalid response is not a transport outage. Both core
     // validators reject null as invalid_result without exposing provider data.
     try { return decode(raw, descriptor, call.outputTokens, isProxy); }
