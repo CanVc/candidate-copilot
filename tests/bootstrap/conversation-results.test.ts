@@ -11,7 +11,7 @@ import { EligibleEvidenceContinuation } from '../../src/application/generate-ans
 import { ModelAwareIntentPreparation, ProfessionalIntentProcessor } from '../../src/application/professional-intent-processor.ts';
 import { DEFAULT_MODEL_CONTEXT_BUDGET } from '../../src/shared/model-context-budget.ts';
 import { describe, expect, it, vi } from 'vitest';
-import { completeResult, controlledFailure, validateConversationResult, type ResultDraft, type LoadedSource } from '../../src/shared/conversation-result.ts';
+import { completeResult, controlledFailure, validateConversationResult, type ResultDraft, type LoadedSource, type SourceExcerpt } from '../../src/shared/conversation-result.ts';
 import { AdmissionRejected, type AdmissionState, type AdmittedMessage } from '../../src/shared/conversation-admission.ts';
 import { CONTEXT_RESTATEMENT } from '../../src/shared/professional-intent.ts';
 import { submitConversationQuestion } from '../../src/application/conversation-results.ts';
@@ -92,6 +92,56 @@ describe('conversation-result mechanical contract', () => {
     { sourceRevision: 'not-provenance' }, { contentHash: 'wrong' }, { sourceTitle: '' }, { location: '' }, { sectionTitle: 2 },
   ])('rejects ineligible or malformed loaded provenance: %j', (changed) => {
     expect(() => completeResult(message, draft, [{ ...source, chunk: { ...source.chunk, ...changed } } as LoadedSource])).toThrow();
+  });
+  it.each(['lines:9-8', 'lines:0-1', 'lines:1-9007199254740992', 'lines:01-2', 'lines:3-4;context:2-1',
+    'lines:3-4;context:1-1;context:0-2', 'lines:3-4;context:1-', 'lines:3-4;other:1-1'])(
+    'rejects impossible or malformed declared ranges: %s', location => {
+      const result = completeResult(message, draft, [source]); result.sourceExcerpts[0]!.location = location;
+      expect(() => validateConversationResult(result)).toThrow('Invalid line location');
+    });
+  it.each(['lines:9007199254740991-9007199254740991;context:1-1;context:2-3', 'heading:solution'])(
+    'preserves complete valid ranges and other diagnostic locations: %s', location => {
+      const result = completeResult(message, draft, [source]); result.sourceExcerpts[0]!.location = location;
+      expect(() => validateConversationResult(result)).not.toThrow();
+    });
+  it('requires one source publication per result, not the admission revision', () => {
+    const second = { responseLocalId: 'S2', chunk: { ...source.chunk, chunkId: 'second-chunk', contentHash: 'f'.repeat(64),
+      location: 'lines:3-4', text: 'Deuxième exemple fictif, sans rapport avec BC.' } };
+    const result = completeResult(message, { ...draft, blocks: [{ ...draft.blocks[0], sourceIds: ['S1', 'S2'] }] }, [source, second]);
+    expect(result.sourceExcerpts.map(s => s.sourceRevision)).toEqual([source.chunk.sourceRevision, source.chunk.sourceRevision]);
+    expect(source.chunk.sourceRevision).not.toBe(message.submittedScope.catalogRevision);
+    expect(() => validateConversationResult(result)).not.toThrow();
+    result.sourceExcerpts[1]!.sourceRevision = 'a'.repeat(40);
+    expect(() => validateConversationResult(result)).toThrow('Mixed source revisions');
+  });
+  it('keeps chunk and file identities local to one result, not to each block or display title', () => {
+    const second = { responseLocalId: 'S2', chunk: { ...source.chunk, chunkId: 'chunk-2', contentHash: 'f'.repeat(64),
+      location: 'lines:3-4', text: 'Autre passage fictif, sans rapport avec BC.' } };
+    const result = completeResult(message, { ...draft, blocks: [draft.blocks[0]!, { ...draft.blocks[1]!, sourceIds: ['S1', 'S2'] }] }, [source, second]);
+    const [first, next] = result.sourceExcerpts;
+    const validate = (patch: Partial<SourceExcerpt>) => validateConversationResult({ ...result, sourceExcerpts: [first!, { ...next!, ...patch }] });
+    expect(() => validate({})).not.toThrow(); // two chunks, one file, S1 cited twice
+    expect(() => validate({ sourceChunkId: first!.sourceChunkId })).toThrow('Duplicate source chunk');
+    expect(() => validate({ sourceTitle: 'Autre titre' })).toThrow('Inconsistent source file');
+    const reuse = { contentHash: first!.contentHash, excerpt: first!.excerpt, location: first!.location };
+    expect(() => validate(reuse)).not.toThrow(); // distinct citation and chunk, same saved content
+    expect(() => validate({ ...reuse, contentHash: next!.contentHash })).toThrow('Inconsistent content hash');
+    const otherSection = { ...reuse, contentHash: next!.contentHash, sectionTitle: 'Autre section' };
+    expect(() => validate(otherSection)).toThrow('line passage');
+    expect(() => validate({ ...reuse, contentHash: next!.contentHash, excerpt: next!.excerpt })).toThrow('line passage');
+    expect(() => validate({ ...otherSection, location: next!.location })).not.toThrow();
+    expect(() => validate({ ...reuse, excerpt: 'Passage différent.' })).toThrow('Inconsistent content hash');
+    const sourcePath = 'content/public/other.md';
+    expect(() => validate({ sourcePath })).toThrow('Inconsistent source file');
+    expect(() => validate({ documentId: 'uncited' })).toThrow('Inconsistent source file');
+    expect(() => validate({ documentId: 'uncited', sourcePath })).not.toThrow(); // same title, different files
+  });
+  it('requires a string content hash in a saved excerpt', () => {
+    const result = completeResult(message, draft, [source]);
+    expect(() => validateConversationResult(result)).not.toThrow();
+    const excerpt = result.sourceExcerpts[0]!;
+    Object.assign(excerpt, { contentHash: [excerpt.contentHash] }); // Non-string JSON field in an inert receipt.
+    expect(() => validateConversationResult(result)).toThrow('Invalid excerpt');
   });
   it('does not exempt factual examples after a refusal from citation validation', () => {
     const result = completeResult(message, { ...draft, status: 'refused', blocks: [

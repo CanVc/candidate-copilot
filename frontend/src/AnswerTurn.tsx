@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { passageFiles, savedIndex, type PassageFile, type SavedAnswer, type SavedExcerpt } from './passage-sources';
 
 const labels = { answered: 'Réponse', partial: 'Réponse partielle', clarification: 'Demande de précision', refused: 'Refus', failed: 'Échec du traitement' };
@@ -75,7 +75,7 @@ function SourceViewer({ files, selected, panel, id, close }: {
   </dialog>;
 }
 
-export function AnswerTurn({ question, result, headingRef }: { question: string; result: SavedAnswer; headingRef?: Ref<HTMLHeadingElement> }) {
+export function AnswerTurn({ question, result, headingId, viewerAllowed = true, onOpenViewer }: { question: string; result: SavedAnswer; headingId?: string; viewerAllowed?: boolean; onOpenViewer?: () => void }) {
   const column = useRef<HTMLElement>(null);
   const viewerId = useId();
   const activation = useRef(0);
@@ -107,12 +107,12 @@ export function AnswerTurn({ question, result, headingRef }: { question: string;
   const active = passages.find(({ block }) => block.blockId === selected?.blockId);
   return <article ref={column} className="answer-turn" aria-label="Échange enregistré">
     <p className="sent-question">{question}</p>
-    <section className="saved-answer"><h2 ref={headingRef} tabIndex={-1}>{labels[result.status]}</h2>
+    <section className="saved-answer"><h2 id={headingId} tabIndex={-1}>{labels[result.status]}</h2>
       {passages.map(({ block, files }) => {
-        const showing = selected?.blockId === block.blockId;
+        const showing = viewerAllowed && selected?.blockId === block.blockId;
         const props = (fileKey: string | null) => ({ 'aria-haspopup': 'dialog' as const,
           'aria-controls': showing ? viewerId : undefined,
-          onClick: (event: React.MouseEvent<HTMLButtonElement>) => setSelected({ activation: ++activation.current, blockId: block.blockId, fileKey, trigger: event.currentTarget }) });
+          onClick: (event: React.MouseEvent<HTMLButtonElement>) => { onOpenViewer?.(); setSelected({ activation: ++activation.current, blockId: block.blockId, fileKey, trigger: event.currentTarget }); } });
         return <div className="answer-passage" key={block.blockId}><p lang={result.language}>{block.text}</p>
           {files.length > 0 && <div className="citations">
             {files.map(file => <button className="file-token" key={file.key} {...props(file.key)}>{file.title}</button>)}
@@ -124,6 +124,6 @@ export function AnswerTurn({ question, result, headingRef }: { question: string;
         </div>;
       })}
     </section>
-    {selected && active && <SourceViewer key={selected.activation} files={active.files} selected={selected} panel={panel} id={viewerId} close={close} />}
+    {viewerAllowed && selected && active && <SourceViewer key={selected.activation} files={active.files} selected={selected} panel={panel} id={viewerId} close={close} />}
   </article>;
 }

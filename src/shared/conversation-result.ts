@@ -1,5 +1,5 @@
 import type { AdmittedMessage, SubmittedScope } from './conversation-admission.ts';
-import type { RetrievedChunk } from './public-evidence.ts';
+import type { LineRange, RetrievedChunk } from './public-evidence.ts';
 import { exactObject, fullRevision, publicString, sourcePath, stringSet, jcs, validUnicode } from './public-catalog.ts';
 
 export type AnswerStatus = 'answered' | 'partial' | 'clarification' | 'refused' | 'failed';
@@ -19,6 +19,42 @@ export interface SourceExcerpt {
   sourceRevision: string;
   excerpt: string;
   location: string;
+}
+// Other adapters may use opaque diagnostic locations. Only the publisher's
+// lines: representation declares positive, inclusive, safe-integer ranges.
+export function parseLineLocation(location: string): { primary: LineRange; context: LineRange[] } | null {
+  if (!location.startsWith('lines:')) return null;
+  const ranges: LineRange[] = [];
+  for (const range of location.slice('lines:'.length).split(';context:')) {
+    const match = /^([1-9]\d*)-([1-9]\d*)$/.exec(range);
+    if (!match) return null;
+    const start = Number(match[1]), end = Number(match[2]);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end) return null;
+    ranges.push({ start, end });
+  }
+  return { primary: ranges[0]!, context: ranges.slice(1) };
+}
+// A hash fixes the copied fields across publications. Conversely those fields fix
+// the hash only at the same source revision, where the document also fixes the
+// uncopied metadata. Chunk ordinals and per-answer citation IDs are not content.
+export function excerptContentCheck() {
+  const projectionByHash = new Map<string, string>(), hashByRevisionProjection = new Map<string, string>();
+  const passageByLines = new Map<string, SourceExcerpt>();
+  return (source: SourceExcerpt): boolean => {
+    const projection = JSON.stringify([source.documentId, source.sourcePath, source.sourceTitle,
+      source.sectionTitle, source.location, source.excerpt]);
+    const key = `${source.sourceRevision}:${projection}`;
+    const previous = projectionByHash.get(source.contentHash), hash = hashByRevisionProjection.get(key);
+    if ((previous !== undefined && previous !== projection) || (hash !== undefined && hash !== source.contentHash)) return false;
+    if (source.location.startsWith('lines:')) {
+      const lines = JSON.stringify([source.sourceRevision, source.documentId, source.location]);
+      const passage = passageByLines.get(lines);
+      if (passage && (passage.sectionTitle !== source.sectionTitle || passage.excerpt !== source.excerpt)) return false;
+      passageByLines.set(lines, source);
+    }
+    projectionByHash.set(source.contentHash, projection); hashByRevisionProjection.set(key, source.contentHash);
+    return true;
+  };
 }
 export interface ConversationResult {
   requestId: string;
@@ -45,6 +81,9 @@ const failureText = {
   invalid_result: { fr: 'Impossible de produire un résultat valide pour le moment.', en: 'A valid result could not be produced at this time.' },
   processing_unavailable: { fr: 'Le traitement est indisponible pour le moment.', en: 'Processing is currently unavailable.' },
 };
+function validFailureCode(code: unknown): code is ResultFailureCode {
+  return typeof code === 'string' && Object.hasOwn(failureText, code);
+}
 function text(value: unknown, maximum: number = CANONICAL_RESULT_LIMITS.text): string {
   if (typeof value !== 'string' || !value.trim() || value.includes('\0') || value.length > maximum || !validUnicode(value)) throw new Error('Invalid result');
   return value;
@@ -59,7 +98,7 @@ export function factualResult(result: ConversationResult): boolean {
   return result.blocks.some((block) => block.kind === 'paragraph' || block.kind === 'summary') || result.sourceExcerpts.length > 0;
 }
 export function controlledFailure(message: Pick<AdmittedMessage, 'messageId' | 'requestId' | 'submittedScope'>, code: ResultFailureCode, language?: string, previousLanguage?: string): ConversationResult {
-  if (!Object.hasOwn(failureText, code)) throw new Error('Invalid failure code');
+  if (!validFailureCode(code)) throw new Error('Invalid failure code');
   const supported = (value: string | undefined): 'en' | 'fr' | undefined => {
     try { const base = resultLanguage(value).split('-')[0]; return base === 'en' || base === 'fr' ? base : undefined; }
     catch { return undefined; }
@@ -111,15 +150,26 @@ export function validateConversationResult(value: ConversationResult): void {
       !Array.isArray(value.blocks) || !value.blocks.length || value.blocks.length > CANONICAL_RESULT_LIMITS.blocks ||
       !Array.isArray(value.sourceExcerpts) || value.sourceExcerpts.length > CANONICAL_RESULT_LIMITS.excerpts || JSON.stringify({ status: value.status, language: value.language, blocks: value.blocks, sourceExcerpts: value.sourceExcerpts, error: value.error }).length > CANONICAL_RESULT_LIMITS.serializedContent) throw new Error('Invalid result');
   const sourceIds = new Set<string>();
-  const excerptIds = new Set<string>();
+  const excerptIds = new Set<string>(), chunkIds = new Set<string>();
+  const filesByDocument = new Map<string, SourceExcerpt>(), documentsByPath = new Map<string, string>();
+  const acceptContent = excerptContentCheck();
   for (const source of value.sourceExcerpts) {
     exactObject(source, ['sourceExcerptId', 'responseLocalId', 'documentId', 'sourceChunkId', 'contentHash', 'sourceTitle', 'sectionTitle', 'sourcePath', 'sourceRevision', 'excerpt', 'location']);
     for (const id of [source.sourceExcerptId, source.responseLocalId, source.documentId, source.sourceChunkId]) publicString(id);
     sourcePath(source.sourcePath); fullRevision(source.sourceRevision);
-    if (!/^[0-9a-f]{64}$/.test(source.contentHash) || !value.submittedScope.eligibleDocumentIds.includes(source.documentId) ||
+    if (source.sourceRevision !== value.sourceExcerpts[0]!.sourceRevision) throw new Error('Mixed source revisions');
+    if (typeof source.contentHash !== 'string' || !/^[0-9a-f]{64}$/.test(source.contentHash) || !value.submittedScope.eligibleDocumentIds.includes(source.documentId) ||
         sourceIds.has(source.responseLocalId) || excerptIds.has(source.sourceExcerptId)) throw new Error('Invalid excerpt');
     text(source.excerpt, CANONICAL_RESULT_LIMITS.excerptText); text(source.sourceTitle); text(source.location);
+    if (source.location.startsWith('lines:') && !parseLineLocation(source.location)) throw new Error('Invalid line location');
     if (source.sectionTitle !== null) text(source.sectionTitle);
+    // A result snapshots each cited retrieval chunk once; blocks may share its citation.
+    if (chunkIds.has(source.sourceChunkId)) throw new Error('Duplicate source chunk');
+    const file = filesByDocument.get(source.documentId), owner = documentsByPath.get(source.sourcePath);
+    if ((file && (file.sourcePath !== source.sourcePath || file.sourceTitle !== source.sourceTitle)) ||
+        (owner !== undefined && owner !== source.documentId)) throw new Error('Inconsistent source file');
+    if (!acceptContent(source)) throw new Error('Inconsistent content hash or line passage');
+    chunkIds.add(source.sourceChunkId); filesByDocument.set(source.documentId, source); documentsByPath.set(source.sourcePath, source.documentId);
     sourceIds.add(source.responseLocalId); excerptIds.add(source.sourceExcerptId);
   }
   const blockIds = new Set<string>(), cited = new Set<string>();
@@ -134,7 +184,7 @@ export function validateConversationResult(value: ConversationResult): void {
   if (cited.size !== sourceIds.size) throw new Error('Uncited excerpt');
   if (value.status === 'failed') {
     const error = value.error;
-    if (!error || !Object.hasOwn(failureText, error.code)) throw new Error('Invalid failure');
+    if (!error || !validFailureCode(error.code)) throw new Error('Invalid failure');
     exactObject(error, ['code', 'message', 'retryable', 'retryMode']);
     text(error.message);
     // Saved copy is authoritative; changing today's template must not invalidate

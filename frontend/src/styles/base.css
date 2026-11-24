@@ -17,18 +17,32 @@ button:disabled { cursor: default; color: var(--muted); background: var(--warm-w
 .suggestion { display: block; width: 100%; background: transparent; color: var(--green); text-align: start; font: 1.25rem/1.4 var(--font-editorial); border-radius: 0; border-top: 1px solid var(--line); padding-inline: .25rem; }
 .suggestion:not(:disabled):hover { background: var(--mint); }
 .free { margin-top: .8rem; }
-.conversation { min-height: 100svh; display: flex; flex-direction: column; }
+.conversation { height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: .5rem; padding-block: min(2dvh, 1rem); }
+.reading-pane { overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: .3rem; }
+.rejected > p:first-of-type { white-space: pre-wrap; }
+.waiting { display: inline-flex; align-items: center; gap: .5rem; color: var(--green); }
+.assistant-badge { border-radius: 1rem; padding: .2rem .65rem; background: var(--mint); font-weight: 600; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .identity { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: 1rem; }
 .identity p, .identity h1 { margin: 0; }
 .identity h1 { font-size: 1.65rem; }
 .badge { display: grid; place-items: center; width: 3rem; aspect-ratio: 1; border-radius: 50%; background: var(--ink); color: var(--warm-white); }
 summary { cursor: pointer; font-weight: 600; }
 .guide p { margin-bottom: 0; }
-.receipt { flex: 1; }
-.composer { background: var(--white); border: 1px solid var(--composer-border); border-radius: 1rem; padding: .8rem; }
-.composer textarea { display: block; width: 100%; margin-block: .4rem; resize: vertical; max-height: 35vh; color: var(--ink); background: var(--white); border: 1px solid var(--composer-border); }
+
+.composer { max-height: 58dvh; overflow-y: auto; background: var(--white); border: 1px solid var(--composer-border); border-radius: 1rem; padding: .8rem; }
+.composer textarea { display: block; width: 100%; margin-block: .4rem; resize: none; field-sizing: content; min-height: 1.8em; max-height: 18dvh; overflow-y: auto; color: var(--ink); background: var(--white); border: 1px solid var(--composer-border); }
+.composer .read-latest { font-size: .85rem; margin-inline-start: .5rem; padding: .1rem .4rem; }
+#input-guidance { font-size: .9rem; margin: .15rem 0; }
+.send-hint { display: block; color: var(--ink); }
 .composer:focus-within { border-color: var(--focus-border); }
-.composer div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.composer div { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(54%); align-items: center; gap: .5rem; }
+@media (max-height: 30rem) {
+  .composer { max-height: 63dvh; padding: .45rem .65rem; }
+  .composer textarea { max-height: 13dvh; margin-block: .2rem; }
+  .composer button { padding: .35rem .5rem; line-height: 1.25; }
+  #input-guidance { line-height: 1.25; }
+}
 footer { margin-top: 1.5rem; }
 
 html { scrollbar-gutter: stable; }
